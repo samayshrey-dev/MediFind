@@ -1,0 +1,669 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+
+    <div class="d-flex justify-content-between align-items-center mb-5">
+
+        <div>
+
+            <h2 class="fw-bold">
+
+                <i class="fa-solid fa-chart-line text-primary"></i>
+
+                MediFind Dashboard
+
+            </h2>
+
+            <p class="text-muted">
+
+                Welcome back! Here's a complete overview of your healthcare platform.
+
+            </p>
+
+        </div>
+
+        <div>
+
+            <a href="{% url 'search' %}" class="btn btn-primary btn-lg">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                Search Medicines
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- Statistics -->
+
+    <div class="row g-4">
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="dashboard-card">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <h6 class="text-muted">
+
+                            Medicines
+
+                        </h6>
+
+                        <h2>
+
+                            {{ medicine_count }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="dashboard-circle bg-primary">
+
+                        <i class="fa-solid fa-pills text-white"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="dashboard-card">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <h6 class="text-muted">
+
+                            Pharmacies
+
+                        </h6>
+
+                        <h2>
+
+                            {{ pharmacy_count }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="dashboard-circle bg-success">
+
+                        <i class="fa-solid fa-hospital text-white"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="dashboard-card">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <h6 class="text-muted">
+
+                            Inventory
+
+                        </h6>
+
+                        <h2>
+
+                            {{ inventory_count }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="dashboard-circle bg-warning">
+
+                        <i class="fa-solid fa-boxes-stacked text-white"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="dashboard-card">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <h6 class="text-muted">
+
+                            Active Pharmacies
+
+                        </h6>
+
+                        <h2>
+
+                            {{ active_pharmacies }}
+
+                        </h2>
+
+                    </div>
+
+                    <div class="dashboard-circle bg-danger">
+
+                        <i class="fa-solid fa-circle-check text-white"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div class="row mt-5">
+
+        <div class="col-lg-8">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        Quick Actions
+
+                    </h4>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+
+                            <a href="{% url 'add_medicine' %}" class="btn btn-primary w-100 py-3">
+
+                                <i class="fa-solid fa-plus"></i><br>
+
+                                Add Medicine
+
+                            </a>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <a href="{% url 'add_pharmacy' %}" class="btn btn-success w-100 py-3">
+
+                                <i class="fa-solid fa-hospital"></i><br>
+
+                                Add Pharmacy
+
+                            </a>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <a href="{% url 'add_inventory' %}" class="btn btn-warning w-100 py-3">
+
+                                <i class="fa-solid fa-box"></i><br>
+
+                                Add Inventory
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+                <div class="col-lg-4">
+
+            <div class="card shadow border-0 h-100">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        System Status
+
+                    </h4>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-success">
+
+                            Database Online
+
+                        </span>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-success">
+
+                            Search Engine Active
+
+                        </span>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-success">
+
+                            Maps Connected
+
+                        </span>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-success">
+
+                            Inventory Synced
+
+                        </span>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-primary">
+
+                            Django Backend Running
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Charts -->
+
+    <div class="row mt-5">
+
+        <div class="col-lg-6">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        <i class="fa-solid fa-chart-pie text-primary"></i>
+
+                        Medicine Categories
+
+                    </h4>
+
+                    <canvas id="categoryChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-6">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        <i class="fa-solid fa-chart-column text-success"></i>
+
+                        Inventory Stock
+
+                    </h4>
+
+                    <canvas id="stockChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Widgets -->
+
+    <div class="row mt-5">
+
+        <div class="col-lg-4">
+
+            <div class="card shadow border-0 h-100">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        🔴 Low Stock Medicines
+
+                    </h4>
+
+                    {% for item in low_stock %}
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span>
+
+                            {{ item.medicine.name }}
+
+                        </span>
+
+                        <span class="badge bg-danger">
+
+                            {{ item.quantity }}
+
+                        </span>
+
+                    </div>
+
+                    {% empty %}
+
+                    <div class="alert alert-success">
+
+                        No Low Stock Medicines
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card shadow border-0 h-100">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        ⏰ Expiring Soon
+
+                    </h4>
+
+                    {% for item in expiring %}
+
+                    <div class="mb-3">
+
+                        <strong>
+
+                            {{ item.medicine.name }}
+
+                        </strong>
+
+                        <br>
+
+                        <small class="text-muted">
+
+                            {{ item.expiry_date }}
+
+                        </small>
+
+                    </div>
+
+                    {% empty %}
+
+                    <div class="alert alert-success">
+
+                        Nothing Expiring Soon
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card shadow border-0 h-100">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        🏥 Top Pharmacy
+
+                    </h4>
+
+                    {% if top_pharmacy %}
+
+                    <h5>
+
+                        {{ top_pharmacy.name }}
+
+                    </h5>
+
+                    <p>
+
+                        {{ top_pharmacy.city }}
+
+                    </p>
+
+                    <p>
+
+                        {{ top_pharmacy.phone }}
+
+                    </p>
+
+                    <span class="badge bg-success">
+
+                        Active
+
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Recent Inventory -->
+
+    <div class="row mt-5">
+
+        <div class="col-lg-12">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body">
+
+                    <h4 class="mb-4">
+
+                        📦 Recent Inventory Activity
+
+                    </h4>
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>Medicine</th>
+
+                                <th>Pharmacy</th>
+
+                                <th>Quantity</th>
+
+                                <th>Price</th>
+
+                                <th>Expiry</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for item in recent_inventory %}
+
+                            <tr>
+
+                                <td>{{ item.medicine.name }}</td>
+
+                                <td>{{ item.pharmacy.name }}</td>
+
+                                <td>
+
+                                    <span class="badge bg-primary">
+
+                                        {{ item.quantity }}
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    ₹{{ item.price }}
+
+                                </td>
+
+                                <td>
+
+                                    {{ item.expiry_date }}
+
+                                </td>
+
+                            </tr>
+
+                            {% empty %}
+
+                            <tr>
+
+                                <td colspan="5" class="text-center">
+
+                                    No Inventory Found
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const categoryChart = new Chart(
+
+document.getElementById("categoryChart"),
+
+{
+
+type:"pie",
+
+data:{
+
+labels:{{ category_labels|safe }},
+
+datasets:[{
+
+data:{{ category_values|safe }}
+
+}]
+
+}
+
+}
+
+);
+
+const stockChart = new Chart(
+
+document.getElementById("stockChart"),
+
+{
+
+type:"bar",
+
+data:{
+
+labels:{{ stock_labels|safe }},
+
+datasets:[{
+
+label:"Stock",
+
+data:{{ stock_values|safe }}
+
+}]
+
+}
+
+}
+
+);
+
+</script>
+
+{% endblock %}

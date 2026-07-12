@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Pharmacy Details
+{% endblock %}
+
+{% block content %}
+
+<section class="pharmacy-hero">
+
+<div class="container">
+
+<div class="row align-items-center">
+
+<div class="col-lg-8">
+
+<span class="badge bg-success">
+
+Open Now
+
+</span>
+
+<h1>
+
+Apollo Pharmacy
+
+</h1>
+
+<p>
+
+Your trusted neighbourhood pharmacy with live medicine inventory.
+
+</p>
+
+<div class="pharmacy-meta">
+
+<span>
+
+⭐ 4.8
+
+</span>
+
+<span>
+
+📍 0.8 km Away
+
+</span>
+
+<span>
+
+🕒 8:00 AM - 10:00 PM
+
+</span>
+
+</div>
+
+<div class="mt-4">
+
+<button class="btn btn-primary">
+
+Get Directions
+
+</button>
+
+<button class="btn btn-outline-primary">
+
+Call Pharmacy
+
+</button>
+
+</div>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="pharmacy-score">
+
+<h2>
+
+96%
+
+</h2>
+
+<p>
+
+Stock Accuracy
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="inventory-section">
+
+<div class="container">
+
+<div class="row">
+
+<div class="col-lg-8">
+
+<h2>
+
+Available Medicines
+
+</h2>
+
+<table class="table inventory-table">
+
+<thead>
+
+<tr>
+
+<th>Medicine</th>
+
+<th>Stock</th>
+
+<th>Price</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Paracetamol 500mg</td>
+
+<td>56</td>
+
+<td>₹35</td>
+
+<td>
+
+<span class="badge bg-success">
+
+Available
+
+</span>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>Cetirizine</td>
+
+<td>14</td>
+
+<td>₹48</td>
+
+<td>
+
+<span class="badge bg-warning text-dark">
+
+Low Stock
+
+</span>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>Dolo 650</td>
+
+<td>82</td>
+
+<td>₹40</td>
+
+<td>
+
+<span class="badge bg-success">
+
+Available
+
+</span>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>Vitamin C</td>
+
+<td>120</td>
+
+<td>₹90</td>
+
+<td>
+
+<span class="badge bg-success">
+
+Available
+
+</span>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="info-sidebar">
+
+<h4>
+
+Store Information
+
+</h4>
+
+<p>
+
+📍 Chennai, Tamil Nadu
+
+</p>
+
+<p>
+
+📞 +91 XXXXX XXXXX
+
+</p>
+
+<p>
+
+✉ support@apollo.com
+
+</p>
+
+<hr>
+
+<h5>
+
+Services
+
+</h5>
+
+<ul>
+
+<li>Home Delivery</li>
+
+<li>Prescription Medicines</li>
+
+<li>Health Products</li>
+
+<li>24x7 Customer Support</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="map-section">
+
+<div class="container">
+
+<h2>
+
+Location
+
+</h2>
+
+<div id="pharmacyMap">
+
+</div>
+
+</div>
+
+</section>
+
+{% endblock %}

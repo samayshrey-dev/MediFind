@@ -1,0 +1,35 @@
+#testimonialCarousel .carousel-control-prev{
+left:-80px;
+}
+
+#testimonialCarousel .carousel-control-next{
+right:-80px;
+}
+
+#testimonialCarousel .carousel-control-prev,
+#testimonialCarousel .carousel-control-next{
+
+width:60px;
+
+opacity:1;
+
+}
+
+#testimonialCarousel .carousel-control-prev-icon,
+#testimonialCarousel .carousel-control-next-icon{
+
+background-color:#2563eb;
+
+border-radius:50%;
+
+padding:22px;
+
+background-size:55%;
+
+}#testimonialCarousel .carousel-control-prev{
+left:-40px;
+}
+
+#testimonialCarousel .carousel-control-next{
+right:-40px;
+}

@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Search Medicines
+{% endblock %}
+
+{% block content %}
+
+<section class="search-page py-5">
+
+<div class="container">
+
+<div class="row">
+
+<!-- ================= LEFT PANEL ================= -->
+
+<div class="col-lg-5">
+
+<h2 class="mb-4">
+
+<i class="fa-solid fa-pills text-primary"></i>
+
+Find Medicines
+
+</h2>
+
+<form method="GET">
+
+<div class="input-group mb-4">
+
+<input
+type="search"
+name="medicine"
+class="form-control form-control-lg"
+placeholder="Search by medicine name or brand..."
+value="{{ query|default:'' }}"
+required>
+
+<button
+class="btn btn-primary btn-lg"
+type="submit">
+
+<i class="fa-solid fa-magnifying-glass"></i>
+
+Search
+
+</button>
+
+</div>
+
+</form>
+
+{% if inventory %}
+
+<h5 class="mb-4 text-success">
+
+<i class="fa-solid fa-circle-check"></i>
+
+{{ inventory|length }} Medicine(s) Found
+
+</h5>
+
+{% for item in inventory %}
+
+<div class="card shadow-lg border-0 mb-4">
+
+<div class="card-body">
+
+<div class="d-flex justify-content-between align-items-center">
+
+<h4 class="text-primary mb-0">
+
+{{ item.medicine.name }}
+
+</h4>
+
+<span class="badge bg-primary">
+
+{{ item.medicine.category }}
+
+</span>
+
+</div>
+
+<hr>
+
+<p>
+
+<i class="fa-solid fa-capsules text-primary"></i>
+
+<strong> Brand:</strong>
+
+{{ item.medicine.brand }}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-hospital text-success"></i>
+
+<strong> Pharmacy:</strong>
+
+{{ item.pharmacy.name }}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-location-dot text-danger"></i>
+
+<strong> City:</strong>
+
+{{ item.pharmacy.city }}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-map-location-dot text-secondary"></i>
+
+<strong> Address:</strong>
+
+{{ item.pharmacy.address }}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-phone text-info"></i>
+
+<strong> Phone:</strong>
+
+{{ item.pharmacy.phone }}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-store text-success"></i>
+
+<strong> Status:</strong>
+
+{% if item.pharmacy.is_active %}
+
+<span class="badge bg-success">
+
+Open
+
+</span>
+
+{% else %}
+
+<span class="badge bg-danger">
+
+Closed
+
+</span>
+
+{% endif %}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-location-arrow text-primary"></i>
+
+<strong> Distance:</strong>
+
+<span class="badge bg-primary">
+
+~ 2.5 km
+
+</span>
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-indian-rupee-sign text-warning"></i>
+
+<strong> Price:</strong>
+
+₹{{ item.price }}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-box-open text-success"></i>
+
+<strong> Stock:</strong>
+
+{{ item.quantity }}
+
+</p>
+
+<div class="progress mb-3" style="height:10px;">
+
+<div
+class="progress-bar bg-success"
+role="progressbar"
+style="width:{% if item.quantity > 100 %}100{% else %}{{ item.quantity }}{% endif %}%">
+
+</div>
+
+</div>
+
+<div class="d-flex gap-2 flex-wrap">
+
+<a
+href="{% url 'pharmacy' %}"
+class="btn btn-primary">
+
+<i class="fa-solid fa-eye"></i>
+
+View Pharmacy
+
+</a>
+
+<a
+target="_blank"
+href="https://www.google.com/maps/dir/?api=1&destination={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}"
+class="btn btn-success">
+
+<i class="fa-solid fa-route"></i>
+
+Directions
+
+</a>
+
+<a
+href="tel:{{ item.pharmacy.phone }}"
+class="btn btn-outline-dark">
+
+<i class="fa-solid fa-phone"></i>
+
+Call
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<div class="alert alert-warning">
+
+<i class="fa-solid fa-circle-exclamation"></i>
+
+No medicines found.
+
+</div>
+
+{% endif %}
+
+</div>
+
+<!-- ================= RIGHT PANEL ================= -->
+
+<div class="col-lg-7">
+
+<div
+id="map"
+style="height:700px;border-radius:18px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,.15);">
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<script>
+
+const pharmacyData = {{ marker_data|safe }};
+
+</script>
+
+{% endblock %}

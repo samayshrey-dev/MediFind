@@ -1,0 +1,140 @@
+/* ==========================================
+   MediFind Global Styles
+   ========================================== */
+
+:root{
+
+    --primary:#2563eb;
+    --primary-dark:#1d4ed8;
+
+    --secondary:#0ea5e9;
+
+    --success:#16a34a;
+
+    --danger:#ef4444;
+
+    --warning:#f59e0b;
+
+    --light:#f8fafc;
+
+    --white:#ffffff;
+
+    --dark:#0f172a;
+
+    --text:#334155;
+
+    --border:#e2e8f0;
+
+    --shadow:0 10px 30px rgba(0,0,0,.08);
+
+    --radius:16px;
+
+    --transition:.35s;
+
+}
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+}
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    font-family:'Poppins',sans-serif;
+
+    color:var(--text);
+
+    background:#f5f7fb;
+
+    overflow-x:hidden;
+
+}
+
+a{
+
+    text-decoration:none;
+
+}
+
+img{
+
+    max-width:100%;
+
+}
+
+section{
+
+    padding:90px 0;
+
+}
+
+.container{
+
+    max-width:1200px;
+
+}
+
+.btn{
+
+    border-radius:50px;
+
+    padding:12px 28px;
+
+    font-weight:600;
+
+}
+
+.btn-primary{
+
+    background:var(--primary);
+
+    border:none;
+
+}
+
+.btn-primary:hover{
+
+    background:var(--primary-dark);
+
+}
+
+.title{
+
+    font-size:48px;
+
+    font-weight:700;
+
+    color:var(--dark);
+
+}
+
+.subtitle{
+
+    font-size:18px;
+
+    color:#64748b;
+
+    line-height:1.8;
+
+}
+
+.shadow-box{
+
+    background:white;
+
+    border-radius:20px;
+
+    box-shadow:var(--shadow);
+
+}

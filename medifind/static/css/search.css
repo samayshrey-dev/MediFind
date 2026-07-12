@@ -1,0 +1,107 @@
+.search-page{
+
+padding:80px 0;
+
+background:#f5f8fc;
+
+min-height:100vh;
+
+}
+
+.search-page h2{
+
+font-weight:700;
+
+color:#1e293b;
+
+margin-bottom:25px;
+
+}
+
+.input-group{
+
+box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+border-radius:15px;
+
+overflow:hidden;
+
+}
+
+.input-group input{
+
+border:none;
+
+padding:18px;
+
+font-size:17px;
+
+}
+
+.input-group input:focus{
+
+box-shadow:none;
+
+}
+
+.input-group button{
+
+border-radius:0;
+
+padding:18px 30px;
+
+}
+
+.card{
+
+border-radius:18px;
+
+transition:.3s;
+
+}
+
+.card:hover{
+
+transform:translateY(-5px);
+
+box-shadow:0 18px 45px rgba(0,0,0,.12);
+
+}
+
+.card-body p{
+
+margin-bottom:10px;
+
+font-size:15px;
+
+}
+
+#map{
+
+box-shadow:0 10px 35px rgba(0,0,0,.12);
+
+border-radius:18px;
+
+position:sticky;
+
+top:100px;
+
+}
+
+.badge{
+
+font-size:13px;
+
+padding:8px 14px;
+
+border-radius:20px;
+
+}
+
+.btn{
+
+border-radius:12px;
+
+font-weight:600;
+
+}

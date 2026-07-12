@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+
+Medicine Details
+
+{% endblock %}
+
+{% block content %}
+
+<section class="medicine-page">
+
+<div class="container">
+
+<div class="row g-5">
+
+<!-- LEFT -->
+
+<div class="col-lg-5">
+
+<div class="medicine-image-box">
+
+<div class="medicine-icon">
+
+<i class="fa-solid fa-capsules"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- RIGHT -->
+
+<div class="col-lg-7">
+
+<span class="badge bg-success">
+
+OTC Medicine
+
+</span>
+
+<h1 class="medicine-title">
+
+Paracetamol 500mg
+
+</h1>
+
+<p class="medicine-brand">
+
+by Cipla
+
+</p>
+
+<div class="rating-box">
+
+★★★★★
+
+<span>
+
+4.8 (512 Reviews)
+
+</span>
+
+</div>
+
+<h2 class="price">
+
+₹35
+
+</h2>
+
+<p>
+
+Effective relief from fever, headache, body pain and mild inflammation.
+
+</p>
+
+<div class="action-buttons">
+
+<button class="btn btn-primary">
+
+Check Nearby Pharmacies
+
+</button>
+
+<button class="btn btn-outline-primary">
+
+Get Directions
+
+</button>
+
+</div>
+
+<div class="medicine-info-grid">
+
+<div class="info-box">
+
+<h5>
+
+Category
+
+</h5>
+
+<p>
+
+Pain Relief
+
+</p>
+
+</div>
+
+<div class="info-box">
+
+<h5>
+
+Dosage
+
+</h5>
+
+<p>
+
+500mg
+
+</p>
+
+</div>
+
+<div class="info-box">
+
+<h5>
+
+Prescription
+
+</h5>
+
+<p>
+
+No
+
+</p>
+
+</div>
+
+<div class="info-box">
+
+<h5>
+
+Availability
+
+</h5>
+
+<p>
+
+Available
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="medicine-description">
+
+<div class="container">
+
+<ul class="nav nav-pills mb-4">
+
+<li class="nav-item">
+
+<button class="nav-link active">
+
+Description
+
+</button>
+
+</li>
+
+<li class="nav-item">
+
+<button class="nav-link">
+
+Uses
+
+</button>
+
+</li>
+
+<li class="nav-item">
+
+<button class="nav-link">
+
+Side Effects
+
+</button>
+
+</li>
+
+<li class="nav-item">
+
+<button class="nav-link">
+
+Warnings
+
+</button>
+
+</li>
+
+</ul>
+
+<div class="description-box">
+
+<h3>
+
+Description
+
+</h3>
+
+<p>
+
+Paracetamol is used to reduce fever and relieve mild to moderate pain.
+
+It is one of the safest OTC medicines when used according to the prescribed dosage.
+
+</p>
+
+<h3>
+
+Uses
+
+</h3>
+
+<ul>
+
+<li>Fever</li>
+
+<li>Headache</li>
+
+<li>Body Pain</li>
+
+<li>Toothache</li>
+
+<li>Muscle Pain</li>
+
+</ul>
+
+<h3>
+
+Side Effects
+
+</h3>
+
+<ul>
+
+<li>Nausea</li>
+
+<li>Skin Rash (Rare)</li>
+
+<li>Liver Damage (Overdose)</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="nearby-pharmacy">
+
+<div class="container">
+
+<h2>
+
+Nearby Pharmacies
+
+</h2>
+
+<div class="row g-4">
+
+<div class="col-lg-4">
+
+<div class="pharmacy-card">
+
+<h4>
+
+Apollo Pharmacy
+
+</h4>
+
+<p>
+
+0.8 km Away
+
+</p>
+
+<span class="badge bg-success">
+
+In Stock
+
+</span>
+
+<h5>
+
+₹35
+
+</h5>
+
+<button class="btn btn-primary w-100">
+
+Directions
+
+</button>
+
+</div>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="pharmacy-card">
+
+<h4>
+
+MedPlus
+
+</h4>
+
+<p>
+
+1.2 km Away
+
+</p>
+
+<span class="badge bg-warning text-dark">
+
+Low Stock
+
+</span>
+
+<h5>
+
+₹38
+
+</h5>
+
+<button class="btn btn-primary w-100">
+
+Directions
+
+</button>
+
+</div>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="pharmacy-card">
+
+<h4>
+
+Guardian Pharmacy
+
+</h4>
+
+<p>
+
+1.9 km Away
+
+</p>
+
+<span class="badge bg-danger">
+
+Out of Stock
+
+</span>
+
+<h5>
+
+₹36
+
+</h5>
+
+<button class="btn btn-outline-secondary w-100">
+
+Unavailable
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+{% endblock %}
