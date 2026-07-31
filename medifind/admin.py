@@ -1,6 +1,12 @@
 from django.contrib import admin
-from .models import Medicine, Pharmacy, Inventory
-
+from .models import (
+    Medicine,
+    Pharmacy,
+    Inventory,
+    UserProfile,
+    Reservation,
+    Notification,
+)
 @admin.register(Medicine)
 class MedicineAdmin(admin.ModelAdmin):
 
@@ -28,6 +34,7 @@ class PharmacyAdmin(admin.ModelAdmin):
         "city",
         "phone",
         "is_active",
+        "is_open"
     )
 
     search_fields = (
@@ -58,3 +65,6 @@ class InventoryAdmin(admin.ModelAdmin):
     list_filter = (
         "pharmacy",
     )
+admin.site.register(UserProfile)
+admin.site.register(Reservation)
+admin.site.register(Notification)

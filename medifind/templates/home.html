@@ -39,26 +39,23 @@ check stock availability, and get instant GPS directions.
 
 <form action="{% url 'search' %}" method="GET">
 
-<div class="search-box">
+    <div class="search-box">
 
-<input
-type="text"
-name="medicine"
-class="form-control"
-placeholder="Search medicines..."
-required>
+        <input
+            type="text"
+            name="medicine"
+            placeholder="Search medicines like Dolo, Crocin, Insulin..."
+            required>
 
-<button
-class="btn btn-primary"
-type="submit">
+        <button class="btn btn-primary">
 
-<i class="fa-solid fa-magnifying-glass"></i>
+            <i class="fa-solid fa-magnifying-glass me-2"></i>
 
-Search
+            Search
 
-</button>
+        </button>
 
-</div>
+    </div>
 
 </form>
 <div class="chips">
@@ -555,7 +552,7 @@ Pain Relief & Fever
 
 </p>
 
-<a href="{% url 'medicine' %}" class="btn btn-primary w-100">
+<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
 
 View Details
 
@@ -593,7 +590,7 @@ Antibiotic
 
 </p>
 
-<a href="{% url 'medicine' %}" class="btn btn-primary w-100">
+<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
 
 View Details
 
@@ -630,7 +627,7 @@ Allergy Relief
 
 </p>
 
-<a href="{% url 'medicine' %}" class="btn btn-primary w-100">
+<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
 
 View Details
 
@@ -668,7 +665,7 @@ Immunity Booster
 
 </p>
 
-<a href="{% url 'medicine' %}" class="btn btn-primary w-100">
+<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
 
 View Details
 
@@ -1031,4 +1028,73 @@ Yes. Only verified pharmacy partners are displayed within MediFind.
 </div>
 
 </section>
+
+<script>
+
+const input = document.getElementById("medicineInput");
+const suggestions = document.getElementById("suggestions");
+
+input.addEventListener("keyup", async function () {
+
+    const query = input.value.trim();
+
+    if (query.length < 2) {
+
+        suggestions.style.display = "none";
+        return;
+
+    }
+
+    const response = await fetch(`/search-suggestions/?q=${query}`);
+
+    const data = await response.json();
+
+    suggestions.innerHTML = "";
+
+    if (data.length === 0) {
+
+        suggestions.style.display = "none";
+        return;
+
+    }
+
+    data.forEach(name => {
+
+        suggestions.innerHTML += `
+            <button
+                type="button"
+                class="list-group-item list-group-item-action">
+                ${name}
+            </button>
+        `;
+
+    });
+
+    suggestions.style.display = "block";
+
+});
+
+suggestions.addEventListener("click", function(e){
+
+    if(e.target.tagName === "BUTTON"){
+
+        input.value = e.target.innerText;
+
+        suggestions.style.display = "none";
+
+    }
+
+});
+
+document.addEventListener("click", function(e){
+
+    if(!suggestions.contains(e.target) && e.target !== input){
+
+        suggestions.style.display = "none";
+
+    }
+
+});
+
+</script>
 {% endblock %}

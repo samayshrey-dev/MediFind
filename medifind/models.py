@@ -87,6 +87,9 @@ class Pharmacy(models.Model):
     )
 
     is_active = models.BooleanField(default=True)
+    is_open = models.BooleanField(
+    default=True
+)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -95,6 +98,36 @@ class Pharmacy(models.Model):
     def __str__(self):
         return self.name
 
+
+    
+
+class UserProfile(models.Model):
+
+    ROLE_CHOICES = [
+        ("Customer", "Customer"),
+        ("Pharmacy", "Pharmacy"),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default="Customer"
+    )
+    pharmacy = models.OneToOneField(
+    "Pharmacy",
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True
+    )
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+    
 class Inventory(models.Model):
 
     medicine = models.ForeignKey(
@@ -120,6 +153,19 @@ class Inventory(models.Model):
 
     expiry_date = models.DateField()
 
+    minimum_stock = models.PositiveIntegerField(
+        default=10
+    )
+
+    expected_restock = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    last_updated = models.DateTimeField(
+        auto_now=True
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )
@@ -131,25 +177,156 @@ class Inventory(models.Model):
     def __str__(self):
 
         return f"{self.medicine.name} - {self.pharmacy.name}"
-    
+class Reservation(models.Model):
 
-class UserProfile(models.Model):
-
-    ROLE_CHOICES = [
-        ("Customer", "Customer"),
-        ("Pharmacy", "Pharmacy"),
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Accepted", "Accepted"),
+        ("Rejected", "Rejected"),
+        ("Collected", "Collected"),
+        ("Cancelled", "Cancelled"),
     ]
 
-    user = models.OneToOneField(
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reservations"
+    )
+
+    pharmacy = models.ForeignKey(
+        Pharmacy,
+        on_delete=models.CASCADE
+    )
+
+    medicine = models.ForeignKey(
+        Medicine,
+        on_delete=models.CASCADE
+    )
+
+    quantity = models.PositiveIntegerField(default=1)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Pending"
+    )
+
+    requested_at = models.DateTimeField(auto_now_add=True)
+
+    pickup_before = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    notes = models.TextField(
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.customer.username} - {self.medicine.name}"
+    # ==========================================================
+# Notification Model
+# ==========================================================
+
+class Notification(models.Model):
+
+    NOTIFICATION_TYPES = [
+
+        ("Reservation", "Reservation"),
+        ("Accepted", "Accepted"),
+        ("Rejected", "Rejected"),
+        ("Inventory", "Inventory"),
+
+    ]
+
+    recipient = models.ForeignKey(
+
+        User,
+
+        on_delete=models.CASCADE,
+
+        related_name="notifications"
+
+    )
+
+    sender = models.ForeignKey(
+
+        User,
+
+        on_delete=models.SET_NULL,
+
+        null=True,
+
+        blank=True,
+
+        related_name="sent_notifications"
+
+    )
+
+    reservation = models.ForeignKey(
+
+        "Reservation",
+
+        on_delete=models.CASCADE,
+
+        null=True,
+
+        blank=True
+
+    )
+
+    title = models.CharField(
+
+        max_length=150
+
+    )
+
+    message = models.TextField()
+
+    notification_type = models.CharField(
+
+        max_length=20,
+
+        choices=NOTIFICATION_TYPES,
+
+        default="Reservation"
+
+    )
+
+    is_read = models.BooleanField(
+
+        default=False
+
+    )
+
+    created_at = models.DateTimeField(
+
+        auto_now_add=True
+
+    )
+
+    class Meta:
+
+        ordering = ["-created_at"]
+
+    def __str__(self):
+
+        return f"{self.recipient.username} - {self.title}"
+    
+class SearchHistory(models.Model):
+
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE
     )
 
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default="Customer"
+    medicine = models.CharField(
+        max_length=200
+    )
+
+    searched_at = models.DateTimeField(
+        auto_now_add=True
     )
 
     def __str__(self):
-        return f"{self.user.username} - {self.role}"
+        return f"{self.user.username} - {self.medicine}"

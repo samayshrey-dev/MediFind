@@ -1,12 +1,23 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.views import LoginView, LogoutView
 
 urlpatterns = [
     path("", views.home, name="home"),
     path("search/", views.search, name="search"),
-    path("medicine/", views.medicine_detail, name="medicine"),
-    path("pharmacy/", views.pharmacy_detail, name="pharmacy"),
+
+    path(
+        "medicine/<int:id>/",
+        views.medicine_detail,
+        name="medicine_detail"
+    ),
+
+    path(
+        "pharmacy/<int:id>/",
+        views.pharmacy_detail,
+        name="pharmacy_detail"
+    ),
     path("dashboard/", views.dashboard, name="dashboard"),
     path(
     "medicines/",
@@ -79,27 +90,93 @@ path(
     name="delete_inventory"
 ),
 path(
-    "login/",
-    auth_views.LoginView.as_view(
-        template_name="login.html"
+        "login/",
+        LoginView.as_view(
+            template_name="login.html"
+        ),
+        name="login"
     ),
-    name="login",
-),
 
-path(
-    "logout/",
-    auth_views.LogoutView.as_view(),
-    name="logout",
-),
+    path(
+        "logout/",
+        LogoutView.as_view(),
+        name="logout"
+    ),
 
-path(
-    "register/",
-    views.register,
-    name="register",
-),
+    path(
+        "register/",
+        views.register,
+        name="register"
+    ),
+
+    path(
+        "profile/",
+        views.profile,
+        name="profile"
+    ),
 path(
     "dashboard-redirect/",
     views.dashboard_redirect,
-    name="dashboard_redirect",
+    name="dashboard_redirect"
+),
+path(
+    "reserve/<int:inventory_id>/",
+    views.reserve_medicine,
+    name="reserve_medicine"
+),
+
+path(
+    "reservations/",
+    views.reservations,
+    name="reservations"
+),
+
+path(
+    "reservations/<int:id>/accept/",
+    views.accept_reservation,
+    name="accept_reservation"
+),
+
+path(
+    "reservations/<int:id>/reject/",
+    views.reject_reservation,
+    name="reject_reservation"
+),
+
+path(
+    "my-reservations/",
+    views.my_reservations,
+    name="my_reservations"
+),
+
+path(
+    "search-history/",
+    views.search_history,
+    name="search_history"
+),
+path(
+    "pharmacy-dashboard/",
+    views.pharmacy_dashboard,
+    name="pharmacy_dashboard"
+),
+path(
+    "search/suggestions/",
+    views.search_suggestions,
+    name="search_suggestions"
+),
+path(
+    "notifications/",
+    views.notifications_api,
+    name="notifications_api"
+),
+path(
+    "reservation-history/",
+    views.reservation_history,
+    name="reservation_history"
+),
+path(
+    "toggle-pharmacy-status/",
+    views.toggle_pharmacy_status,
+    name="toggle_pharmacy_status"
 ),
 ]

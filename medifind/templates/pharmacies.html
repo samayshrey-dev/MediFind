@@ -1,26 +1,42 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block title %}
-Pharmacies
+Pharmacy Management
 {% endblock %}
 
 {% block content %}
 
 <section class="dashboard">
 
-<div class="container">
+<div class="container-fluid px-4">
 
-<div class="d-flex justify-content-between mb-4">
+<!-- ================= HEADER ================= -->
 
-<h2>
+<div class="d-flex justify-content-between align-items-center mb-5">
+
+<div>
+
+<h2 class="fw-bold mb-1">
+
+<i class="fa-solid fa-hospital text-primary me-2"></i>
 
 Pharmacy Management
 
 </h2>
 
+<p class="text-muted mb-0">
+
+Manage all registered pharmacies in MediFind.
+
+</p>
+
+</div>
+
 <a
 href="{% url 'add_pharmacy' %}"
-class="btn btn-success">
+class="btn btn-primary btn-lg">
+
+<i class="fa-solid fa-plus me-2"></i>
 
 Add Pharmacy
 
@@ -28,15 +44,127 @@ Add Pharmacy
 
 </div>
 
-<table class="table table-hover table-striped">
+<!-- ================= STATS ================= -->
 
-<thead class="table-dark">
+<div class="row g-4 mb-5">
+
+<div class="col-md-4">
+
+<div class="dashboard-card text-center">
+
+<div class="dashboard-circle bg-primary mx-auto mb-3">
+
+<i class="fa-solid fa-hospital"></i>
+
+</div>
+
+<h2>{{ pharmacies|length }}</h2>
+
+<p class="text-muted mb-0">
+
+Total Pharmacies
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="dashboard-card text-center">
+
+<div class="dashboard-circle bg-success mx-auto mb-3">
+
+<i class="fa-solid fa-circle-check"></i>
+
+</div>
+
+<h2>
+
+{{ active_count|default:"--" }}
+
+</h2>
+
+<p class="text-muted mb-0">
+
+Active Pharmacies
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="dashboard-card text-center">
+
+<div class="dashboard-circle bg-danger mx-auto mb-3">
+
+<i class="fa-solid fa-circle-xmark"></i>
+
+</div>
+
+<h2>
+
+{{ inactive_count|default:"--" }}
+
+</h2>
+
+<p class="text-muted mb-0">
+
+Inactive Pharmacies
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ================= TABLE ================= -->
+
+<div class="card shadow border-0 rounded-4">
+
+<div class="card-header bg-white">
+
+<div class="d-flex justify-content-between align-items-center">
+
+<h4 class="mb-0">
+
+<i class="fa-solid fa-list text-primary me-2"></i>
+
+Registered Pharmacies
+
+</h4>
+
+<span class="badge bg-primary">
+
+{{ pharmacies|length }} Total
+
+</span>
+
+</div>
+
+</div>
+
+<div class="card-body p-0">
+
+{% if pharmacies %}
+
+<div class="table-responsive">
+
+<table class="table align-middle table-hover mb-0">
+
+<thead class="table-light">
 
 <tr>
 
 <th>ID</th>
 
-<th>Name</th>
+<th>Pharmacy</th>
 
 <th>City</th>
 
@@ -44,7 +172,11 @@ Add Pharmacy
 
 <th>Status</th>
 
-<th>Actions</th>
+<th class="text-center">
+
+Actions
+
+</th>
 
 </tr>
 
@@ -56,19 +188,61 @@ Add Pharmacy
 
 <tr>
 
-<td>{{ pharmacy.id }}</td>
+<td>
 
-<td>{{ pharmacy.name }}</td>
+<strong>#{{ pharmacy.id }}</strong>
 
-<td>{{ pharmacy.city }}</td>
+</td>
 
-<td>{{ pharmacy.phone }}</td>
+<td>
+
+<div class="d-flex align-items-center">
+
+<div class="dashboard-circle bg-primary me-3" style="width:50px;height:50px;">
+
+<i class="fa-solid fa-hospital"></i>
+
+</div>
+
+<div>
+
+<h6 class="mb-1">
+
+{{ pharmacy.name }}
+
+</h6>
+
+<small class="text-muted">
+
+{{ pharmacy.address }}
+
+</small>
+
+</div>
+
+</div>
+
+</td>
+
+<td>
+
+{{ pharmacy.city }}
+
+</td>
+
+<td>
+
+{{ pharmacy.phone }}
+
+</td>
 
 <td>
 
 {% if pharmacy.is_active %}
 
 <span class="badge bg-success">
+
+<i class="fa-solid fa-circle-check me-1"></i>
 
 Active
 
@@ -78,6 +252,8 @@ Active
 
 <span class="badge bg-danger">
 
+<i class="fa-solid fa-circle-xmark me-1"></i>
+
 Inactive
 
 </span>
@@ -86,13 +262,15 @@ Inactive
 
 </td>
 
-<td>
+<td class="text-center">
+
+<div class="btn-group">
 
 <a
 href="{% url 'edit_pharmacy' pharmacy.id %}"
 class="btn btn-warning btn-sm">
 
-Edit
+<i class="fa-solid fa-pen"></i>
 
 </a>
 
@@ -100,21 +278,11 @@ Edit
 href="{% url 'delete_pharmacy' pharmacy.id %}"
 class="btn btn-danger btn-sm">
 
-Delete
+<i class="fa-solid fa-trash"></i>
 
 </a>
 
-</td>
-
-</tr>
-
-{% empty %}
-
-<tr>
-
-<td colspan="6">
-
-No Pharmacies Found
+</div>
 
 </td>
 
@@ -125,6 +293,44 @@ No Pharmacies Found
 </tbody>
 
 </table>
+
+</div>
+
+{% else %}
+
+<div class="text-center py-5">
+
+<i class="fa-solid fa-hospital fa-4x text-secondary mb-4"></i>
+
+<h4>
+
+No Pharmacies Found
+
+</h4>
+
+<p class="text-muted">
+
+Add your first pharmacy to begin managing inventory.
+
+</p>
+
+<a
+href="{% url 'add_pharmacy' %}"
+class="btn btn-primary">
+
+<i class="fa-solid fa-plus me-2"></i>
+
+Add Pharmacy
+
+</a>
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
 
 </div>
 

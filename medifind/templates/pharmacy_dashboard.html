@@ -1,0 +1,1239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Pharmacy Dashboard
+{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+
+<div class="container-fluid px-4 py-5">
+
+<!-- ======================================= -->
+<!-- DASHBOARD HEADER -->
+<!-- ======================================= -->
+
+<div class="dashboard-header mb-5">
+
+<div class="row align-items-center">
+
+<div class="col-lg-8">
+
+<div class="d-flex align-items-center">
+
+<div class="dashboard-circle bg-primary me-4">
+
+<i class="fa-solid fa-hospital"></i>
+
+</div>
+
+<div>
+
+<h1 class="fw-bold mb-2">
+
+{{ pharmacy.name }}
+
+</h1>
+
+<p class="text-muted mb-2">
+
+Welcome back,
+
+<strong>
+
+{{ request.user.first_name|default:request.user.username }}
+
+</strong>
+
+</p>
+
+<div class="d-flex flex-wrap gap-4">
+
+<span>
+
+<i class="fa-solid fa-location-dot text-danger me-2"></i>
+
+{{ pharmacy.address }}
+
+</span>
+
+<span>
+
+<i class="fa-solid fa-phone text-success me-2"></i>
+
+{{ pharmacy.phone }}
+
+</span>
+
+<span>
+
+<i class="fa-solid fa-envelope text-primary me-2"></i>
+
+{{ pharmacy.email }}
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+
+{% if pharmacy.is_open %}
+
+<div class="d-inline-block">
+
+<span class="badge bg-success fs-6 px-4 py-3">
+
+<i class="fa-solid fa-circle-check me-2"></i>
+
+Currently OPEN
+
+</span>
+
+<br><br>
+
+<a
+href="{% url 'toggle_pharmacy_status' %}"
+class="btn btn-danger rounded-pill px-4">
+
+<i class="fa-solid fa-door-closed me-2"></i>
+
+Close Pharmacy
+
+</a>
+
+</div>
+
+{% else %}
+
+<div class="d-inline-block">
+
+<span class="badge bg-danger fs-6 px-4 py-3">
+
+<i class="fa-solid fa-circle-xmark me-2"></i>
+
+Currently CLOSED
+
+</span>
+
+<br><br>
+
+<a
+href="{% url 'toggle_pharmacy_status' %}"
+class="btn btn-success rounded-pill px-4">
+
+<i class="fa-solid fa-door-open me-2"></i>
+
+Open Pharmacy
+
+</a>
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ======================================= -->
+<!-- STATISTICS -->
+<!-- ======================================= -->
+
+<div class="row g-4 mb-5">
+
+<div class="col-xl-3 col-md-6">
+
+<div class="dashboard-card">
+
+<div class="d-flex justify-content-between">
+
+<div>
+
+<p class="text-muted mb-2">
+
+Medicines
+
+</p>
+
+<h2>
+
+{{ inventory_count }}
+
+</h2>
+
+</div>
+
+<div class="dashboard-circle bg-primary">
+
+<i class="fa-solid fa-capsules"></i>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-xl-3 col-md-6">
+
+<div class="dashboard-card">
+
+<div class="d-flex justify-content-between">
+
+<div>
+
+<p class="text-muted mb-2">
+
+Reservations
+
+</p>
+
+<h2>
+
+{{ reservation_count }}
+
+</h2>
+
+</div>
+
+<div class="dashboard-circle bg-success">
+
+<i class="fa-solid fa-bell-concierge"></i>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-xl-3 col-md-6">
+
+<div class="dashboard-card">
+
+<div class="d-flex justify-content-between">
+
+<div>
+
+<p class="text-muted mb-2">
+
+Low Stock
+
+</p>
+
+<h2>
+
+{{ low_stock.count }}
+
+</h2>
+
+</div>
+
+<div class="dashboard-circle bg-warning">
+
+<i class="fa-solid fa-triangle-exclamation"></i>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-xl-3 col-md-6">
+
+<div class="dashboard-card">
+
+<div class="d-flex justify-content-between">
+
+<div>
+
+<p class="text-muted mb-2">
+
+Inventory
+
+</p>
+
+<h2>
+
+{{ inventory_count }}
+
+</h2>
+
+</div>
+
+<div class="dashboard-circle bg-info">
+
+<i class="fa-solid fa-boxes-stacked"></i>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ======================================= -->
+<!-- QUICK ACTIONS -->
+<!-- ======================================= -->
+
+<div class="card shadow border-0 rounded-4 mb-5">
+
+<div class="card-header bg-white">
+
+<h4 class="mb-0">
+
+<i class="fa-solid fa-bolt text-warning me-2"></i>
+
+Quick Actions
+
+</h4>
+
+</div>
+
+<div class="card-body">
+
+<div class="row g-3">
+
+<div class="col-lg-3 col-md-6">
+
+<a href="{% url 'add_medicine' %}"
+
+class="btn btn-primary w-100 py-4">
+
+<i class="fa-solid fa-capsules fs-2 d-block mb-3"></i>
+
+Add Medicine
+
+</a>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<a href="{% url 'add_inventory' %}"
+
+class="btn btn-success w-100 py-4">
+
+<i class="fa-solid fa-boxes-stacked fs-2 d-block mb-3"></i>
+
+Add Inventory
+
+</a>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<a href="{% url 'inventory' %}"
+
+class="btn btn-info text-white w-100 py-4">
+
+<i class="fa-solid fa-warehouse fs-2 d-block mb-3"></i>
+
+Inventory
+
+</a>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<a href="{% url 'reservations' %}"
+
+class="btn btn-warning text-dark w-100 py-4">
+
+<i class="fa-solid fa-bell-concierge fs-2 d-block mb-3"></i>
+
+Reservations
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ======================================= -->
+<!-- MAIN CONTENT -->
+<!-- ======================================= -->
+
+<div class="row g-4">
+<!-- ======================================= -->
+<!-- RECENT RESERVATIONS -->
+<!-- ======================================= -->
+
+<div class="col-xl-8">
+
+<div class="card border-0 shadow rounded-4 h-100">
+
+<div class="card-header bg-white py-4">
+
+<div class="d-flex justify-content-between align-items-center">
+
+<h4 class="mb-0">
+
+<i class="fa-solid fa-bell-concierge text-primary me-2"></i>
+
+Recent Reservation Requests
+
+</h4>
+
+<a
+href="{% url 'reservations' %}"
+class="btn btn-outline-primary btn-sm">
+
+View All
+
+</a>
+
+</div>
+
+</div>
+
+<div class="card-body p-0">
+
+{% if reservations %}
+
+<div class="table-responsive">
+
+<table class="table align-middle table-hover mb-0">
+
+<thead class="table-light">
+
+<tr>
+
+<th class="ps-4">
+
+Customer
+
+</th>
+
+<th>
+
+Medicine
+
+</th>
+
+<th>
+
+Quantity
+
+</th>
+
+<th>
+
+Requested
+
+</th>
+
+<th>
+
+Status
+
+</th>
+
+<th class="text-center">
+
+Action
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for reservation in reservations %}
+
+<tr>
+
+<td class="ps-4">
+
+<div class="d-flex align-items-center">
+
+<div class="dashboard-circle bg-primary me-3"
+
+style="width:45px;height:45px;">
+
+<i class="fa-solid fa-user"></i>
+
+</div>
+
+<div>
+
+<strong>
+
+{{ reservation.customer.username }}
+
+</strong>
+
+<br>
+
+<small class="text-muted">
+
+Customer
+
+</small>
+
+</div>
+
+</div>
+
+</td>
+
+<td>
+
+<strong>
+
+{{ reservation.medicine.name }}
+
+</strong>
+
+</td>
+
+<td>
+
+<span class="badge bg-secondary">
+
+{{ reservation.quantity }}
+
+</span>
+
+</td>
+
+<td>
+
+{{ reservation.requested_at|date:"d M Y" }}
+
+<br>
+
+<small class="text-muted">
+
+{{ reservation.requested_at|date:"h:i A" }}
+
+</small>
+
+</td>
+
+<td>
+
+{% if reservation.status == "Pending" %}
+
+<span class="badge bg-warning text-dark">
+
+<i class="fa-solid fa-clock me-1"></i>
+
+Pending
+
+</span>
+
+{% elif reservation.status == "Accepted" %}
+
+<span class="badge bg-success">
+
+<i class="fa-solid fa-circle-check me-1"></i>
+
+Accepted
+
+</span>
+
+{% elif reservation.status == "Rejected" %}
+
+<span class="badge bg-danger">
+
+<i class="fa-solid fa-circle-xmark me-1"></i>
+
+Rejected
+
+</span>
+
+{% else %}
+
+<span class="badge bg-primary">
+
+{{ reservation.status }}
+
+</span>
+
+{% endif %}
+
+</td>
+
+<td class="text-center">
+
+{% if reservation.status == "Pending" %}
+
+<div class="btn-group">
+
+<a
+
+href="{% url 'accept_reservation' reservation.id %}"
+
+class="btn btn-success btn-sm">
+
+<i class="fa-solid fa-check"></i>
+
+</a>
+
+<a
+
+href="{% url 'reject_reservation' reservation.id %}"
+
+class="btn btn-danger btn-sm">
+
+<i class="fa-solid fa-xmark"></i>
+
+</a>
+
+</div>
+
+{% else %}
+
+<span class="text-success fw-bold">
+
+Completed
+
+</span>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% else %}
+
+<div class="text-center py-5">
+
+<i class="fa-solid fa-bell-slash fa-4x text-secondary mb-4"></i>
+
+<h4>
+
+No Reservation Requests
+
+</h4>
+
+<p class="text-muted">
+
+New reservations will appear here automatically.
+
+</p>
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ======================================= -->
+<!-- LOW STOCK -->
+<!-- ======================================= -->
+
+<div class="col-xl-4">
+
+<div class="card border-0 shadow rounded-4 mb-4">
+
+<div class="card-header bg-white py-4">
+
+<h4 class="mb-0">
+
+<i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
+
+Low Stock Alert
+
+</h4>
+
+</div>
+
+<div class="card-body">
+
+{% if low_stock %}
+
+{% for item in low_stock %}
+
+<div class="d-flex justify-content-between align-items-center border-bottom py-3">
+
+<div>
+
+<h6 class="mb-1">
+
+{{ item.medicine.name }}
+
+</h6>
+
+<small class="text-muted">
+
+Minimum :
+
+{{ item.minimum_stock }}
+
+</small>
+
+</div>
+
+<span class="badge bg-danger">
+
+{{ item.quantity }}
+
+Left
+
+</span>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<div class="text-center py-4">
+
+<i class="fa-solid fa-circle-check fa-3x text-success mb-3"></i>
+
+<h5>
+
+Excellent!
+
+</h5>
+
+<p class="text-muted mb-0">
+
+No medicines are running low.
+
+</p>
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
+<!-- ======================================= -->
+<!-- INVENTORY OVERVIEW -->
+<!-- ======================================= -->
+
+<div class="card border-0 shadow rounded-4 mt-4">
+
+<div class="card-header bg-white py-4">
+
+<div class="d-flex justify-content-between align-items-center">
+
+<h4 class="mb-0">
+
+<i class="fa-solid fa-boxes-stacked text-primary me-2"></i>
+
+Inventory Overview
+
+</h4>
+
+<a
+href="{% url 'inventory' %}"
+class="btn btn-outline-primary btn-sm">
+
+View Inventory
+
+</a>
+
+</div>
+
+</div>
+
+<div class="card-body">
+
+<div class="row g-4 mb-4">
+
+<div class="col-lg-4">
+
+<div class="dashboard-card text-center">
+
+<div class="dashboard-circle bg-success mx-auto mb-3">
+
+<i class="fa-solid fa-circle-check"></i>
+
+</div>
+
+<h2>
+
+{{ available_stock }}
+
+</h2>
+
+<p class="text-muted mb-0">
+
+Available Medicines
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="dashboard-card text-center">
+
+<div class="dashboard-circle bg-danger mx-auto mb-3">
+
+<i class="fa-solid fa-circle-xmark"></i>
+
+</div>
+
+<h2>
+
+{{ out_of_stock }}
+
+</h2>
+
+<p class="text-muted mb-0">
+
+Out of Stock
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="dashboard-card text-center">
+
+<div class="dashboard-circle bg-warning mx-auto mb-3">
+
+<i class="fa-solid fa-calendar-days"></i>
+
+</div>
+
+<h2>
+
+{{ expiring_stock }}
+
+</h2>
+
+<p class="text-muted mb-0">
+
+Expiring Soon
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-hover align-middle">
+
+<thead class="table-light">
+
+<tr>
+
+<th>Medicine</th>
+
+<th>Category</th>
+
+<th>Price</th>
+
+<th>Stock</th>
+
+<th>Expiry</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for item in inventory|slice:":8" %}
+
+<tr>
+
+<td>
+
+<div class="d-flex align-items-center">
+
+<div class="dashboard-circle bg-primary me-3"
+
+style="width:45px;height:45px;">
+
+<i class="fa-solid fa-capsules"></i>
+
+</div>
+
+<div>
+
+<strong>
+
+{{ item.medicine.name }}
+
+</strong>
+
+<br>
+
+<small class="text-muted">
+
+{{ item.medicine.brand }}
+
+</small>
+
+</div>
+
+</div>
+
+</td>
+
+<td>
+
+<span class="badge bg-primary">
+
+{{ item.medicine.category }}
+
+</span>
+
+</td>
+
+<td>
+
+<strong>
+
+₹{{ item.price }}
+
+</strong>
+
+</td>
+
+<td>
+
+{% if item.quantity <= item.minimum_stock %}
+
+<span class="badge bg-danger">
+
+{{ item.quantity }}
+
+</span>
+
+{% else %}
+
+<span class="badge bg-success">
+
+{{ item.quantity }}
+
+</span>
+
+{% endif %}
+
+</td>
+
+<td>
+
+{{ item.expiry_date }}
+
+</td>
+
+<td>
+
+{% if item.quantity == 0 %}
+
+<span class="badge bg-danger">
+
+Out of Stock
+
+</span>
+
+{% elif item.quantity <= item.minimum_stock %}
+
+<span class="badge bg-warning text-dark">
+
+Low Stock
+
+</span>
+
+{% else %}
+
+<span class="badge bg-success">
+
+Healthy
+
+</span>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<!-- ======================================= -->
+<!-- PERFORMANCE & QUICK INSIGHTS -->
+<!-- ======================================= -->
+
+<div class="row g-4 mt-4">
+
+<div class="col-lg-8">
+
+<div class="card border-0 shadow rounded-4">
+
+<div class="card-header bg-white py-4">
+
+<h4 class="mb-0">
+
+<i class="fa-solid fa-chart-line text-success me-2"></i>
+
+Today's Performance
+
+</h4>
+
+</div>
+
+<div class="card-body">
+
+<div class="row text-center">
+
+<div class="col-md-4">
+
+<div class="dashboard-card">
+
+<div class="dashboard-circle bg-success mx-auto mb-3">
+
+<i class="fa-solid fa-users"></i>
+
+</div>
+
+<h2>{{ reservation_count }}</h2>
+
+<p class="text-muted mb-0">
+
+Customers Served
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="dashboard-card">
+
+<div class="dashboard-circle bg-primary mx-auto mb-3">
+
+<i class="fa-solid fa-capsules"></i>
+
+</div>
+
+<h2>{{ inventory_count }}</h2>
+
+<p class="text-muted mb-0">
+
+Medicines Listed
+
+</p>
+
+</div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="dashboard-card">
+
+<div class="dashboard-circle bg-warning mx-auto mb-3">
+
+<i class="fa-solid fa-triangle-exclamation"></i>
+
+</div>
+
+<h2>{{ low_stock.count }}</h2>
+
+<p class="text-muted mb-0">
+
+Need Restocking
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-4">
+
+<div class="card border-0 shadow rounded-4">
+
+<div class="card-header bg-white py-4">
+
+<h4 class="mb-0">
+
+<i class="fa-solid fa-lightbulb text-warning me-2"></i>
+
+Quick Insights
+
+</h4>
+
+</div>
+
+<div class="card-body">
+
+<div class="mb-4">
+
+<h6 class="fw-bold">
+
+<i class="fa-solid fa-circle-check text-success me-2"></i>
+
+System Status
+
+</h6>
+
+<p class="text-muted mb-0">
+
+Dashboard operating normally.
+
+</p>
+
+</div>
+
+<hr>
+
+<div class="mb-4">
+
+<h6 class="fw-bold">
+
+<i class="fa-solid fa-warehouse text-primary me-2"></i>
+
+Inventory
+
+</h6>
+
+<p class="text-muted mb-0">
+
+{{ inventory_count }} medicines currently managed.
+
+</p>
+
+</div>
+
+<hr>
+
+<div class="mb-4">
+
+<h6 class="fw-bold">
+
+<i class="fa-solid fa-bell-concierge text-info me-2"></i>
+
+Reservations
+
+</h6>
+
+<p class="text-muted mb-0">
+
+{{ reservation_count }} customer requests received.
+
+</p>
+
+</div>
+
+<hr>
+
+<div>
+
+<h6 class="fw-bold">
+
+<i class="fa-solid fa-heart-pulse text-danger me-2"></i>
+
+Recommendation
+
+</h6>
+
+<p class="text-muted mb-0">
+
+Monitor low-stock medicines daily to prevent shortages.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ======================================= -->
+<!-- FOOTER -->
+<!-- ======================================= -->
+
+<div class="text-center mt-5">
+
+<p class="text-muted">
+
+<i class="fa-solid fa-shield-heart text-primary me-2"></i>
+
+Powered by <strong>MediFind</strong> |
+Helping pharmacies serve patients faster.
+
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+{% endblock %}

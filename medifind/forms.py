@@ -68,7 +68,11 @@ class InventoryForm(forms.ModelForm):
 
             "expiry_date": forms.DateInput(
                 attrs={"type": "date"}
-            )
+            ),
+
+            "expected_restock": forms.DateInput(
+                attrs={"type": "date"}
+            ),
 
         }
 class RegisterForm(forms.ModelForm):
