@@ -348,6 +348,12 @@ Actions
 
 <div class="d-flex align-items-center">
 
+{% if medicine.image %}
+
+<img src="{{ medicine.image.url }}" alt="{{ medicine.name }}" class="rounded-3 me-3 bg-white p-1 border object-fit-contain" style="width:48px;height:48px;">
+
+{% else %}
+
 <div class="dashboard-circle bg-primary me-3"
 
 style="width:48px;height:48px;">
@@ -355,6 +361,8 @@ style="width:48px;height:48px;">
 <i class="fa-solid fa-capsules"></i>
 
 </div>
+
+{% endif %}
 
 <div>
 

@@ -323,9 +323,17 @@ Live Inventory
 
 <div class="result-top">
 
-<div class="medicine-icon">
+<div class="medicine-icon overflow-hidden me-3" style="width:54px;height:54px;min-width:54px;">
+
+{% if item.medicine.image %}
+
+<img src="{{ item.medicine.image.url }}" alt="{{ item.medicine.name }}" class="w-100 h-100 object-fit-contain bg-white rounded-3 p-1 border">
+
+{% else %}
 
 <i class="fa-solid fa-pills"></i>
+
+{% endif %}
 
 </div>
 

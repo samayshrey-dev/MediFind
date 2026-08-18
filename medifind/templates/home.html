@@ -551,15 +551,11 @@ MediFind | Real-time Pharmacy & Medicine Finder
 
               <div>
 
-                <div class="rounded-3 overflow-hidden mb-3 bg-light text-center" style="height: 180px;">
+                <div class="rounded-3 overflow-hidden mb-3 bg-light text-center p-2" style="height: 180px;">
 
-                  {% if forloop.counter == 1 %}
+                  {% if med.image %}
 
-                    <img src="{% static 'images/medicine1.png' %}" class="w-100 h-100 object-fit-cover" alt="{{ med.name }}">
-
-                  {% elif forloop.counter == 2 %}
-
-                    <img src="{% static 'images/medicine2.png' %}" class="w-100 h-100 object-fit-cover" alt="{{ med.name }}">
+                    <img src="{{ med.image.url }}" class="w-100 h-100 object-fit-contain" alt="{{ med.name }}">
 
                   {% else %}
 
