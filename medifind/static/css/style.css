@@ -64,13 +64,16 @@
 [data-theme="dark"] html,
 [data-theme="dark"] main,
 [data-theme="dark"] section,
+[data-theme="dark"] .stats-section,
 [data-theme="dark"] .features,
 [data-theme="dark"] .steps,
 [data-theme="dark"] .cta,
 [data-theme="dark"] .bg-white,
 [data-theme="dark"] .bg-light,
 [data-theme="dark"] .bg-body {
+    background: #030712 !important;
     background-color: #030712 !important;
+    background-image: none !important;
     color: #e2e8f0 !important;
 }
 
@@ -90,6 +93,31 @@
     color: #f8fafc !important;
 }
 
+/* Stats Section Specific Override */
+[data-theme="dark"] .stats-section {
+    background: #030712 !important;
+    background-image: none !important;
+}
+
+[data-theme="dark"] .stats-section::before,
+[data-theme="dark"] .stats-section::after {
+    opacity: 0.1 !important;
+}
+
+[data-theme="dark"] .stat-card {
+    background-color: #111827 !important;
+    border: 1px solid #1f2937 !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .stat-card h2 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .stat-card p {
+    color: #94a3b8 !important;
+}
+
 /* Containers, cards, wrappers, panels */
 [data-theme="dark"] .card,
 [data-theme="dark"] .category-card,
@@ -100,7 +128,6 @@
 [data-theme="dark"] .popular-card,
 [data-theme="dark"] .filter-chip,
 [data-theme="dark"] .smart-tip,
-[data-theme="dark"] .stat-card,
 [data-theme="dark"] .dashboard-card,
 [data-theme="dark"] .hero-card,
 [data-theme="dark"] .hero-search-wrapper,
@@ -115,7 +142,8 @@
 
 [data-theme="dark"] .category-card:hover,
 [data-theme="dark"] .feature-card:hover,
-[data-theme="dark"] .step-card:hover {
+[data-theme="dark"] .step-card:hover,
+[data-theme="dark"] .stat-card:hover {
     background-color: #1f2937 !important;
     border-color: #0d9488 !important;
 }
