@@ -1129,6 +1129,88 @@ def dashboard_redirect(request):
     return redirect("home")
 
 
+def notify_reservation_update(reservation, action, actor_user):
+    """
+    Creates bidirectional real-time notifications for both Customer and Pharmacy Owner(s).
+    """
+    try:
+        pharmacy = reservation.pharmacy
+        medicine = reservation.medicine
+        customer = reservation.customer
+
+        # Find pharmacy owner profiles
+        pharmacy_profiles = UserProfile.objects.filter(pharmacy=pharmacy)
+        pharmacy_users = [p.user for p in pharmacy_profiles if p.user]
+
+        # ACTION 1: New Reservation Created
+        if action == "NEW_RESERVATION":
+            # 1. Notify Customer (Confirmation)
+            Notification.objects.create(
+                recipient=customer,
+                sender=actor_user,
+                reservation=reservation,
+                title="Reservation Sent",
+                message=f"Your reservation request for {medicine.name} at {pharmacy.name} was successfully submitted.",
+                notification_type="Reservation"
+            )
+            # 2. Notify Pharmacy Owner(s)
+            for owner in pharmacy_users:
+                Notification.objects.create(
+                    recipient=owner,
+                    sender=actor_user,
+                    reservation=reservation,
+                    title="New Reservation Request",
+                    message=f"Customer {customer.first_name or customer.username} requested {reservation.quantity} unit(s) of {medicine.name}.",
+                    notification_type="Reservation"
+                )
+
+        # ACTION 2: Reservation Accepted
+        elif action == "ACCEPTED":
+            # 1. Notify Customer
+            Notification.objects.create(
+                recipient=customer,
+                sender=actor_user,
+                reservation=reservation,
+                title="Reservation Accepted",
+                message=f"Good news! {pharmacy.name} accepted your reservation for {medicine.name}.",
+                notification_type="Accepted"
+            )
+            # 2. Notify Pharmacy Owner(s)
+            for owner in pharmacy_users:
+                Notification.objects.create(
+                    recipient=owner,
+                    sender=actor_user,
+                    reservation=reservation,
+                    title="Reservation Accepted",
+                    message=f"Reservation #{reservation.id} for {medicine.name} was marked as Accepted.",
+                    notification_type="Accepted"
+                )
+
+        # ACTION 3: Reservation Rejected
+        elif action == "REJECTED":
+            # 1. Notify Customer
+            Notification.objects.create(
+                recipient=customer,
+                sender=actor_user,
+                reservation=reservation,
+                title="Reservation Rejected",
+                message=f"{pharmacy.name} was unable to fulfill your reservation for {medicine.name}.",
+                notification_type="Rejected"
+            )
+            # 2. Notify Pharmacy Owner(s)
+            for owner in pharmacy_users:
+                Notification.objects.create(
+                    recipient=owner,
+                    sender=actor_user,
+                    reservation=reservation,
+                    title="Reservation Rejected",
+                    message=f"Reservation #{reservation.id} for {medicine.name} was marked as Rejected.",
+                    notification_type="Rejected"
+                )
+    except Exception as e:
+        print("NOTIFICATION CREATION WARNING:", e)
+
+
 # ==========================================================
 # Reservation System
 # ==========================================================
@@ -1176,52 +1258,15 @@ def reserve_medicine(request, inventory_id):
         return redirect("search")
 
     reservation = Reservation.objects.create(
-
         customer=request.user,
-
         pharmacy=inventory.pharmacy,
-
         medicine=inventory.medicine,
-
         quantity=1,
-
         status="Pending"
-
     )
 
-    # ==========================================
-    # Create Notification for Pharmacy
-    # ==========================================
-
-    try:
-
-        profile = UserProfile.objects.get(
-            pharmacy=inventory.pharmacy
-        )
-
-        notification = Notification.objects.create(
-
-            recipient=profile.user,
-
-            sender=request.user,
-
-            reservation=reservation,
-
-            title="New Reservation",
-
-            message=f"{request.user.username} requested {inventory.medicine.name}.",
-
-            notification_type="Reservation"
-
-        )
-
-        print("Notification Created:", notification.id)
-
-    except Exception as e:
-
-        print("NOTIFICATION ERROR:", e)
-
-        raise
+    # Send Bidirectional Notifications for Both Customer & Pharmacy Owner
+    notify_reservation_update(reservation, "NEW_RESERVATION", request.user)
 
     messages.success(
         request,
@@ -1313,21 +1358,9 @@ def accept_reservation(request, id):
 
     reservation.status = "Accepted"
     reservation.save()
-    Notification.objects.create(
 
-    recipient=reservation.customer,
-
-    sender=request.user,
-
-    reservation=reservation,
-
-    title="Reservation Accepted",
-
-    message=f"{reservation.pharmacy.name} accepted your reservation for {reservation.medicine.name}.",
-
-    notification_type="Accepted"
-
-)
+    # Send Bidirectional Notifications for Both Customer & Pharmacy Owner
+    notify_reservation_update(reservation, "ACCEPTED", request.user)
 
     inventory = get_object_or_404(
         Inventory,
@@ -1359,23 +1392,10 @@ def reject_reservation(request, id):
     )
 
     reservation.status = "Rejected"
-
     reservation.save()
-    Notification.objects.create(
 
-    recipient=reservation.customer,
-
-    sender=request.user,
-
-    reservation=reservation,
-
-    title="Reservation Rejected",
-
-    message=f"{reservation.pharmacy.name} rejected your reservation for {reservation.medicine.name}.",
-
-    notification_type="Rejected"
-
-)
+    # Send Bidirectional Notifications for Both Customer & Pharmacy Owner
+    notify_reservation_update(reservation, "REJECTED", request.user)
 
     messages.success(
         request,
