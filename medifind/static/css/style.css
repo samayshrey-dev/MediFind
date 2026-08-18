@@ -68,13 +68,17 @@
 [data-theme="dark"] .features,
 [data-theme="dark"] .steps,
 [data-theme="dark"] .cta,
-[data-theme="dark"] .bg-white,
-[data-theme="dark"] .bg-light,
 [data-theme="dark"] .bg-body {
     background: #030712 !important;
     background-color: #030712 !important;
     background-image: none !important;
     color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-light {
+    background-color: #111827 !important;
+    color: #f8fafc !important;
 }
 
 /* Hero Section */
@@ -238,6 +242,26 @@
     color: #94a3b8 !important;
 }
 
+/* Card Header Banners */
+[data-theme="dark"] .bg-primary.bg-gradient,
+[data-theme="dark"] .card-header {
+    background: linear-gradient(135deg, #0f766e, #0d9488) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .bg-primary.bg-gradient *,
+[data-theme="dark"] .card-header * {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .bg-primary.bg-gradient .badge {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
 /* Typography & Text Overrides */
 [data-theme="dark"] h1,
 [data-theme="dark"] h2,
@@ -251,16 +275,23 @@
 [data-theme="dark"] .fw-semibold,
 [data-theme="dark"] .text-dark,
 [data-theme="dark"] p,
-[data-theme="dark"] span,
+[data-theme="dark"] span:not(.badge):not(.filter-chip):not(.tag-pill),
 [data-theme="dark"] label,
+[data-theme="dark"] i,
+[data-theme="dark"] small,
+[data-theme="dark"] strong,
 [data-theme="dark"] li {
     color: #f8fafc !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 [data-theme="dark"] .text-muted,
 [data-theme="dark"] .subtitle,
 [data-theme="dark"] small {
     color: #94a3b8 !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* Inputs & Form Controls */
