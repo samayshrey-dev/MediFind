@@ -31,3 +31,4 @@ staticfiles/
 
 # Migrations cache
 *.pyc
+.vercel
