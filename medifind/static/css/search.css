@@ -365,7 +365,8 @@
     gap: 10px;
 }
 
-.popular-tags span {
+.popular-tags span,
+.popular-tags a {
     background: #f1f5f9;
     border: 1px solid #cbd5e1;
     border-radius: 50px;
@@ -376,12 +377,123 @@
     transition: all 0.25s ease;
     cursor: pointer;
     display: inline-block;
+    text-decoration: none;
 }
 
-.popular-tags span:hover {
+.popular-tags span:hover,
+.popular-tags a:hover {
     background: #0f766e;
     color: #ffffff;
     border-color: #0f766e;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(15, 118, 110, 0.25);
+}
+
+/* ======================================================
+         SEARCH PAGE DARK THEME OVERRIDES
+====================================================== */
+[data-theme="dark"] .search-page {
+    background: #030712 !important;
+}
+
+[data-theme="dark"] .search-page .display-5,
+[data-theme="dark"] .search-page h1,
+[data-theme="dark"] .search-page h2,
+[data-theme="dark"] .search-page h3,
+[data-theme="dark"] .search-page h4,
+[data-theme="dark"] .search-page h5,
+[data-theme="dark"] .search-page h6 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .search-page .lead {
+    color: #94a3b8 !important;
+}
+
+/* Summary Box, Mini Cards, Result Cards, Map Card & Side Cards */
+[data-theme="dark"] .summary-box,
+[data-theme="dark"] .mini-card,
+[data-theme="dark"] .search-bar-card,
+[data-theme="dark"] .search-result-card,
+[data-theme="dark"] .map-card,
+[data-theme="dark"] .service-card,
+[data-theme="dark"] .popular-card {
+    background-color: #111827 !important;
+    border-color: #1f2937 !important;
+    color: #f8fafc !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .summary-box h2,
+[data-theme="dark"] .mini-card h3 {
+    color: #14b8a6 !important;
+}
+
+[data-theme="dark"] .summary-box p,
+[data-theme="dark"] .mini-card p {
+    color: #94a3b8 !important;
+}
+
+/* Service Boxes Inside Service Card */
+[data-theme="dark"] .service-box {
+    background-color: #0b0f17 !important;
+    border-color: #1f2937 !important;
+}
+
+[data-theme="dark"] .service-box p {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .service-box:hover {
+    background-color: #1f2937 !important;
+    border-color: #0d9488 !important;
+}
+
+/* Popular Tag Pills & Filter Chips */
+[data-theme="dark"] .popular-tags span,
+[data-theme="dark"] .popular-tags a,
+[data-theme="dark"] .tag-pill {
+    background-color: #0b0f17 !important;
+    border-color: #1f2937 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .popular-tags span:hover,
+[data-theme="dark"] .popular-tags a:hover {
+    background-color: #0f766e !important;
+    color: #ffffff !important;
+    border-color: #0f766e !important;
+}
+
+[data-theme="dark"] .filter-chip {
+    background-color: #111827 !important;
+    border-color: #1f2937 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .filter-chip.active,
+[data-theme="dark"] .filter-chip:hover {
+    background-color: #0f766e !important;
+    color: #ffffff !important;
+    border-color: #0f766e !important;
+}
+
+/* Smart Tip Box */
+[data-theme="dark"] .smart-tip {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.15) 0%, rgba(2, 132, 199, 0.1) 100%) !important;
+    border-color: #1f2937 !important;
+    border-left: 5px solid #0d9488 !important;
+}
+
+[data-theme="dark"] .smart-tip .tip-icon {
+    background-color: #0b0f17 !important;
+    color: #f59e0b !important;
+}
+
+[data-theme="dark"] .smart-tip h5 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .smart-tip p {
+    color: #cbd5e1 !important;
 }
