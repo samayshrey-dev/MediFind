@@ -90,8 +90,11 @@ else:
         }
     }
 
-# Session Engine for Serverless Environments
+# Session Engine & Login Redirect Settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard_redirect'
+LOGOUT_REDIRECT_URL = 'home'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
