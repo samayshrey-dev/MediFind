@@ -32,7 +32,7 @@ Reservation History | MediFind
 
   </div>
 
-  <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
 
     <div class="card-body p-0">
 
@@ -40,7 +40,7 @@ Reservation History | MediFind
 
         <table class="table align-middle table-hover mb-0">
 
-          <thead class="bg-light">
+          <thead>
 
             <tr>
 
@@ -66,7 +66,7 @@ Reservation History | MediFind
 
                 <td class="ps-4">
 
-                  <strong class="d-block text-dark">{{ reservation.customer.first_name|default:reservation.customer.username }}</strong>
+                  <strong class="d-block">{{ reservation.customer.first_name|default:reservation.customer.username }}</strong>
 
                   <small class="text-muted">{{ reservation.customer.email }}</small>
 
@@ -76,7 +76,7 @@ Reservation History | MediFind
 
                   <strong>
 
-                    <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none text-dark hover-primary">
+                    <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none hover-primary">
 
                       {{ reservation.medicine.name }}
 

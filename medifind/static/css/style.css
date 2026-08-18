@@ -294,7 +294,13 @@
 [data-theme="dark"] .table thead,
 [data-theme="dark"] .table th,
 [data-theme="dark"] .table-dark,
-[data-theme="dark"] .table-dark th {
+[data-theme="dark"] .table-dark th,
+[data-theme="dark"] .table-primary,
+[data-theme="dark"] .table-primary th,
+[data-theme="dark"] .table-light,
+[data-theme="dark"] .table-light th,
+[data-theme="dark"] .thead-light,
+[data-theme="dark"] .thead-light th {
     background-color: #0b0f17 !important;
     color: #94a3b8 !important;
     border-bottom: 2px solid #1f2937 !important;
@@ -309,8 +315,22 @@
     border-bottom: 1px solid #1f2937 !important;
 }
 
+[data-theme="dark"] .table tbody tr strong,
+[data-theme="dark"] .table tbody tr a,
+[data-theme="dark"] .table tbody tr span,
+[data-theme="dark"] .table td strong,
+[data-theme="dark"] .table td a {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .table tbody tr small,
+[data-theme="dark"] .table td small {
+    color: #94a3b8 !important;
+}
+
 [data-theme="dark"] .table-hover tbody tr:hover,
-[data-theme="dark"] .table-hover tbody tr:hover td {
+[data-theme="dark"] .table-hover tbody tr:hover td,
+[data-theme="dark"] .table-hover tbody tr:hover * {
     background-color: #1f2937 !important;
     color: #ffffff !important;
 }
