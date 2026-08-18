@@ -45,6 +45,13 @@ id="navbarNav">
 
 <ul class="navbar-nav ms-auto align-items-center">
 
+<!-- ================= THEME TOGGLE ================= -->
+<li class="nav-item me-2">
+    <button id="theme-toggle" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width: 38px; height: 38px;" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+        <i class="fa-solid fa-moon text-dark fs-6" id="theme-icon"></i>
+    </button>
+</li>
+
 {% if not user.is_authenticated %}
 
 <!-- ================= VISITOR ================= -->

@@ -3,7 +3,6 @@
 ========================================== */
 
 :root {
-
     --primary: #0f766e;
     --primary-dark: #0d9488;
     --primary-light: #14b8a6;
@@ -37,13 +36,121 @@
     --radius-lg: 24px;
 
     --transition: cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
 
+/* ==========================================
+            DARK THEME OVERRIDES
+========================================== */
+[data-theme="dark"] {
+    --dark: #f8fafc;
+    --dark-muted: #e2e8f0;
+    --text: #cbd5e1;
+    --text-muted: #94a3b8;
+    
+    --white: #1e293b;
+    --light: #0f172a;
+    --border: #334155;
+    --border-light: #1e293b;
+
+    --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+    --shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 20px 45px -8px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] body {
+    background-color: #0b0f17 !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .bg-white {
+    background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .navbar-glass {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-bottom-color: #334155 !important;
+}
+
+[data-theme="dark"] .text-dark {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .table {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .table thead {
+    background-color: #0f172a !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .table th,
+[data-theme="dark"] .table td {
+    border-bottom-color: #334155 !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background-color: #0f172a !important;
+    color: #14b8a6 !important;
+}
+
+[data-theme="dark"] .category-card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .category-title {
+    color: #f8fafc !important;
 }
 
 /* ==========================================
                 RESET & BASE
 ========================================== */
-
 * {
     margin: 0;
     padding: 0;
@@ -63,12 +170,12 @@ body {
     line-height: 1.65;
     font-size: 15px;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ==========================================
                 TYPOGRAPHY
 ========================================== */
-
 h1, h2, h3, h4, h5, h6 {
     color: var(--dark);
     font-weight: 700;
@@ -94,7 +201,6 @@ h1, h2, h3, h4, h5, h6 {
 /* ==========================================
                 LINKS
 ========================================== */
-
 a {
     text-decoration: none;
     transition: var(--transition);
@@ -112,7 +218,6 @@ a:hover {
 /* ==========================================
                 LAYOUT & CONTAINERS
 ========================================== */
-
 .container {
     max-width: 1260px;
 }
@@ -125,7 +230,6 @@ section {
 /* ==========================================
                 BUTTONS
 ========================================== */
-
 .btn {
     border-radius: 12px;
     padding: 12px 24px;
@@ -211,7 +315,6 @@ section {
 /* ==========================================
                 CARDS
 ========================================== */
-
 .card {
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -228,7 +331,6 @@ section {
 /* ==========================================
                 INPUTS & FORMS
 ========================================== */
-
 .form-control,
 .form-select,
 input,
@@ -268,7 +370,6 @@ textarea:focus {
 /* ==========================================
                 TABLES
 ========================================== */
-
 .table-responsive {
     border-radius: var(--radius);
     border: 1px solid var(--border);
@@ -305,7 +406,6 @@ textarea:focus {
 /* ==========================================
                 BADGES
 ========================================== */
-
 .badge {
     border-radius: 50px;
     padding: 6px 14px;
@@ -341,7 +441,6 @@ textarea:focus {
 /* ==========================================
                 SCROLLBAR
 ========================================== */
-
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -363,7 +462,6 @@ textarea:focus {
 /* ==========================================
                 SELECTION
 ========================================== */
-
 ::selection {
     background: var(--primary);
     color: #ffffff;
