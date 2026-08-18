@@ -63,9 +63,42 @@ def pharmacy_required(view_func):
 
 def home(request):
 
+    medicines = Medicine.objects.all()[:8]
+
+    pharmacies = Pharmacy.objects.filter(is_active=True)[:4]
+
+    medicine_count = Medicine.objects.count()
+
+    pharmacy_count = Pharmacy.objects.count()
+
+    reservation_count = Reservation.objects.count()
+
+    user_count = User.objects.count()
+
+    context = {
+
+        "popular_medicines": medicines,
+
+        "pharmacies": pharmacies,
+
+        "medicine_count": medicine_count,
+
+        "pharmacy_count": pharmacy_count,
+
+        "reservation_count": reservation_count,
+
+        "user_count": user_count,
+
+    }
+
     return render(
+
         request,
-        "home.html"
+
+        "home.html",
+
+        context
+
     )
 
 
@@ -249,16 +282,68 @@ def search_suggestions(request):
 # ==========================================================
 
 def medicine_detail(request, id):
+
+    medicine = get_object_or_404(Medicine, id=id)
+
+    inventory_items = Inventory.objects.filter(medicine=medicine).select_related("pharmacy")
+
+    current_time = timezone.localtime().time()
+
+    for item in inventory_items:
+
+        business_hours = (item.pharmacy.opening_time <= current_time <= item.pharmacy.closing_time)
+
+        item.is_open = item.pharmacy.is_open and business_hours
+
+    prices = [item.price for item in inventory_items if item.price]
+
+    min_price = min(prices) if prices else 0
+
     return render(
+
         request,
-        "medicine_detail.html"
+
+        "medicine_detail.html",
+
+        {
+
+            "medicine": medicine,
+
+            "inventory_items": inventory_items,
+
+            "min_price": min_price,
+
+        }
+
     )
 
 
 def pharmacy_detail(request, id):
+
+    pharmacy = get_object_or_404(Pharmacy, id=id)
+
+    inventory_items = Inventory.objects.filter(pharmacy=pharmacy).select_related("medicine")
+
+    current_time = timezone.localtime().time()
+
+    is_open = pharmacy.is_open and (pharmacy.opening_time <= current_time <= pharmacy.closing_time)
+
     return render(
+
         request,
-        "pharmacy_detail.html"
+
+        "pharmacy_detail.html",
+
+        {
+
+            "pharmacy": pharmacy,
+
+            "inventory_items": inventory_items,
+
+            "is_open": is_open,
+
+        }
+
     )
 
 
@@ -268,6 +353,8 @@ def pharmacy_detail(request, id):
 
 @pharmacy_required
 def dashboard(request):
+
+    current_time = timezone.localtime().time()
 
     medicine_count = Medicine.objects.count()
 
@@ -540,12 +627,26 @@ def pharmacies(request):
 
     pharmacies = Pharmacy.objects.all().order_by("name")
 
+    active_count = pharmacies.filter(is_active=True).count()
+
+    open_count = pharmacies.filter(is_open=True).count()
+
     return render(
+
         request,
+
         "pharmacies.html",
+
         {
-            "pharmacies": pharmacies
+
+            "pharmacies": pharmacies,
+
+            "active_count": active_count,
+
+            "open_count": open_count,
+
         }
+
     )
 
 
@@ -718,6 +819,8 @@ def inventory(request):
 @pharmacy_required
 def add_inventory(request):
 
+    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+
     if request.method == "POST":
 
         form = InventoryForm(
@@ -726,7 +829,13 @@ def add_inventory(request):
 
         if form.is_valid():
 
-            form.save()
+            item = form.save(commit=False)
+
+            if not item.pharmacy_id and user_pharmacy:
+
+                item.pharmacy = user_pharmacy
+
+            item.save()
 
             messages.success(
                 request,
@@ -737,7 +846,13 @@ def add_inventory(request):
 
     else:
 
-        form = InventoryForm()
+        initial_data = {}
+
+        if user_pharmacy:
+
+            initial_data["pharmacy"] = user_pharmacy.id
+
+        form = InventoryForm(initial=initial_data)
 
     return render(
         request,
@@ -846,16 +961,25 @@ def register(request):
             if User.objects.filter(username=username).exists():
 
                 messages.error(
+
                     request,
+
                     "Username already exists. Please choose another username."
+
                 )
 
                 return render(
+
                     request,
+
                     "register.html",
+
                     {
+
                         "form": form
+
                     }
+
                 )
 
             user = User.objects.create_user(
@@ -870,22 +994,75 @@ def register(request):
 
             )
 
-            UserProfile.objects.create(
+            role = form.cleaned_data["role"]
 
-                user=user,
+            pharmacy_instance = None
 
-                role=form.cleaned_data["role"]
+            if role == "Pharmacy":
 
-            )
+                option = form.cleaned_data.get("pharmacy_option")
+
+                if option == "existing" and form.cleaned_data.get("existing_pharmacy"):
+
+                    pharmacy_instance = form.cleaned_data.get("existing_pharmacy")
+
+                elif option == "new" and form.cleaned_data.get("new_pharmacy_name"):
+
+                    from datetime import time
+
+                    pharmacy_instance = Pharmacy.objects.create(
+
+                        name=form.cleaned_data.get("new_pharmacy_name"),
+
+                        owner_name=form.cleaned_data["first_name"] or username,
+
+                        phone=form.cleaned_data.get("new_pharmacy_phone") or "9876543210",
+
+                        email=form.cleaned_data["email"],
+
+                        address=form.cleaned_data.get("new_pharmacy_address") or "City Center, Main Road",
+
+                        city=form.cleaned_data.get("new_pharmacy_city") or "Chennai",
+
+                        state="Tamil Nadu",
+
+                        pincode="600001",
+
+                        latitude=13.0827,
+
+                        longitude=80.2707,
+
+                        opening_time=time(8, 0),
+
+                        closing_time=time(22, 0),
+
+                        is_active=True,
+
+                        is_open=True,
+
+                    )
+
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+
+            profile.role = role
+
+            profile.pharmacy = pharmacy_instance
+
+            profile.save()
+
+            user.refresh_from_db()
 
             login(request, user)
 
             messages.success(
+
                 request,
-                "Account created successfully."
+
+                f"Welcome to MediFind, {user.first_name or user.username}! Account created successfully."
+
             )
 
-            return redirect("home")
+            return redirect("dashboard_redirect")
 
     else:
 

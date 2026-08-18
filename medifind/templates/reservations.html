@@ -1,111 +1,171 @@
 {% extends "base.html" %}
 
 {% block title %}
-Reservations
+Reservation Requests | MediFind
 {% endblock %}
 
 {% block content %}
 
-<div class="container py-5">
+<section class="py-5 bg-light" style="margin-top: 70px;">
 
-<h2 class="mb-4">
+<div class="container py-4">
 
-<i class="fa-solid fa-bell-concierge"></i>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
 
-Reservation Requests
+    <div>
 
-</h2>
+      <h2 class="fw-bold text-dark mb-1">
 
-{% if reservations %}
+        <i class="fa-solid fa-bell-concierge text-primary me-2"></i> Pending Reservation Requests
 
-<table class="table table-hover shadow">
+      </h2>
 
-<thead class="table-primary">
+      <p class="text-muted mb-0">Manage customer pickup orders for your pharmacy store.</p>
 
-<tr>
+    </div>
 
-<th>Customer</th>
+    <a href="{% url 'reservation_history' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
 
-<th>Medicine</th>
+      <i class="fa-solid fa-clock-rotate-left me-1"></i> Reservation History
 
-<th>Quantity</th>
+    </a>
 
-<th>Status</th>
+  </div>
 
-<th>Requested</th>
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
 
-<th>Actions</th>
+    <div class="card-body p-0">
 
-</tr>
+      {% if reservations %}
 
-</thead>
+        <div class="table-responsive">
 
-<tbody>
+          <table class="table align-middle table-hover mb-0">
 
-{% for reservation in reservations %}
+            <thead class="bg-light">
 
-<tr>
+              <tr>
 
-<td>{{ reservation.customer.username }}</td>
+                <th class="ps-4">Customer</th>
 
-<td>{{ reservation.medicine.name }}</td>
+                <th>Medicine</th>
 
-<td>{{ reservation.quantity }}</td>
+                <th>Quantity</th>
 
-<td>
+                <th>Status</th>
 
-<span class="badge bg-warning">
+                <th>Requested Date</th>
 
-{{ reservation.status }}
+                <th class="text-center">Action</th>
 
-</span>
+              </tr>
 
-</td>
+            </thead>
 
-<td>
+            <tbody>
 
-{{ reservation.requested_at|date:"d M Y H:i" }}
+              {% for reservation in reservations %}
 
-</td>
+                <tr>
 
-<td>
+                  <td class="ps-4">
 
-<a
-href="{% url 'accept_reservation' reservation.id %}"
-class="btn btn-success btn-sm">
+                    <strong class="d-block text-dark">{{ reservation.customer.first_name|default:reservation.customer.username }}</strong>
 
-Accept
+                    <small class="text-muted">{{ reservation.customer.email }}</small>
 
-</a>
+                  </td>
 
-<a
-href="{% url 'reject_reservation' reservation.id %}"
-class="btn btn-danger btn-sm">
+                  <td>
 
-Reject
+                    <strong>
 
-</a>
+                      <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none text-dark hover-primary">
 
-</td>
+                        {{ reservation.medicine.name }}
 
-</tr>
+                      </a>
 
-{% endfor %}
+                    </strong>
 
-</tbody>
+                  </td>
 
-</table>
+                  <td>
 
-{% else %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
 
-<div class="alert alert-info">
+                      {{ reservation.quantity }} units
 
-No reservations yet.
+                    </span>
+
+                  </td>
+
+                  <td>
+
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1 fw-bold">
+
+                      <i class="fa-solid fa-clock me-1"></i> {{ reservation.status }}
+
+                    </span>
+
+                  </td>
+
+                  <td>
+
+                    <small class="text-muted fw-semibold">{{ reservation.requested_at|date:"d M Y, h:i A" }}</small>
+
+                  </td>
+
+                  <td class="text-center">
+
+                    <div class="btn-group">
+
+                      <a href="{% url 'accept_reservation' reservation.id %}" class="btn btn-success btn-sm fw-bold px-3">
+
+                        <i class="fa-solid fa-check me-1"></i> Accept
+
+                      </a>
+
+                      <a href="{% url 'reject_reservation' reservation.id %}" class="btn btn-danger btn-sm fw-bold px-3">
+
+                        <i class="fa-solid fa-xmark me-1"></i> Reject
+
+                      </a>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              {% endfor %}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      {% else %}
+
+        <div class="text-center py-5">
+
+          <i class="fa-solid fa-inbox text-muted fa-4x mb-3"></i>
+
+          <h5 class="fw-bold text-dark">No Pending Reservation Requests</h5>
+
+          <p class="text-muted mb-0">When customers reserve medicines from your store, their orders will appear here.</p>
+
+        </div>
+
+      {% endif %}
+
+    </div>
+
+  </div>
 
 </div>
 
-{% endif %}
-
-</div>
+</section>
 
 {% endblock %}

@@ -1,46 +1,141 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-Add Inventory
+Add Inventory | MediFind
 {% endblock %}
 
 {% block content %}
 
-<section class="dashboard">
+<section class="py-5 bg-light" style="margin-top: 70px;">
 
-<div class="container">
+<div class="container py-4">
 
-<div class="card shadow p-4">
+  <div class="row justify-content-center">
 
-<h2 class="mb-4">
+    <div class="col-lg-8">
 
-Add Inventory
+      <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
 
-</h2>
+        <div class="bg-primary bg-gradient text-white p-4 text-center">
 
-<form method="POST">
+          <h3 class="fw-bold mb-1"><i class="fa-solid fa-boxes-stacked me-2"></i> Add Inventory Record</h3>
 
-{% csrf_token %}
+          <p class="mb-0 text-white-50">Add new medicine stock to your pharmacy's live inventory catalog.</p>
 
-{{ form.as_p }}
+        </div>
 
-<button class="btn btn-success">
+        <div class="card-body p-4 p-md-5">
 
-Save Inventory
+          {% if form.errors %}
 
-</button>
+            <div class="alert alert-danger rounded-3 mb-4">
 
-<a
-href="{% url 'inventory' %}"
-class="btn btn-secondary">
+              <strong>Please fix the errors below:</strong>
 
-Cancel
+              {{ form.errors }}
 
-</a>
+            </div>
 
-</form>
+          {% endif %}
 
-</div>
+          <form method="POST">
+
+            {% csrf_token %}
+
+            <div class="row g-3">
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Medicine</label>
+
+                {{ form.medicine }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Pharmacy</label>
+
+                {{ form.pharmacy }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Stock Quantity</label>
+
+                {{ form.quantity }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Price per unit (₹)</label>
+
+                {{ form.price }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Batch Number</label>
+
+                {{ form.batch_number }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Expiry Date</label>
+
+                {{ form.expiry_date }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Minimum Low-Stock Level</label>
+
+                {{ form.minimum_stock }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Expected Restock Date</label>
+
+                {{ form.expected_restock }}
+
+              </div>
+
+            </div>
+
+            <div class="d-flex gap-3 mt-4 pt-3 border-top">
+
+              <button type="submit" class="btn btn-success btn-lg rounded-3 fw-bold flex-grow-1">
+
+                <i class="fa-solid fa-check me-2"></i> Save Inventory Item
+
+              </button>
+
+              <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-lg rounded-3 fw-semibold">
+
+                Cancel
+
+              </a>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 

@@ -1,52 +1,58 @@
 {% extends "base.html" %}
 
 {% block title %}
-Access Denied
+Access Denied | MediFind
 {% endblock %}
 
 {% block content %}
 
-<section class="py-5" style="margin-top:100px; min-height:70vh;">
+<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 70px;">
 
-<div class="container">
+  <div class="container py-4">
 
-<div class="row justify-content-center">
+    <div class="row justify-content-center">
 
-<div class="col-lg-6">
+      <div class="col-md-8 col-lg-6 text-center">
 
-<div class="card shadow-lg border-0 rounded-4 text-center p-5">
+        <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
 
-<i class="fa-solid fa-lock fa-4x text-danger mb-4"></i>
+          <div class="p-4 bg-danger-subtle text-danger rounded-circle d-inline-flex mx-auto mb-4">
 
-<h2 class="fw-bold">
+            <i class="fa-solid fa-user-shield fa-4x"></i>
 
-Access Denied
+          </div>
 
-</h2>
+          <h2 class="fw-bold text-dark mb-2">403 - Permission Required</h2>
 
-<p class="text-muted mt-3">
+          <p class="text-muted lead mb-4">
 
-You don't have permission to access this page.
+            You do not have authorization to access this page. This feature is restricted to registered Pharmacy Owners or Platform Administrators.
 
-Only Pharmacy accounts and Administrators can use this feature.
+          </p>
 
-</p>
+          <div class="d-flex justify-content-center gap-3">
 
-<a href="{% url 'home' %}" class="btn btn-primary mt-4">
+            <a href="{% url 'home' %}" class="btn btn-primary rounded-pill px-4 fw-bold">
 
-<i class="fa-solid fa-house"></i>
+              <i class="fa-solid fa-house me-2"></i> Back to Home
 
-Back to Home
+            </a>
 
-</a>
+            <a href="{% url 'login' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold">
 
-</div>
+              Switch Account
 
-</div>
+            </a>
 
-</div>
+          </div>
 
-</div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </section>
 

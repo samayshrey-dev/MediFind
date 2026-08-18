@@ -1,168 +1,177 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Reservation History
+Reservation History | MediFind
 {% endblock %}
 
 {% block content %}
 
-<section class="dashboard">
+<section class="py-5 bg-light" style="margin-top: 70px;">
 
-<div class="container">
+<div class="container py-4">
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
 
-<h2>
+    <div>
 
-Reservation History
+      <h2 class="fw-bold text-dark mb-1">
 
-</h2>
+        <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Reservation Request History
 
-<a
-href="{% url 'reservations' %}"
-class="btn btn-primary">
+      </h2>
 
-<i class="fa-solid fa-arrow-left me-2"></i>
+      <p class="text-muted mb-0">Archived log of accepted, rejected, and collected orders.</p>
 
-Pending Requests
+    </div>
 
-</a>
+    <a href="{% url 'reservations' %}" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
 
-</div>
+      <i class="fa-solid fa-arrow-left me-2"></i> Pending Requests
 
-<div class="table-responsive">
+    </a>
 
-<table class="table table-hover table-striped align-middle shadow">
+  </div>
 
-<thead class="table-dark">
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
 
-<tr>
+    <div class="card-body p-0">
 
-<th>Customer</th>
+      <div class="table-responsive">
 
-<th>Medicine</th>
+        <table class="table align-middle table-hover mb-0">
 
-<th>Quantity</th>
+          <thead class="bg-light">
 
-<th>Status</th>
+            <tr>
 
-<th>Requested On</th>
+              <th class="ps-4">Customer</th>
 
-</tr>
+              <th>Medicine</th>
 
-</thead>
+              <th>Quantity</th>
 
-<tbody>
+              <th>Status</th>
 
-{% for reservation in history %}
-<tr>
+              <th>Date & Time</th>
 
-<td>
+            </tr>
 
-    {{ reservation.customer.username }}
+          </thead>
 
-</td>
+          <tbody>
 
-<td>
+            {% for reservation in history %}
 
-    {{ reservation.medicine.name }}
+              <tr>
 
-</td>
+                <td class="ps-4">
 
-<td>
+                  <strong class="d-block text-dark">{{ reservation.customer.first_name|default:reservation.customer.username }}</strong>
 
-    {{ reservation.quantity }}
+                  <small class="text-muted">{{ reservation.customer.email }}</small>
 
-</td>
+                </td>
 
-<td>
+                <td>
 
-    {% if reservation.status == "Accepted" %}
+                  <strong>
 
-        <span class="badge bg-success">
+                    <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none text-dark hover-primary">
 
-            <i class="fa-solid fa-circle-check me-1"></i>
+                      {{ reservation.medicine.name }}
 
-            Accepted
+                    </a>
 
-        </span>
+                  </strong>
 
-    {% elif reservation.status == "Rejected" %}
+                </td>
 
-        <span class="badge bg-danger">
+                <td>
 
-            <i class="fa-solid fa-circle-xmark me-1"></i>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
 
-            Rejected
+                    {{ reservation.quantity }} units
 
-        </span>
+                  </span>
 
-    {% elif reservation.status == "Collected" %}
+                </td>
 
-        <span class="badge bg-primary">
+                <td>
 
-            <i class="fa-solid fa-box me-1"></i>
+                  {% if reservation.status == "Accepted" %}
 
-            Collected
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 fw-bold">
 
-        </span>
+                      <i class="fa-solid fa-circle-check me-1"></i> Accepted
 
-    {% elif reservation.status == "Cancelled" %}
+                    </span>
 
-        <span class="badge bg-secondary">
+                  {% elif reservation.status == "Rejected" %}
 
-            <i class="fa-solid fa-ban me-1"></i>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 fw-bold">
 
-            Cancelled
+                      <i class="fa-solid fa-circle-xmark me-1"></i> Rejected
 
-        </span>
+                    </span>
 
-    {% endif %}
+                  {% elif reservation.status == "Collected" %}
 
-</td>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
 
-<td>
+                      <i class="fa-solid fa-box me-1"></i> Collected
 
-    {{ reservation.requested_at|date:"d M Y, h:i A" }}
+                    </span>
 
-</td>
+                  {% else %}
 
-</tr>
+                    <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 fw-bold">
 
-{% empty %}
+                      {{ reservation.status }}
 
-<tr>
+                    </span>
 
-<td colspan="5" class="text-center py-5">
+                  {% endif %}
 
-<i class="fa-solid fa-clock-rotate-left fa-3x text-muted mb-3"></i>
+                </td>
 
-<h5>
+                <td>
 
-No reservation history found.
+                  <small class="text-muted fw-semibold">{{ reservation.requested_at|date:"d M Y, h:i A" }}</small>
 
-</h5>
+                </td>
 
-<p class="text-muted">
+              </tr>
 
-Accepted and rejected reservations will appear here.
+            {% empty %}
 
-</p>
+              <tr>
 
-</td>
+                <td colspan="5" class="text-center py-5">
 
-</tr>
+                  <i class="fa-solid fa-clock-rotate-left fa-3x text-muted mb-3"></i>
 
-{% endfor %}
+                  <h5 class="fw-bold text-dark">No Reservation History Found</h5>
 
-</tbody>
+                  <p class="text-muted mb-0">Accepted and rejected reservations will appear here once processed.</p>
 
-</table>
+                </td>
 
-</div>
+              </tr>
+
+            {% endfor %}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 
 </section>
 
-{% endblock %}  
+{% endblock %}

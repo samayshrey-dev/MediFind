@@ -6,16 +6,14 @@ from .models import UserProfile
 
 
 @receiver(post_save, sender=User)
-def create_profile(sender, instance, created, **kwargs):
+def create_or_save_profile(sender, instance, created, **kwargs):
 
     if created:
 
-        UserProfile.objects.create(
+        UserProfile.objects.get_or_create(
             user=instance
         )
 
+    elif hasattr(instance, "userprofile"):
 
-@receiver(post_save, sender=User)
-def save_profile(sender, instance, **kwargs):
-
-    instance.userprofile.save()
+        instance.userprofile.save()

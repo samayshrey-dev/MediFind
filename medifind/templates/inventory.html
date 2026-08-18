@@ -1,134 +1,228 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-
-Inventory
-
+Inventory Management | MediFind
 {% endblock %}
 
 {% block content %}
 
-<section class="dashboard">
+<section class="py-5 bg-light" style="margin-top: 70px;">
 
-<div class="container">
+<div class="container py-4">
 
-<div class="d-flex justify-content-between mb-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
 
-<h2>
+    <div>
 
-Inventory Management
+      <h2 class="fw-bold text-dark mb-1">
 
-</h2>
+        <i class="fa-solid fa-boxes-stacked text-primary me-2"></i> Inventory Management
 
-<a href="{% url 'add_inventory' %}" class="btn btn-success">
+      </h2>
 
-Add Inventory
+      <p class="text-muted mb-0">Track stock levels, pricing, batch numbers, and expiry dates.</p>
 
-</a>
+    </div>
 
-</div>
+    <a href="{% url 'add_inventory' %}" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm">
 
-<table class="table table-hover table-striped">
+      <i class="fa-solid fa-plus me-2"></i> Add Inventory Record
 
-<thead class="table-dark">
+    </a>
 
-<tr>
+  </div>
 
-<th>Medicine</th>
+  <!-- Search & Filter Card -->
+  <div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
 
-<th>Pharmacy</th>
+    <div class="card-body p-3">
 
-<th>Quantity</th>
+      <form method="GET" class="row g-2">
 
-<th>Price</th>
+        <div class="col-md-10">
 
-<th>Expiry</th>
+          <div class="input-group">
 
-<th>Actions</th>
+            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
 
-</tr>
+            <input type="text" name="q" class="form-control border-start-0 bg-light" placeholder="Search inventory by medicine name..." value="{{ query|default:'' }}">
 
-</thead>
+          </div>
 
-<tbody>
+        </div>
 
-{% for item in inventory %}
+        <div class="col-md-2 d-grid">
 
-<tr>
+          <button type="submit" class="btn btn-primary fw-semibold">Search</button>
 
-<td>{{ item.medicine }}</td>
+        </div>
 
-<td>{{ item.pharmacy }}</td>
+      </form>
 
-<td>
+    </div>
 
-{% if item.quantity > 50 %}
+  </div>
 
-<span class="badge bg-success">
+  <!-- Inventory Table Card -->
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
 
-{{ item.quantity }}
+    <div class="card-body p-0">
 
-</span>
+      {% if inventory %}
 
-{% elif item.quantity > 10 %}
+        <div class="table-responsive">
 
-<span class="badge bg-warning text-dark">
+          <table class="table align-middle table-hover mb-0">
 
-{{ item.quantity }}
+            <thead class="bg-light">
 
-</span>
+              <tr>
 
-{% else %}
+                <th class="ps-4">Medicine</th>
 
-<span class="badge bg-danger">
+                <th>Pharmacy</th>
 
-{{ item.quantity }}
+                <th>Batch</th>
 
-</span>
+                <th>Price</th>
 
-{% endif %}
+                <th>Stock Level</th>
 
-</td>
-<td>₹{{ item.price }}</td>
+                <th>Expiry Date</th>
 
-<td>{{ item.expiry_date }}</td>
-<td>
+                <th class="text-center">Actions</th>
 
-<a href="{% url 'edit_inventory' item.id %}" class="btn btn-warning btn-sm">
+              </tr>
 
-Edit
+            </thead>
 
-</a>
+            <tbody>
 
-<a href="{% url 'delete_inventory' item.id %}"
+              {% for item in inventory %}
 
-class="btn btn-danger btn-sm">
+                <tr>
 
-Delete
+                  <td class="ps-4">
 
-</a>
+                    <strong class="d-block">
 
-</td>
+                      <a href="{% url 'medicine_detail' item.medicine.id %}" class="text-decoration-none text-dark hover-primary">
 
-</tr>
+                        {{ item.medicine.name }}
 
-{% empty %}
+                      </a>
 
-<tr>
+                    </strong>
 
-<td colspan="6">
+                    <small class="text-muted">{{ item.medicine.brand }} &bull; {{ item.medicine.dosage }}</small>
 
-No Inventory Available
+                  </td>
 
-</td>
+                  <td>
 
-</tr>
+                    <a href="{% url 'pharmacy_detail' item.pharmacy.id %}" class="text-decoration-none text-secondary font-weight-semibold">
 
-{% endfor %}
+                      <i class="fa-solid fa-clinic-medical text-primary me-1"></i> {{ item.pharmacy.name }}
 
-</tbody>
+                    </a>
 
-</table>
+                  </td>
+
+                  <td><code>{{ item.batch_number }}</code></td>
+
+                  <td class="fw-bold text-success">₹{{ item.price }}</td>
+
+                  <td>
+
+                    {% if item.quantity > 50 %}
+
+                      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+
+                        <i class="fa-solid fa-check-circle me-1"></i> {{ item.quantity }} units
+
+                      </span>
+
+                    {% elif item.quantity > 10 %}
+
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill fw-bold">
+
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ item.quantity }} units
+
+                      </span>
+
+                    {% else %}
+
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold">
+
+                        <i class="fa-solid fa-circle-exclamation me-1"></i> {{ item.quantity }} low stock
+
+                      </span>
+
+                    {% endif %}
+
+                  </td>
+
+                  <td>
+
+                    <small class="fw-semibold text-secondary">{{ item.expiry_date|date:"d M Y" }}</small>
+
+                  </td>
+
+                  <td class="text-center">
+
+                    <div class="btn-group">
+
+                      <a href="{% url 'edit_inventory' item.id %}" class="btn btn-warning btn-sm" title="Edit Item">
+
+                        <i class="fa-solid fa-pen"></i>
+
+                      </a>
+
+                      <a href="{% url 'delete_inventory' item.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this inventory item?')" title="Delete Item">
+
+                        <i class="fa-solid fa-trash"></i>
+
+                      </a>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              {% endfor %}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      {% else %}
+
+        <div class="text-center py-5">
+
+          <i class="fa-solid fa-boxes-stacked text-muted fa-4x mb-3"></i>
+
+          <h5 class="fw-bold text-dark">No Inventory Records Found</h5>
+
+          <p class="text-muted mb-4">Add your first medicine stock item to get started.</p>
+
+          <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+
+            <i class="fa-solid fa-plus me-1"></i> Add Inventory
+
+          </a>
+
+        </div>
+
+      {% endif %}
+
+    </div>
+
+  </div>
 
 </div>
 

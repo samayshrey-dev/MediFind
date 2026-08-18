@@ -28,29 +28,36 @@ My Profile
 
 <div class="list-group list-group-flush">
 
-<a href="#" class="list-group-item list-group-item-action">
+<a href="{% url 'profile' %}" class="list-group-item list-group-item-action active">
+
 <i class="fa-solid fa-user me-2"></i>
+
 My Profile
+
 </a>
 
-<a href="#" class="list-group-item list-group-item-action">
+<a href="{% url 'search_history' %}" class="list-group-item list-group-item-action">
+
 <i class="fa-solid fa-clock-rotate-left me-2"></i>
+
 Search History
+
 </a>
 
-<a href="#" class="list-group-item list-group-item-action">
+<a href="{% url 'my_reservations' %}" class="list-group-item list-group-item-action">
+
 <i class="fa-solid fa-bell-concierge me-2"></i>
+
 My Reservations
+
 </a>
 
-<a href="#" class="list-group-item list-group-item-action">
-<i class="fa-solid fa-heart me-2"></i>
-Favourite Medicines
-</a>
+<a href="{% url 'search' %}" class="list-group-item list-group-item-action">
 
-<a href="#" class="list-group-item list-group-item-action">
-<i class="fa-solid fa-gear me-2"></i>
-Settings
+<i class="fa-solid fa-magnifying-glass me-2"></i>
+
+Search Medicines
+
 </a>
 
 <form method="POST" action="{% url 'logout' %}">

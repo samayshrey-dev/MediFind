@@ -1,1100 +1,728 @@
 {% extends 'base.html' %}
-
 {% load static %}
 
 {% block title %}
-
-MediFind
-
+MediFind | Real-time Pharmacy & Medicine Finder
 {% endblock %}
 
 {% block content %}
 
+<!-- ======================================= -->
+<!-- HERO SECTION -->
+<!-- ======================================= -->
 <section class="hero">
 
-<div class="container">
+  <div class="container">
 
-<div class="row align-items-center">
+    <div class="row align-items-center g-5">
 
-<div class="col-lg-7">
+      <div class="col-lg-7">
 
-<span class="badge rounded-pill bg-light text-primary mb-4">
+        <div class="badge rounded-pill px-3 py-2 mb-3 bg-white text-dark shadow-sm border border-light fw-bold">
 
-📍 GPS Powered Pharmacy Finder
-
-</span>
-
-<h1>
-
-Find Your Medicine at Nearby Pharmacies
-
-</h1>
-
-<p>
-
-Search medicines in real time, compare prices across nearby pharmacies,
-check stock availability, and get instant GPS directions.
-
-</p>
-
-<form action="{% url 'search' %}" method="GET">
-
-    <div class="search-box">
-
-        <input
-            type="text"
-            name="medicine"
-            placeholder="Search medicines like Dolo, Crocin, Insulin..."
-            required>
-
-        <button class="btn btn-primary">
-
-            <i class="fa-solid fa-magnifying-glass me-2"></i>
-
-            Search
-
-        </button>
-
-    </div>
-
-</form>
-<div class="chips">
-
-    <span>Paracetamol</span>
-
-    <span>Dolo 650</span>
-
-    <span>Crocin</span>
-
-    <span>Vitamin C</span>
-
-</div>
-
-</div>
-
-<div class="col-lg-5">
-
-<div id="heroCarousel"
-class="carousel slide carousel-fade"
-data-bs-ride="carousel"
-data-bs-interval="3500">
-
-<div class="carousel-inner">
-
-<div class="carousel-item active">
-
-<div class="hero-slide">
-
-<img
-src="{% static 'images/medicine1.png' %}"
-class="img-fluid hero-slider-img">
-
-<div class="slide-content">
-
-<h4>
-
-Find Medicines Instantly
-
-</h4>
-
-<p>
-
-Search thousands of medicines in nearby pharmacies.
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="carousel-item">
-
-<div class="hero-slide">
-
-<img
-src="{% static 'images/medicine2.png' %}"
-class="img-fluid hero-slider-img">
-
-<div class="slide-content">
-
-<h4>
-
-Live Stock Availability
-
-</h4>
-
-<p>
-
-Real-time inventory updates from trusted pharmacies.
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="carousel-item">
-
-<div class="hero-slide">
-
-<img
-src="{% static 'images/medicine3.png' %}"
-class="img-fluid hero-slider-img">
-
-<div class="slide-content">
-
-<h4>
-
-GPS Navigation
-
-</h4>
-
-<p>
-
-Navigate to the nearest pharmacy in one click.
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<button
-class="carousel-control-prev"
-type="button"
-data-bs-target="#heroCarousel"
-data-bs-slide="prev">
-
-<span class="carousel-control-prev-icon"></span>
-
-</button>
-
-<button
-class="carousel-control-next"
-type="button"
-data-bs-target="#heroCarousel"
-data-bs-slide="next">
-
-<span class="carousel-control-next-icon"></span>
-
-</button>
-
-<div class="carousel-indicators">
-
-<button
-type="button"
-data-bs-target="#heroCarousel"
-data-bs-slide-to="0"
-class="active">
-
-</button>
-
-<button
-type="button"
-data-bs-target="#heroCarousel"
-data-bs-slide-to="1">
-
-</button>
-
-<button
-type="button"
-data-bs-target="#heroCarousel"
-data-bs-slide-to="2">
-
-</button>
-
-</div>
-
-</div>
-
-</div>
-</section>
-
-<!-- ===================================== -->
-<!-- Statistics Section -->
-<!-- ===================================== -->
-
-<section class="stats-section">
-
-    <div class="container">
-
-        <div class="row g-4">
-
-            <div class="col-lg-3 col-md-6">
-
-                <div class="stat-card">
-
-                    <i class="fa-solid fa-pills"></i>
-
-                    <h2 class="counter" data-target="15000">0</h2>
-
-                    <p>Medicines</p>
-
-                </div>
-
-            </div>
-
-            <div class="col-lg-3 col-md-6">
-
-                <div class="stat-card">
-
-                    <i class="fa-solid fa-hospital"></i>
-
-                    <h2 class="counter" data-target="2500">0</h2>
-
-                    <p>Partner Pharmacies</p>
-
-                </div>
-
-            </div>
-
-            <div class="col-lg-3 col-md-6">
-
-                <div class="stat-card">
-
-                    <i class="fa-solid fa-users"></i>
-
-                    <h2 class="counter" data-target="80000">0</h2>
-
-                    <p>Happy Users</p>
-
-                </div>
-
-            </div>
-
-            <div class="col-lg-3 col-md-6">
-
-                <div class="stat-card">
-
-                    <i class="fa-solid fa-location-dot"></i>
-
-                    <h2 class="counter" data-target="99">0</h2>
-
-                    <p>Location Accuracy %</p>
-
-                </div>
-
-            </div>
+          <i class="fa-solid fa-location-dot text-primary me-2"></i> Live GPS Pharmacy Finder
 
         </div>
 
+        <h1 class="display-4 fw-extrabold mb-3">
+
+          Find Your Medicine at <span>Nearby Pharmacies</span>
+
+        </h1>
+
+        <p class="lead mb-4">
+
+          Search medicines in real-time, compare prices across local pharmacies, check live stock availability, and reserve in one click.
+
+        </p>
+
+        <!-- Search Card -->
+        <form action="{% url 'search' %}" method="GET">
+
+          <div class="search-box">
+
+            <input
+              type="text"
+              name="medicine"
+              placeholder="Search medicine (e.g. Dolo 650, Amoxicillin, Vitamin C)..."
+              required>
+
+            <button type="submit" class="btn btn-primary">
+
+              <i class="fa-solid fa-magnifying-glass me-2"></i> Search
+
+            </button>
+
+          </div>
+
+        </form>
+
+        <!-- Quick Tags -->
+        <div class="chips">
+
+          <small class="text-white-50 align-self-center me-1 fw-semibold">Popular:</small>
+
+          <a href="{% url 'search' %}?medicine=Paracetamol"><span>Paracetamol</span></a>
+
+          <a href="{% url 'search' %}?medicine=Dolo"><span>Dolo 650</span></a>
+
+          <a href="{% url 'search' %}?medicine=Amoxicillin"><span>Amoxicillin</span></a>
+
+          <a href="{% url 'search' %}?medicine=Vitamin"><span>Vitamin C</span></a>
+
+          <a href="{% url 'search' %}?medicine=Cetirizine"><span>Cetirizine</span></a>
+
+        </div>
+
+      </div>
+
+      <div class="col-lg-5">
+
+        <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
+
+          <div class="carousel-inner">
+
+            <div class="carousel-item active">
+
+              <div class="hero-slide">
+
+                <img src="{% static 'images/medicine1.png' %}" class="img-fluid hero-slider-img" alt="Find Medicines">
+
+                <div class="slide-content">
+
+                  <h4>Real-Time Medicine Search</h4>
+
+                  <p>Check stock across 2,500+ verified partner pharmacies.</p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="carousel-item">
+
+              <div class="hero-slide">
+
+                <img src="{% static 'images/medicine2.png' %}" class="img-fluid hero-slider-img" alt="Live Inventory">
+
+                <div class="slide-content">
+
+                  <h4>Live Inventory Tracking</h4>
+
+                  <p>Instant price comparisons and stock status updates.</p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="carousel-item">
+
+              <div class="hero-slide">
+
+                <img src="{% static 'images/medicine3.png' %}" class="img-fluid hero-slider-img" alt="GPS Directions">
+
+                <div class="slide-content">
+
+                  <h4>GPS Pharmacy Navigation</h4>
+
+                  <p>Get turn-by-turn directions to the closest open pharmacy.</p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="carousel-indicators position-relative mt-3">
+
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
 
+  </div>
+
 </section>
 
-<!-- ===================================== -->
-<!-- Features -->
-<!-- ===================================== -->
+<!-- ======================================= -->
+<!-- STATS SECTION -->
+<!-- ======================================= -->
+<section class="stats-section bg-white border-bottom py-5">
 
+  <div class="container">
+
+    <div class="row g-4 text-center">
+
+      <div class="col-6 col-md-3">
+
+        <div class="p-3">
+
+          <h2 class="fw-extrabold text-primary mb-1 display-5">{{ medicine_count|default:"15" }}+</h2>
+
+          <p class="text-muted fw-semibold mb-0">Medicines Cataloged</p>
+
+        </div>
+
+      </div>
+
+      <div class="col-6 col-md-3">
+
+        <div class="p-3">
+
+          <h2 class="fw-extrabold text-primary mb-1 display-5">{{ pharmacy_count|default:"3" }}+</h2>
+
+          <p class="text-muted fw-semibold mb-0">Partner Pharmacies</p>
+
+        </div>
+
+      </div>
+
+      <div class="col-6 col-md-3">
+
+        <div class="p-3">
+
+          <h2 class="fw-extrabold text-primary mb-1 display-5">{{ user_count|default:"10" }}+</h2>
+
+          <p class="text-muted fw-semibold mb-0">Active Platform Users</p>
+
+        </div>
+
+      </div>
+
+      <div class="col-6 col-md-3">
+
+        <div class="p-3">
+
+          <h2 class="fw-extrabold text-primary mb-1 display-5">99.9%</h2>
+
+          <p class="text-muted fw-semibold mb-0">Location Accuracy</p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ======================================= -->
+<!-- CATEGORIES EXPLORER -->
+<!-- ======================================= -->
+<section class="py-5 bg-light">
+
+  <div class="container py-4">
+
+    <div class="text-center mb-5">
+
+      <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-2">Therapeutic Categories</span>
+
+      <h2 class="fw-bold text-dark mb-2">Browse Medicines by Category</h2>
+
+      <p class="text-muted">Find medicines quickly tailored to your healthcare requirement.</p>
+
+    </div>
+
+    <div class="row g-3">
+
+      <div class="col-6 col-md-4 col-lg-2">
+
+        <a href="{% url 'search' %}?category=Pain Relief" class="text-decoration-none">
+
+          <div class="category-card">
+
+            <div class="category-icon">
+
+              <i class="fa-solid fa-capsules"></i>
+
+            </div>
+
+            <h6 class="category-title">Pain Relief</h6>
+
+          </div>
+
+        </a>
+
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+
+        <a href="{% url 'search' %}?category=Antibiotic" class="text-decoration-none">
+
+          <div class="category-card">
+
+            <div class="category-icon">
+
+              <i class="fa-solid fa-shield-virus"></i>
+
+            </div>
+
+            <h6 class="category-title">Antibiotics</h6>
+
+          </div>
+
+        </a>
+
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+
+        <a href="{% url 'search' %}?category=Vitamin" class="text-decoration-none">
+
+          <div class="category-card">
+
+            <div class="category-icon">
+
+              <i class="fa-solid fa-apple-whole"></i>
+
+            </div>
+
+            <h6 class="category-title">Vitamins</h6>
+
+          </div>
+
+        </a>
+
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+
+        <a href="{% url 'search' %}?category=Allergy" class="text-decoration-none">
+
+          <div class="category-card">
+
+            <div class="category-icon">
+
+              <i class="fa-solid fa-feather"></i>
+
+            </div>
+
+            <h6 class="category-title">Allergy Care</h6>
+
+          </div>
+
+        </a>
+
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+
+        <a href="{% url 'search' %}?category=Diabetes" class="text-decoration-none">
+
+          <div class="category-card">
+
+            <div class="category-icon">
+
+              <i class="fa-solid fa-syringe"></i>
+
+            </div>
+
+            <h6 class="category-title">Diabetes</h6>
+
+          </div>
+
+        </a>
+
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+
+        <a href="{% url 'search' %}?category=Heart" class="text-decoration-none">
+
+          <div class="category-card">
+
+            <div class="category-icon">
+
+              <i class="fa-solid fa-heart-pulse"></i>
+
+            </div>
+
+            <h6 class="category-title">Heart Care</h6>
+
+          </div>
+
+        </a>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ======================================= -->
+<!-- FEATURES SHOWCASE -->
+<!-- ======================================= -->
 <section class="features">
 
-<div class="container">
+  <div class="container">
 
-<div class="text-center mb-5">
+    <div class="text-center mb-5">
 
-<h2 class="title">
+      <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-2">Platform Features</span>
 
-Everything You Need
+      <h2 class="fw-bold text-dark mb-2">Everything You Need to Find Medicine</h2>
 
-</h2>
+      <p class="text-muted">Intuitive tools built for patients and healthcare seekers.</p>
 
-<p class="subtitle">
+    </div>
 
-Powerful tools to help you find medicines instantly.
+    <div class="row g-4">
 
-</p>
+      <div class="col-lg-3 col-md-6">
 
-</div>
+        <div class="feature-card">
 
-<div class="row g-4">
+          <i class="fa-solid fa-magnifying-glass-location"></i>
 
-<div class="col-lg-3 col-md-6">
+          <h4>Live Stock Search</h4>
 
-<div class="feature-card">
+          <p>Search over 15,000 medicines in real-time across nearby stores.</p>
 
-<i class="fa-solid fa-magnifying-glass-location"></i>
+        </div>
 
-<h4>Live Search</h4>
+      </div>
 
-<p>
+      <div class="col-lg-3 col-md-6">
 
-Search medicines in real time.
+        <div class="feature-card">
 
-</p>
+          <i class="fa-solid fa-map-location-dot"></i>
 
-</div>
+          <h4>GPS Nearby Stores</h4>
 
-</div>
+          <p>Locate the closest open pharmacy with 1-click map directions.</p>
 
-<div class="col-lg-3 col-md-6">
+        </div>
 
-<div class="feature-card">
+      </div>
 
-<i class="fa-solid fa-map-location-dot"></i>
+      <div class="col-lg-3 col-md-6">
 
-<h4>GPS Nearby</h4>
+        <div class="feature-card">
 
-<p>
+          <i class="fa-solid fa-shield-halved"></i>
 
-Locate nearby pharmacies instantly.
+          <h4>Verified Pharmacies</h4>
 
-</p>
+          <p>Partnered exclusively with licensed and authentic pharmacies.</p>
 
-</div>
+        </div>
 
-</div>
+      </div>
 
-<div class="col-lg-3 col-md-6">
+      <div class="col-lg-3 col-md-6">
 
-<div class="feature-card">
+        <div class="feature-card">
 
-<i class="fa-solid fa-box-open"></i>
+          <i class="fa-solid fa-bookmark"></i>
 
-<h4>Stock Availability</h4>
+          <h4>Instant Reservation</h4>
 
-<p>
+          <p>Reserve your medicine online before traveling to the store.</p>
 
-Check medicine availability.
+        </div>
 
-</p>
+      </div>
 
-</div>
+    </div>
 
-</div>
-
-<div class="col-lg-3 col-md-6">
-
-<div class="feature-card">
-
-<i class="fa-solid fa-shield-heart"></i>
-
-<h4>Safe Medicines</h4>
-
-<p>
-
-Verified pharmacy partners.
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
+  </div>
 
 </section>
 
-<!-- ===================================== -->
-<!-- How It Works -->
-<!-- ===================================== -->
-
+<!-- ======================================= -->
+<!-- HOW IT WORKS -->
+<!-- ======================================= -->
 <section class="steps">
 
-<div class="container">
+  <div class="container">
 
-<div class="text-center">
+    <div class="text-center mb-5">
 
-<h2 class="title">
+      <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-2">Simple Process</span>
 
-Find Medicines in 3 Easy Steps
+      <h2 class="fw-bold text-dark mb-2">Find Medicines in 3 Easy Steps</h2>
 
-</h2>
+      <p class="text-muted">No more walking from pharmacy to pharmacy looking for stock.</p>
 
-</div>
+    </div>
 
-<div class="row mt-5">
+    <div class="row g-4">
 
-<div class="col-lg-4">
+      <div class="col-lg-4">
 
-<div class="step-card">
+        <div class="step-card">
 
-<div class="step-number">
+          <div class="step-number">1</div>
 
-1
+          <h4>Search Medicine</h4>
 
-</div>
+          <p>Type the name or brand of the prescribed medicine in the search bar.</p>
 
-<h4>
+        </div>
 
-Search
+      </div>
 
-</h4>
+      <div class="col-lg-4">
 
-<p>
+        <div class="step-card">
 
-Enter the medicine name.
+          <div class="step-number">2</div>
 
-</p>
+          <h4>Compare Price & Stock</h4>
 
-</div>
+          <p>View which nearby pharmacies have the medicine in stock and compare prices.</p>
 
-</div>
+        </div>
 
-<div class="col-lg-4">
+      </div>
 
-<div class="step-card">
+      <div class="col-lg-4">
 
-<div class="step-number">
+        <div class="step-card">
 
-2
+          <div class="step-number">3</div>
 
-</div>
+          <h4>Reserve & Pickup</h4>
 
-<h4>
+          <p>Reserve online or get turn-by-turn GPS directions to pick up your medicine.</p>
 
-Locate
+        </div>
 
-</h4>
+      </div>
 
-<p>
+    </div>
 
-View nearby pharmacies.
-
-</p>
-
-</div>
-
-</div>
-
-<div class="col-lg-4">
-
-<div class="step-card">
-
-<div class="step-number">
-
-3
-
-</div>
-
-<h4>
-
-Purchase
-
-</h4>
-
-<p>
-
-Visit the nearest pharmacy.
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
+  </div>
 
 </section>
 
-<!-- ====================================== -->
-<!-- Popular Medicines -->
-<!-- ====================================== -->
+<!-- ======================================= -->
+<!-- POPULAR MEDICINES GRID WITH PRODUCT IMAGES -->
+<!-- ======================================= -->
+<section class="py-5 bg-light">
 
-<section class="medicine-section">
+  <div class="container py-4">
 
-<div class="container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
 
-<div class="text-center mb-5">
+      <div>
 
-<h2 class="title">
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-1">Catalog Showcase</span>
 
-Popular Medicines
+        <h3 class="fw-bold text-dark mb-0">Popular Medicines in Stock</h3>
 
-</h2>
+      </div>
 
-<p class="subtitle">
+      <a href="{% url 'medicines' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
 
-Frequently searched medicines across nearby pharmacies.
+        View All Catalog <i class="fa-solid fa-arrow-right ms-1"></i>
 
-</p>
+      </a>
 
-</div>
+    </div>
 
-<div class="row g-4">
+    <div class="row g-4">
 
-<div class="col-lg-3 col-md-6">
+      {% if popular_medicines %}
 
-<div class="medicine-card">
+        {% for med in popular_medicines %}
 
-<div class="medicine-image">
+          <div class="col-md-6 col-lg-3">
 
-<i class="fa-solid fa-capsules"></i>
+            <div class="card shadow-sm border-0 rounded-4 h-100 bg-white p-3 d-flex flex-column justify-content-between">
 
-</div>
+              <div>
 
-<span class="badge bg-success">
+                <div class="rounded-3 overflow-hidden mb-3 bg-light text-center" style="height: 180px;">
 
-OTC
+                  {% if forloop.counter == 1 %}
 
-</span>
+                    <img src="{% static 'images/medicine1.png' %}" class="w-100 h-100 object-fit-cover" alt="{{ med.name }}">
 
-<h4>
+                  {% elif forloop.counter == 2 %}
 
-Paracetamol
+                    <img src="{% static 'images/medicine2.png' %}" class="w-100 h-100 object-fit-cover" alt="{{ med.name }}">
 
-</h4>
+                  {% else %}
 
-<p>
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-primary-subtle text-primary">
 
-Pain Relief & Fever
+                      <i class="fa-solid fa-capsules fa-3x"></i>
 
-</p>
+                    </div>
 
-<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
+                  {% endif %}
 
-View Details
+                </div>
 
-</a>
+                <div class="d-flex justify-content-between align-items-center mb-2">
 
-</div>
+                  <span class="badge {% if med.prescription_required %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} px-3 py-1">
 
-</div>
+                    {% if med.prescription_required %}Rx Required{% else %}OTC Medicine{% endif %}
 
-<div class="col-lg-3 col-md-6">
+                  </span>
 
-<div class="medicine-card">
+                  <small class="text-muted fw-semibold">{{ med.category }}</small>
 
-<div class="medicine-image">
+                </div>
 
-<i class="fa-solid fa-tablets"></i>
+                <h5 class="fw-bold text-dark mb-1">{{ med.name }}</h5>
 
-</div>
+                <p class="text-muted small mb-3">{{ med.brand }} &bull; {{ med.dosage }}</p>
 
-<span class="badge bg-warning text-dark">
+              </div>
 
-Rx
+              <div>
 
-</span>
+                <a href="{% url 'medicine_detail' med.id %}" class="btn btn-primary w-100 rounded-3 fw-bold py-2 shadow-sm">
 
-<h4>
+                  <i class="fa-solid fa-eye me-1"></i> View Details
 
-Amoxicillin
+                </a>
 
-</h4>
+              </div>
 
-<p>
+            </div>
 
-Antibiotic
+          </div>
 
-</p>
+        {% endfor %}
 
-<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
+      {% endif %}
 
-View Details
+    </div>
 
-</a>
-</div>
-
-</div>
-
-<div class="col-lg-3 col-md-6">
-
-<div class="medicine-card">
-
-<div class="medicine-image">
-
-<i class="fa-solid fa-capsules"></i>
-
-</div>
-
-<span class="badge bg-success">
-
-OTC
-
-</span>
-
-<h4>
-
-Cetirizine
-
-</h4>
-
-<p>
-
-Allergy Relief
-
-</p>
-
-<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
-
-View Details
-
-</a>
-
-</div>
-
-</div>
-
-<div class="col-lg-3 col-md-6">
-
-<div class="medicine-card">
-
-<div class="medicine-image">
-
-<i class="fa-solid fa-pills"></i>
-
-</div>
-
-<span class="badge bg-success">
-
-OTC
-
-</span>
-
-<h4>
-
-Vitamin C
-
-</h4>
-
-<p>
-
-Immunity Booster
-
-</p>
-
-<a href="{% url 'medicine_detail' 1 %}" class="btn btn-primary w-100">
-
-View Details
-
-</a>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
+  </div>
 
 </section>
 
-<!-- ====================================== -->
-<!-- CTA -->
-<!-- ====================================== -->
+<!-- ======================================= -->
+<!-- PARTNER PHARMACIES SHOWCASE WITH STOREFRONT PHOTOS -->
+<!-- ======================================= -->
+<section class="py-5 bg-white">
 
+  <div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+
+      <div>
+
+        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 fw-semibold mb-1">Partner Stores</span>
+
+        <h3 class="fw-bold text-dark mb-0">Verified Local Pharmacies</h3>
+
+      </div>
+
+      <a href="{% url 'pharmacies' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+
+        View All Stores <i class="fa-solid fa-arrow-right ms-1"></i>
+
+      </a>
+
+    </div>
+
+    <div class="row g-4">
+
+      {% if pharmacies %}
+
+        {% for pharm in pharmacies %}
+
+          <div class="col-md-6 col-lg-3">
+
+            <div class="card shadow-sm border-0 rounded-4 h-100 bg-white p-3 d-flex flex-column justify-content-between">
+
+              <div>
+
+                <div class="rounded-3 overflow-hidden mb-3 bg-light position-relative" style="height: 140px;">
+
+                  <img src="{% static 'images/medicine3.png' %}" class="w-100 h-100 object-fit-cover" alt="{{ pharm.name }}">
+
+                  <div class="position-absolute top-0 end-0 p-2">
+
+                    <span class="badge {% if pharm.is_open %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} px-3 py-1 shadow-sm">
+
+                      {% if pharm.is_open %}Open Now{% else %}Closed{% endif %}
+
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <h5 class="fw-bold text-dark mb-1">{{ pharm.name }}</h5>
+
+                <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot text-primary me-1"></i> {{ pharm.address }}, {{ pharm.city }}</p>
+
+                <p class="text-muted small mb-3"><i class="fa-solid fa-phone me-1"></i> {{ pharm.phone }}</p>
+
+              </div>
+
+              <div>
+
+                <a href="{% url 'pharmacy_detail' pharm.id %}" class="btn btn-outline-primary w-100 rounded-3 fw-semibold">
+
+                  View Store Profile
+
+                </a>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        {% endfor %}
+
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ======================================= -->
+<!-- CALL TO ACTION (CTA) -->
+<!-- ======================================= -->
 <section class="cta">
 
-<div class="container">
+  <div class="container">
 
-<div class="cta-box">
+    <div class="cta-box">
 
-<h2>
+      <h2>Can't Find Your Prescribed Medicine?</h2>
 
-Can't Find Your Medicine?
+      <p>Search thousands of real-time inventory items across verified local pharmacies instantly.</p>
 
-</h2>
+      <a href="{% url 'search' %}" class="btn btn-light btn-lg rounded-pill px-5 fw-bold text-primary shadow">
 
-<p>
+        <i class="fa-solid fa-magnifying-glass me-2"></i> Start Live Search Now
 
-Search over 15,000 medicines from thousands of nearby pharmacies.
+      </a>
 
-</p>
+    </div>
 
-<a href="{% url 'search' %}" class="btn btn-light btn-lg">
-
-Start Searching
-
-</a>
-
-</div>
-
-</div>
+  </div>
 
 </section>
 
-<!-- ===================================== -->
-<!-- Testimonials -->
-<!-- ===================================== -->
-
-<section class="testimonials py-5">
-
-<div class="container">
-
-<div class="text-center mb-5">
-
-<h2 class="title">
-
-What Our Users Say
-
-</h2>
-
-<p class="subtitle">
-
-Trusted by thousands of users across India.
-
-</p>
-
-</div>
-
-<div id="testimonialCarousel"
-class="carousel slide"
-data-bs-ride="carousel"
-data-bs-interval="4000">
-
-<div class="carousel-inner">
-
-<div class="carousel-item active">
-
-<div class="testimonial-card">
-
-<img src="https://i.pravatar.cc/120?img=12"
-class="testimonial-img">
-
-<h4>Rahul Sharma</h4>
-
-<small>Hyderabad</small>
-
-<div class="stars">★★★★★</div>
-
-<p>
-
-"MediFind saved me so much time. I found my medicine within minutes."
-
-</p>
-
-</div>
-
-</div>
-
-<div class="carousel-item">
-
-<div class="testimonial-card">
-
-<img src="https://i.pravatar.cc/120?img=32"
-class="testimonial-img">
-
-<h4>Priya Verma</h4>
-
-<small>Chennai</small>
-
-<div class="stars">★★★★★</div>
-
-<p>
-
-"The GPS navigation is extremely accurate. Highly recommended!"
-
-</p>
-
-</div>
-
-</div>
-
-<div class="carousel-item">
-
-<div class="testimonial-card">
-
-<img src="https://i.pravatar.cc/120?img=15"
-class="testimonial-img">
-
-<h4>Arjun Patel</h4>
-
-<small>Bangalore</small>
-
-<div class="stars">★★★★★</div>
-
-<p>
-
-"The interface is clean, fast and very easy to use."
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-<button
-class="carousel-control-prev"
-type="button"
-data-bs-target="#testimonialCarousel"
-data-bs-slide="prev">
-
-<span class="carousel-control-prev-icon"></span>
-
-</button>
-
-<button
-class="carousel-control-next"
-type="button"
-data-bs-target="#testimonialCarousel"
-data-bs-slide="next">
-
-<span class="carousel-control-next-icon"></span>
-
-</button>
-
-</div>
-
-</div>
-
-</section>
-<!-- ===================================== -->
-<!-- FAQ -->
-<!-- ===================================== -->
-
-<section class="faq-section py-5">
-
-<div class="container">
-
-<div class="text-center mb-5">
-
-<h2 class="title">
-
-Frequently Asked Questions
-
-</h2>
-
-<p class="subtitle">
-
-Everything you need to know about MediFind.
-
-</p>
-
-</div>
-
-<div class="accordion accordion-flush" id="faqAccordion">
-
-<div class="accordion-item">
-
-<h2 class="accordion-header">
-
-<button
-class="accordion-button"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#faq1">
-
-How does MediFind work?
-
-</button>
-
-</h2>
-
-<div
-id="faq1"
-class="accordion-collapse collapse show"
-data-bs-parent="#faqAccordion">
-
-<div class="accordion-body">
-
-Simply search for a medicine by name. MediFind instantly searches nearby pharmacies and displays availability, pricing, and directions.
-
-</div>
-
-</div>
-
-</div>
-
-<div class="accordion-item">
-
-<h2 class="accordion-header">
-
-<button
-class="accordion-button collapsed"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#faq2">
-
-Is MediFind free to use?
-
-</button>
-
-</h2>
-
-<div
-id="faq2"
-class="accordion-collapse collapse"
-data-bs-parent="#faqAccordion">
-
-<div class="accordion-body">
-
-Yes. Searching medicines and locating nearby pharmacies is completely free for users.
-
-</div>
-
-</div>
-
-</div>
-
-<div class="accordion-item">
-
-<h2 class="accordion-header">
-
-<button
-class="accordion-button collapsed"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#faq3">
-
-How accurate is medicine availability?
-
-</button>
-
-</h2>
-
-<div
-id="faq3"
-class="accordion-collapse collapse"
-data-bs-parent="#faqAccordion">
-
-<div class="accordion-body">
-
-Medicine availability depends on pharmacy inventory updates. MediFind displays the latest available stock information stored in the system.
-
-</div>
-
-</div>
-
-</div>
-
-<div class="accordion-item">
-
-<h2 class="accordion-header">
-
-<button
-class="accordion-button collapsed"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#faq4">
-
-Can I search without enabling GPS?
-
-</button>
-
-</h2>
-
-<div
-id="faq4"
-class="accordion-collapse collapse"
-data-bs-parent="#faqAccordion">
-
-<div class="accordion-body">
-
-Yes. GPS helps you find the nearest pharmacies, but you can still search medicines manually.
-
-</div>
-
-</div>
-
-</div>
-
-<div class="accordion-item">
-
-<h2 class="accordion-header">
-
-<button
-class="accordion-button collapsed"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#faq5">
-
-Are all pharmacies verified?
-
-</button>
-
-</h2>
-
-<div
-id="faq5"
-class="accordion-collapse collapse"
-data-bs-parent="#faqAccordion">
-
-<div class="accordion-body">
-
-Yes. Only verified pharmacy partners are displayed within MediFind.
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-<script>
-
-const input = document.getElementById("medicineInput");
-const suggestions = document.getElementById("suggestions");
-
-input.addEventListener("keyup", async function () {
-
-    const query = input.value.trim();
-
-    if (query.length < 2) {
-
-        suggestions.style.display = "none";
-        return;
-
-    }
-
-    const response = await fetch(`/search-suggestions/?q=${query}`);
-
-    const data = await response.json();
-
-    suggestions.innerHTML = "";
-
-    if (data.length === 0) {
-
-        suggestions.style.display = "none";
-        return;
-
-    }
-
-    data.forEach(name => {
-
-        suggestions.innerHTML += `
-            <button
-                type="button"
-                class="list-group-item list-group-item-action">
-                ${name}
-            </button>
-        `;
-
-    });
-
-    suggestions.style.display = "block";
-
-});
-
-suggestions.addEventListener("click", function(e){
-
-    if(e.target.tagName === "BUTTON"){
-
-        input.value = e.target.innerText;
-
-        suggestions.style.display = "none";
-
-    }
-
-});
-
-document.addEventListener("click", function(e){
-
-    if(!suggestions.contains(e.target) && e.target !== input){
-
-        suggestions.style.display = "none";
-
-    }
-
-});
-
-</script>
 {% endblock %}

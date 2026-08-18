@@ -62,7 +62,11 @@ My Reservations
 
                         <strong>
 
-                            {{ reservation.medicine.name }}
+                            <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none text-dark hover-primary">
+
+                                {{ reservation.medicine.name }}
+
+                            </a>
 
                         </strong>
 
@@ -70,7 +74,11 @@ My Reservations
 
                     <td>
 
-                        {{ reservation.pharmacy.name }}
+                        <a href="{% url 'pharmacy_detail' reservation.pharmacy.id %}" class="text-decoration-none text-secondary">
+
+                            <i class="fa-solid fa-clinic-medical text-primary me-1"></i> {{ reservation.pharmacy.name }}
+
+                        </a>
 
                     </td>
 

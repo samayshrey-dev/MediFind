@@ -2,55 +2,69 @@
 
 <div class="container">
 
-<div class="row gy-5">
+<div class="row gy-4">
 
 <div class="col-lg-4">
 
-<h3>
+<h3 class="d-flex align-items-center">
 
-<i class="fa-solid fa-capsules"></i>
+<i class="fa-solid fa-capsules text-teal me-2" style="color: #5eead4;"></i>
 
-MediFind
+<span>MediFind</span>
 
 </h3>
 
 <p>
 
-Locate medicines from nearby pharmacies with real-time stock availability.
+Find medicines instantly from verified local pharmacies with real-time inventory tracking and GPS navigation.
 
 </p>
 
 <div class="socials">
 
-<a href="#"><i class="fab fa-facebook"></i></a>
+<a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
 
-<a href="#"><i class="fab fa-instagram"></i></a>
+<a href="#" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
 
-<a href="#"><i class="fab fa-linkedin"></i></a>
+<a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
 
-<a href="#"><i class="fab fa-github"></i></a>
+<a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
 
 </div>
+
+</div>
+
+<div class="col-lg-2 offset-lg-1">
+
+<h5>Quick Links</h5>
+
+<ul>
+
+<li><a href="{% url 'home' %}">Home</a></li>
+
+<li><a href="{% url 'search' %}">Search Medicines</a></li>
+
+<li><a href="{% url 'pharmacies' %}">Nearby Pharmacies</a></li>
+
+<li><a href="{% url 'medicines' %}">Medicine Catalog</a></li>
+
+</ul>
 
 </div>
 
 <div class="col-lg-2">
 
-<h5>
-
-Company
-
-</h5>
+<h5>Account</h5>
 
 <ul>
 
-<li><a href="#">Home</a></li>
+<li><a href="{% url 'login' %}">Login</a></li>
 
-<li><a href="#">About</a></li>
+<li><a href="{% url 'register' %}">Sign Up</a></li>
 
-<li><a href="#">Contact</a></li>
+<li><a href="{% url 'profile' %}">My Profile</a></li>
 
-<li><a href="#">Support</a></li>
+<li><a href="{% url 'my_reservations' %}">Reservations</a></li>
 
 </ul>
 
@@ -58,45 +72,13 @@ Company
 
 <div class="col-lg-3">
 
-<h5>
+<h5>Contact Support</h5>
 
-Services
+<p class="mb-2"><i class="fa-solid fa-envelope me-2 text-teal" style="color: #5eead4;"></i> support@medifind.com</p>
 
-</h5>
+<p class="mb-2"><i class="fa-solid fa-phone me-2 text-teal" style="color: #5eead4;"></i> +91 98765 43210</p>
 
-<ul>
-
-<li><a href="#">Medicine Search</a></li>
-
-<li><a href="#">Nearby Pharmacies</a></li>
-
-<li><a href="#">Inventory</a></li>
-
-<li><a href="#">GPS</a></li>
-
-</ul>
-
-</div>
-
-<div class="col-lg-3">
-
-<h5>
-
-Contact
-
-</h5>
-
-<p>
-
-support@medifind.com
-
-</p>
-
-<p>
-
-+91 XXXXX XXXXX
-
-</p>
+<p class="mb-0"><i class="fa-solid fa-location-dot me-2 text-teal" style="color: #5eead4;"></i> Chennai, India</p>
 
 </div>
 
@@ -104,11 +86,19 @@ support@medifind.com
 
 <hr>
 
-<p class="text-center mb-0">
+<div class="footer-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
 
-© 2026 MediFind. All Rights Reserved.
+<p class="mb-0">&copy; 2026 <strong>MediFind</strong>. Healthcare Technology Platform. All Rights Reserved.</p>
 
-</p>
+<div class="small">
+
+<a href="{% url 'home' %}" class="me-3">Privacy Policy</a>
+
+<a href="{% url 'home' %}">Terms of Service</a>
+
+</div>
+
+</div>
 
 </div>
 

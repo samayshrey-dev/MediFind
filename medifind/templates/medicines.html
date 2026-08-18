@@ -360,7 +360,11 @@ style="width:48px;height:48px;">
 
 <strong>
 
+<a href="{% url 'medicine_detail' medicine.id %}" class="text-decoration-none text-dark hover-primary">
+
 {{ medicine.name }}
+
+</a>
 
 </strong>
 
@@ -432,9 +436,23 @@ Not Required
 
 <a
 
+href="{% url 'medicine_detail' medicine.id %}"
+
+class="btn btn-info btn-sm text-white"
+
+title="View Details">
+
+<i class="fa-solid fa-eye"></i>
+
+</a>
+
+<a
+
 href="{% url 'edit_medicine' medicine.id %}"
 
-class="btn btn-warning btn-sm">
+class="btn btn-warning btn-sm"
+
+title="Edit">
 
 <i class="fa-solid fa-pen"></i>
 
@@ -445,6 +463,8 @@ class="btn btn-warning btn-sm">
 href="{% url 'delete_medicine' medicine.id %}"
 
 class="btn btn-danger btn-sm"
+
+title="Delete"
 
 onclick="return confirm('Delete this medicine?')">
 

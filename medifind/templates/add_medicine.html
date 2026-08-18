@@ -1,41 +1,155 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-Add Medicine
+Add Medicine | MediFind
 {% endblock %}
 
 {% block content %}
 
-<section class="dashboard">
+<section class="py-5 bg-light" style="margin-top: 70px;">
 
-<div class="container">
+<div class="container py-4">
 
-<div class="card p-4 shadow">
+  <div class="row justify-content-center">
 
-<h2>
+    <div class="col-lg-8">
 
-Add Medicine
+      <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
 
-</h2>
+        <div class="bg-primary bg-gradient text-white p-4 text-center">
 
-<form
-method="POST"
-enctype="multipart/form-data">
+          <h3 class="fw-bold mb-1"><i class="fa-solid fa-pills me-2"></i> Add New Medicine</h3>
 
-{% csrf_token %}
+          <p class="mb-0 text-white-50">Create a new pharmaceutical product entry in the global catalog.</p>
 
-{{ form.as_p }}
+        </div>
 
-<button
-class="btn btn-success">
+        <div class="card-body p-4 p-md-5">
 
-Save Medicine
+          {% if form.errors %}
 
-</button>
+            <div class="alert alert-danger rounded-3 mb-4">
 
-</form>
+              <strong>Please fix the errors below:</strong>
 
-</div>
+              {{ form.errors }}
+
+            </div>
+
+          {% endif %}
+
+          <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <div class="row g-3">
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Medicine Name</label>
+
+                {{ form.name }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Brand / Manufacturer</label>
+
+                {{ form.brand }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Category</label>
+
+                {{ form.category }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Dosage Form & Strength</label>
+
+                {{ form.dosage }}
+
+              </div>
+
+              <div class="col-md-12">
+
+                <label class="form-label fw-semibold">Description</label>
+
+                {{ form.description }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Therapeutic Uses</label>
+
+                {{ form.uses }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Known Side Effects</label>
+
+                {{ form.side_effects }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <div class="form-check form-switch mt-3">
+
+                  {{ form.prescription_required }}
+
+                  <label class="form-check-label fw-semibold" for="id_prescription_required">
+                    Prescription Required (Rx)
+                  </label>
+
+                </div>
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Product Image (Optional)</label>
+
+                {{ form.image }}
+
+              </div>
+
+            </div>
+
+            <div class="d-flex gap-3 mt-4 pt-3 border-top">
+
+              <button type="submit" class="btn btn-success btn-lg rounded-3 fw-bold flex-grow-1">
+
+                <i class="fa-solid fa-check me-2"></i> Save Medicine Entry
+
+              </button>
+
+              <a href="{% url 'medicines' %}" class="btn btn-outline-secondary btn-lg rounded-3 fw-semibold">
+
+                Cancel
+
+              </a>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 

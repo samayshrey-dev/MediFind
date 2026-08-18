@@ -1,14 +1,26 @@
 from django import forms
-
-
-from .models import Medicine, Pharmacy, Inventory
 from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import Medicine, Pharmacy, Inventory, UserProfile
 
 
+class BootstrapFormMixin:
+    """Mixin to apply Bootstrap form-control / form-select styling automatically to form fields."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            widget = field.widget
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = "form-check-input"
+            elif isinstance(widget, (forms.Select, forms.SelectMultiple)):
+                existing_class = widget.attrs.get("class", "")
+                widget.attrs["class"] = (existing_class + " form-select").strip()
+            else:
+                existing_class = widget.attrs.get("class", "")
+                widget.attrs["class"] = (existing_class + " form-control").strip()
 
 
-class MedicineForm(forms.ModelForm):
+class MedicineForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
 
@@ -19,20 +31,21 @@ class MedicineForm(forms.ModelForm):
         widgets = {
 
             "description": forms.Textarea(
-                attrs={"rows":4}
+                attrs={"rows": 3, "placeholder": "Describe the medicine..."}
             ),
 
             "uses": forms.Textarea(
-                attrs={"rows":4}
+                attrs={"rows": 3, "placeholder": "Key therapeutic uses..."}
             ),
 
             "side_effects": forms.Textarea(
-                attrs={"rows":4}
+                attrs={"rows": 3, "placeholder": "Common side effects..."}
             ),
 
         }
 
-class PharmacyForm(forms.ModelForm):
+
+class PharmacyForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
 
@@ -43,20 +56,21 @@ class PharmacyForm(forms.ModelForm):
         widgets = {
 
             "address": forms.Textarea(
-                attrs={"rows":3}
+                attrs={"rows": 3, "placeholder": "Full street address..."}
             ),
 
             "opening_time": forms.TimeInput(
-                attrs={"type":"time"}
+                attrs={"type": "time"}
             ),
 
             "closing_time": forms.TimeInput(
-                attrs={"type":"time"}
+                attrs={"type": "time"}
             ),
 
         }
 
-class InventoryForm(forms.ModelForm):
+
+class InventoryForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
 
@@ -75,18 +89,62 @@ class InventoryForm(forms.ModelForm):
             ),
 
         }
-class RegisterForm(forms.ModelForm):
+
+
+class RegisterForm(BootstrapFormMixin, forms.ModelForm):
 
     password = forms.CharField(
-        widget=forms.PasswordInput()
+        widget=forms.PasswordInput(attrs={"placeholder": "Choose a strong password"})
     )
 
     confirm_password = forms.CharField(
-        widget=forms.PasswordInput()
+        widget=forms.PasswordInput(attrs={"placeholder": "Repeat your password"})
     )
 
     role = forms.ChoiceField(
-        choices=UserProfile.ROLE_CHOICES
+        choices=UserProfile.ROLE_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    # Optional fields for Pharmacy account registration
+    pharmacy_option = forms.ChoiceField(
+        choices=[
+            ("existing", "Link to an Existing Pharmacy"),
+            ("new", "Register a New Pharmacy"),
+        ],
+        required=False,
+        initial="existing",
+        widget=forms.RadioSelect(attrs={"class": "form-check-input"})
+    )
+
+    existing_pharmacy = forms.ModelChoiceField(
+        queryset=Pharmacy.objects.all(),
+        required=False,
+        empty_label="-- Select Existing Pharmacy --",
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    new_pharmacy_name = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. HealthCare Pharmacy"})
+    )
+
+    new_pharmacy_phone = forms.CharField(
+        required=False,
+        max_length=15,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. +91 9876543210"})
+    )
+
+    new_pharmacy_city = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. Chennai"})
+    )
+
+    new_pharmacy_address = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Pharmacy address..."})
     )
 
     class Meta:
@@ -100,6 +158,12 @@ class RegisterForm(forms.ModelForm):
             "password",
         ]
 
+        widgets = {
+            "first_name": forms.TextInput(attrs={"placeholder": "Enter your full name"}),
+            "email": forms.EmailInput(attrs={"placeholder": "name@example.com"}),
+            "username": forms.TextInput(attrs={"placeholder": "Choose a unique username"}),
+        }
+
     def clean(self):
 
         cleaned_data = super().clean()
@@ -110,4 +174,15 @@ class RegisterForm(forms.ModelForm):
                 "Passwords do not match."
             )
 
-        return cleaned_data
+        role = cleaned_data.get("role")
+        if role == "Pharmacy":
+            option = cleaned_data.get("pharmacy_option")
+            if option == "existing" and not cleaned_data.get("existing_pharmacy"):
+                # If existing selected but none picked, check if any pharmacies exist
+                if Pharmacy.objects.exists():
+                    raise forms.ValidationError("Please select a pharmacy to link to your account.")
+            elif option == "new":
+                if not cleaned_data.get("new_pharmacy_name"):
+                    raise forms.ValidationError("Please provide a name for your new pharmacy.")
+
+        return cleaned_data

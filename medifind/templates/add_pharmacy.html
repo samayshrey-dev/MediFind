@@ -1,44 +1,209 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-Add Pharmacy
+Add Pharmacy | MediFind
 {% endblock %}
 
 {% block content %}
 
-<section class="dashboard">
+<section class="py-5 bg-light" style="margin-top: 70px;">
 
-<div class="container">
+<div class="container py-4">
 
-<div class="card shadow p-4">
+  <div class="row justify-content-center">
 
-<h2 class="mb-4">
+    <div class="col-lg-8">
 
-Add Pharmacy
+      <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
 
-</h2>
+        <div class="bg-primary bg-gradient text-white p-4 text-center">
 
-<form method="POST" enctype="multipart/form-data">
+          <h3 class="fw-bold mb-1"><i class="fa-solid fa-hospital me-2"></i> Register Pharmacy</h3>
 
-{% csrf_token %}
+          <p class="mb-0 text-white-50">Create a pharmacy listing with GPS coordinates and store hours.</p>
 
-{{ form.as_p }}
+        </div>
 
-<button class="btn btn-success">
+        <div class="card-body p-4 p-md-5">
 
-Save Pharmacy
+          {% if form.errors %}
 
-</button>
+            <div class="alert alert-danger rounded-3 mb-4">
 
-<a href="{% url 'pharmacies' %}" class="btn btn-secondary">
+              <strong>Please fix the errors below:</strong>
 
-Cancel
+              {{ form.errors }}
 
-</a>
+            </div>
 
-</form>
+          {% endif %}
 
-</div>
+          <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <div class="row g-3">
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Pharmacy Name</label>
+
+                {{ form.name }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Owner / Manager Name</label>
+
+                {{ form.owner_name }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Phone Number</label>
+
+                {{ form.phone }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Email Address</label>
+
+                {{ form.email }}
+
+              </div>
+
+              <div class="col-md-12">
+
+                <label class="form-label fw-semibold">Street Address</label>
+
+                {{ form.address }}
+
+              </div>
+
+              <div class="col-md-4">
+
+                <label class="form-label fw-semibold">City</label>
+
+                {{ form.city }}
+
+              </div>
+
+              <div class="col-md-4">
+
+                <label class="form-label fw-semibold">State</label>
+
+                {{ form.state }}
+
+              </div>
+
+              <div class="col-md-4">
+
+                <label class="form-label fw-semibold">Pincode</label>
+
+                {{ form.pincode }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Latitude Coordinate</label>
+
+                {{ form.latitude }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Longitude Coordinate</label>
+
+                {{ form.longitude }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Opening Time</label>
+
+                {{ form.opening_time }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">Closing Time</label>
+
+                {{ form.closing_time }}
+
+              </div>
+
+              <div class="col-md-6">
+
+                <div class="form-check form-switch mt-2">
+
+                  {{ form.is_active }}
+
+                  <label class="form-check-label fw-semibold" for="id_is_active">
+                    Active Listing
+                  </label>
+
+                </div>
+
+              </div>
+
+              <div class="col-md-6">
+
+                <div class="form-check form-switch mt-2">
+
+                  {{ form.is_open }}
+
+                  <label class="form-check-label fw-semibold" for="id_is_open">
+                    Store Currently Open
+                  </label>
+
+                </div>
+
+              </div>
+
+              <div class="col-md-12">
+
+                <label class="form-label fw-semibold">Storefront Photo (Optional)</label>
+
+                {{ form.image }}
+
+              </div>
+
+            </div>
+
+            <div class="d-flex gap-3 mt-4 pt-3 border-top">
+
+              <button type="submit" class="btn btn-success btn-lg rounded-3 fw-bold flex-grow-1">
+
+                <i class="fa-solid fa-check me-2"></i> Save Pharmacy Profile
+
+              </button>
+
+              <a href="{% url 'pharmacies' %}" class="btn btn-outline-secondary btn-lg rounded-3 fw-semibold">
+
+                Cancel
+
+              </a>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 

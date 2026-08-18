@@ -252,7 +252,7 @@ Search
             <a class="dropdown-item"
                href="{% url 'search' %}?sort=nearest">
 
-                📍 Nearest
+                <i class="fa-solid fa-location-arrow text-primary me-2"></i> Nearest
 
             </a>
 
@@ -263,7 +263,7 @@ Search
             <a class="dropdown-item"
                href="{% url 'search' %}?sort=cheapest">
 
-                💰 Cheapest
+                <i class="fa-solid fa-tag text-success me-2"></i> Cheapest
 
             </a>
 
@@ -274,7 +274,7 @@ Search
             <a class="dropdown-item"
                href="{% url 'search' %}?sort=open">
 
-                🟢 Open Now
+                <i class="fa-solid fa-circle-check text-info me-2"></i> Open Now
 
             </a>
 
@@ -337,7 +337,11 @@ Live Inventory
 
 <h4 class="medicine-title">
 
+<a href="{% url 'medicine_detail' item.medicine.id %}" class="text-decoration-none text-dark hover-primary">
+
 {{ item.medicine.name }}
+
+</a>
 
 </h4>
 
@@ -373,7 +377,11 @@ Live Inventory
 
 <strong>
 
+<a href="{% url 'pharmacy_detail' item.pharmacy.id %}" class="text-decoration-none text-dark hover-primary">
+
 {{ item.pharmacy.name }}
+
+</a>
 
 </strong>
 
