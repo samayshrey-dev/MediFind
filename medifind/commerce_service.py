@@ -132,10 +132,22 @@ class AgenticCommerceService:
         except Order.DoesNotExist:
             raise CommerceError("Order reference not found.")
 
-        # Revalidation Gate
-        inv = Inventory.objects.select_related("medicine", "pharmacy").get(id=order.inventory.id)
-        current_price = Decimal(str(inv.price))
+        # Revalidation Gate: Recheck Medicine, Pharmacy, Price, and Stock
+        try:
+            inv = Inventory.objects.select_related("medicine", "pharmacy").get(id=order.inventory.id)
+        except Inventory.DoesNotExist:
+            raise CommerceError("This option has changed. Please review your order.")
 
+        # 1. Medicine recheck
+        if inv.medicine.id != order.medicine.id:
+            raise CommerceError("This option has changed. Please review your order.")
+
+        # 2. Pharmacy recheck
+        if inv.pharmacy.id != order.pharmacy.id or not inv.pharmacy.is_active:
+            raise CommerceError("This option has changed. Please review your order.")
+
+        # 3. Price recheck
+        current_price = Decimal(str(inv.price))
         if current_price != order.unit_price:
             AgentAuditLog.objects.create(
                 session_id=order.session_id,
@@ -151,9 +163,10 @@ class AgenticCommerceService:
             raise PriceMismatchError(
                 old_price=float(order.unit_price),
                 new_price=float(current_price),
-                message=f"Price updated from ₹{order.unit_price} to ₹{current_price}. Please review before proceeding."
+                message="This option has changed. Please review your order."
             )
 
+        # 4. Stock recheck
         if inv.quantity < order.quantity:
             AgentAuditLog.objects.create(
                 session_id=order.session_id,
@@ -162,7 +175,7 @@ class AgenticCommerceService:
                 state="FAILED",
                 payload={"order_reference": order_reference, "available_stock": inv.quantity}
             )
-            raise OutOfStockError("Sorry, this medicine is no longer available in the requested quantity.")
+            raise OutOfStockError("This option has changed. Please review your order.")
 
         # Log Revalidation Passed
         AgentAuditLog.objects.create(

@@ -449,19 +449,30 @@
 
       activeOrderSnapshot = data;
 
-      // Render Approved Transaction Card
+      // Render Clean Purchase Review Breakdown
       container.innerHTML = `
-        <div class="card border-primary border-2 rounded-4 p-3 bg-light shadow-sm text-start w-100 mb-2">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-            <span class="badge bg-emerald text-white fw-bold px-2 py-1"><i class="fa-solid fa-check me-1"></i> APPROVED TRANSACTION</span>
-            <small class="font-monospace text-muted">${escapeHtml(data.order_reference)}</small>
+        <div class="card border rounded-4 p-3.5 bg-white shadow-sm text-start w-100 mb-2" style="border: 1.5px solid #10b981 !important;">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <h5 class="fw-bold text-dark mb-0">${escapeHtml(data.medicine_name)}</h5>
+              <span class="text-muted small">${escapeHtml(data.pharmacy_name)}</span>
+            </div>
+            <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-bold">Verified Available</span>
           </div>
-          <div class="small text-dark mb-1"><strong>Medicine:</strong> ${escapeHtml(data.medicine_name)}</div>
-          <div class="small text-dark mb-1"><strong>Pharmacy:</strong> ${escapeHtml(data.pharmacy_name)}</div>
-          <div class="small text-dark mb-2"><strong>Total Payable:</strong> <span class="fw-bold text-emerald fs-6">₹${data.total_amount.toFixed(2)}</span> (${data.quantity} unit)</div>
+
+          <div class="my-3 py-2 border-top border-bottom d-flex justify-content-between align-items-baseline">
+            <div>
+              <div class="fs-4 fw-extrabold text-dark">₹${data.unit_price.toFixed(0)}</div>
+              <div class="text-muted small">Quantity: ${data.quantity}</div>
+            </div>
+            <div class="text-end">
+              <div class="text-muted small fw-semibold">Total:</div>
+              <div class="fs-4 fw-extrabold text-success">₹${data.total_amount.toFixed(2)}</div>
+            </div>
+          </div>
           
-          <button type="button" class="btn btn-success w-100 fw-bold py-2 rounded-pill shadow-sm" id="btnConfirmAndPay" data-order-ref="${escapeHtml(data.order_reference)}">
-            <i class="fa-solid fa-lock me-1"></i> Confirm &amp; Pay ₹${data.total_amount.toFixed(2)}
+          <button type="button" class="btn btn-primary w-100 fw-bold py-2.5 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="btnConfirmAndPay" data-order-ref="${escapeHtml(data.order_reference)}">
+            <i class="fa-solid fa-lock"></i> Confirm &amp; Pay
           </button>
         </div>
       `;
@@ -511,30 +522,19 @@
 
       // Bounded Commerce Safety: Price or Stock Changed
       if (response.status === 409) {
-        if (data.error_type === 'PRICE_CHANGED') {
-          container.innerHTML = `
-            <div class="card border-warning border-2 rounded-4 p-3 bg-warning-subtle text-start w-100">
-              <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Price Changed</h6>
-              <p class="small text-dark mb-2">${escapeHtml(data.message)}</p>
-              <div class="d-flex justify-content-between small mb-2">
-                <span>Previous: ₹${data.old_price.toFixed(2)}</span>
-                <span class="fw-bold text-emerald">New: ₹${data.new_price.toFixed(2)}</span>
-              </div>
-              <button class="btn btn-outline-dark btn-sm w-100 rounded-pill" onclick="window.MedFinderCommerce.search(document.getElementById('medicineSearch').value)">
-                Re-evaluate Options
-              </button>
+        container.innerHTML = `
+          <div class="alert alert-warning rounded-4 p-3 border-0 shadow-sm text-start w-100 mb-2" style="background: #fffbeb; border-left: 4px solid #f59e0b !important;">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="fa-solid fa-triangle-exclamation text-warning fs-5"></i>
+              <strong class="text-dark">Order Notice</strong>
             </div>
-          `;
-          return;
-        } else if (data.error_type === 'OUT_OF_STOCK') {
-          container.innerHTML = `
-            <div class="alert alert-danger small rounded-4 p-3 text-start w-100">
-              <h6 class="fw-bold mb-1">Item Out of Stock</h6>
-              <p class="mb-0">${escapeHtml(data.message)}</p>
-            </div>
-          `;
-          return;
-        }
+            <p class="small text-dark mb-2 fw-medium">${escapeHtml(data.message || 'This option has changed. Please review your order.')}</p>
+            <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-semibold" onclick="window.MedFinderCommerce.search(document.getElementById('medicineSearch') ? document.getElementById('medicineSearch').value : '')">
+              Re-evaluate Options &rarr;
+            </button>
+          </div>
+        `;
+        return;
       }
 
       if (!data.success) {

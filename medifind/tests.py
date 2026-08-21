@@ -111,6 +111,7 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertEqual(resp.status_code, 409)
         data = resp.json()
         self.assertEqual(data["error_type"], "PRICE_CHANGED")
+        self.assertEqual(data["message"], "This option has changed. Please review your order.")
         self.assertEqual(data["old_price"], 22.0)
         self.assertEqual(data["new_price"], 28.0)
 
@@ -131,6 +132,7 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertEqual(resp.status_code, 409)
         data = resp.json()
         self.assertEqual(data["error_type"], "OUT_OF_STOCK")
+        self.assertEqual(data["message"], "This option has changed. Please review your order.")
 
     def test_05_invalid_signature_rejection(self):
         """Tampered or invalid signature is rejected and does NOT reduce stock."""
