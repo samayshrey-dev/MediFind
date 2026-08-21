@@ -63,7 +63,7 @@ def send_password_reset_otp(user, target_input=None) -> tuple[bool, str, Passwor
     if user.email or "@" in target:
         dest_email = user.email or target
         subject = f"Your MediAI Password Reset OTP: {otp_code}"
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "MediAI Security <security@medifind.com>")
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "MediAI Security <MediAi@gmail.com>")
         
         context = {
             "user": user,
