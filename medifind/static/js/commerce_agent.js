@@ -318,35 +318,51 @@
             <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
           </div>
 
-          <div class="d-flex flex-column gap-2.5">
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
             ${otherOptions.map((opt, idx) => `
-              <div class="card border rounded-4 p-3.5 shadow-sm bg-white hover-elevate" style="transition: all 0.2s ease;">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="col">
+                <div class="card border rounded-4 p-3 shadow-sm bg-white h-100 d-flex flex-column justify-content-between hover-elevate" style="transition: all 0.2s ease;">
                   <div>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                      <h6 class="fw-bold text-dark mb-0 fs-6">${escapeHtml(opt.pharmacy_name)}</h6>
-                      <span class="badge ${opt.is_open ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                    <!-- Header with Name & Open status -->
+                    <div class="d-flex justify-content-between align-items-start gap-1 mb-2">
+                      <h6 class="fw-bold text-dark mb-0 text-truncate" style="font-size: 0.92rem; max-width: 72%;" title="${escapeHtml(opt.pharmacy_name)}">
+                        ${escapeHtml(opt.pharmacy_name)}
+                      </h6>
+                      <span class="badge ${opt.is_open ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} rounded-pill px-2 py-0.5" style="font-size: 0.68rem; flex-shrink: 0;">
                         ● ${opt.is_open ? 'Open' : 'Closed'}
                       </span>
                     </div>
-                    <div class="text-muted small">
-                      <span class="fw-bold text-dark">₹${parseFloat(opt.price).toFixed(2)}</span> &bull; 
-                      ${opt.distance_km !== null ? `<span class="text-primary fw-medium"><i class="fa-solid fa-location-dot me-0.5"></i> ${opt.distance_km} km away</span> &bull; ` : ''}
-                      <span>${opt.stock > 0 ? `${opt.stock} available` : 'Out of stock'}</span>
+
+                    <!-- Price & Stock -->
+                    <div class="d-flex justify-content-between align-items-baseline mb-2">
+                      <span class="fs-4 fw-extrabold text-dark">₹${parseFloat(opt.price).toFixed(2)}</span>
+                      <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                        ${opt.stock > 0 ? `${opt.stock} in stock` : 'Out of stock'}
+                      </span>
+                    </div>
+
+                    <!-- Distance & Location -->
+                    <div class="text-muted small mb-3">
+                      ${opt.distance_km !== null ? `<div class="text-primary fw-medium mb-1"><i class="fa-solid fa-location-dot me-1"></i> <strong>${opt.distance_km} km away</strong></div>` : ''}
+                      <div class="text-truncate text-secondary" style="font-size: 0.78rem;" title="${escapeHtml(opt.pharmacy_address || opt.pharmacy_city || '')}">
+                        ${escapeHtml(opt.pharmacy_address || opt.pharmacy_city || '')}
+                      </div>
                     </div>
                   </div>
 
-                  <div class="d-flex align-items-center gap-2">
-                    <a href="https://maps.google.com/?q=${opt.latitude},${opt.longitude}" target="_blank" class="btn btn-sm btn-light border rounded-pill px-3" style="font-size: 0.8rem;">
-                      <i class="fa-solid fa-diamond-turn-right me-1 text-primary"></i> Directions
+                  <!-- Actions -->
+                  <div class="pt-2 border-top d-flex gap-2">
+                    <a href="https://maps.google.com/?q=${opt.latitude},${opt.longitude}" target="_blank" class="btn btn-sm btn-light border rounded-pill flex-fill py-1.5 text-center text-decoration-none" style="font-size: 0.78rem;">
+                      <i class="fa-solid fa-diamond-turn-right text-primary me-0.5"></i> Maps
                     </a>
-                    <a href="/reserve/${opt.inventory_id}/" class="btn btn-sm btn-outline-primary rounded-pill px-3.5 fw-semibold" style="font-size: 0.8rem;">
+                    <a href="/reserve/${opt.inventory_id}/" class="btn btn-sm btn-outline-primary rounded-pill flex-fill py-1.5 fw-semibold text-center text-decoration-none" style="font-size: 0.78rem;">
                       Reserve &rarr;
                     </a>
                   </div>
                 </div>
               </div>
             `).join('')}
+          </div>
         </div>
       `;
     }

@@ -199,7 +199,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
             </div>
           </div>
 
-          <!-- OTHER OPTIONS -->
+          <!-- OTHER OPTIONS (3-COLUMN RESPONSIVE GRID) -->
           {% if other_items %}
             <div class="mt-4 mb-4 reveal">
               <div class="d-flex justify-content-between align-items-center mb-3">
@@ -209,29 +209,46 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                 <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
               </div>
 
-              <div class="d-flex flex-column gap-2.5">
+              <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
                 {% for item in other_items %}
-                  <div class="card border rounded-4 p-3.5 shadow-sm bg-white hover-elevate" style="transition: all 0.2s ease;">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="col">
+                    <div class="card border rounded-4 p-3 shadow-sm bg-white h-100 d-flex flex-column justify-content-between hover-elevate" style="transition: all 0.2s ease;">
                       <div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                          <h6 class="fw-bold text-dark mb-0 fs-6">{{ item.pharmacy.name }}</h6>
-                          <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                        <!-- Header with Name & Open status -->
+                        <div class="d-flex justify-content-between align-items-start gap-1 mb-2">
+                          <h6 class="fw-bold text-dark mb-0 text-truncate" style="font-size: 0.92rem; max-width: 72%;" title="{{ item.pharmacy.name }}">
+                            {{ item.pharmacy.name }}
+                          </h6>
+                          <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.68rem; flex-shrink: 0;">
                             ● {% if item.is_open %}Open{% else %}Closed{% endif %}
                           </span>
                         </div>
-                        <div class="text-muted small">
-                          <span class="fw-bold text-dark">₹{{ item.price }}</span> &bull; 
-                          {% if item.distance_km %}<span class="text-primary fw-medium"><i class="fa-solid fa-location-dot me-0.5"></i> {{ item.distance_km }} km away</span> &bull; {% endif %}
-                          <span>{{ item.quantity }} available</span>
+
+                        <!-- Price & Stock -->
+                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                          <span class="fs-4 fw-extrabold text-dark">₹{{ item.price }}</span>
+                          <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                            {{ item.quantity }} in stock
+                          </span>
+                        </div>
+
+                        <!-- Distance & Location -->
+                        <div class="text-muted small mb-3">
+                          {% if item.distance_km %}
+                            <div class="text-primary fw-medium mb-1"><i class="fa-solid fa-location-dot me-1"></i> <strong>{{ item.distance_km }} km away</strong></div>
+                          {% endif %}
+                          <div class="text-truncate text-secondary" style="font-size: 0.78rem;" title="{{ item.pharmacy.address }}, {{ item.pharmacy.city }}">
+                            {{ item.pharmacy.address }}, {{ item.pharmacy.city }}
+                          </div>
                         </div>
                       </div>
 
-                      <div class="d-flex align-items-center gap-2">
-                        <a href="https://maps.google.com/?q={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}" target="_blank" class="btn btn-sm btn-light border rounded-pill px-3" style="font-size: 0.8rem;">
-                          <i class="fa-solid fa-diamond-turn-right me-1 text-primary"></i> Directions
+                      <!-- Actions -->
+                      <div class="pt-2 border-top d-flex gap-2">
+                        <a href="https://maps.google.com/?q={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}" target="_blank" class="btn btn-sm btn-light border rounded-pill flex-fill py-1.5 text-center text-decoration-none" style="font-size: 0.78rem;">
+                          <i class="fa-solid fa-diamond-turn-right text-primary me-0.5"></i> Maps
                         </a>
-                        <a href="{% url 'reserve_medicine' item.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3.5 fw-semibold" style="font-size: 0.8rem;">
+                        <a href="{% url 'reserve_medicine' item.id %}" class="btn btn-sm btn-outline-primary rounded-pill flex-fill py-1.5 fw-semibold text-center text-decoration-none" style="font-size: 0.78rem;">
                           Reserve &rarr;
                         </a>
                       </div>
