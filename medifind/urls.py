@@ -6,6 +6,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 urlpatterns = [
     path("", views.home, name="home"),
     path("search/", views.search, name="search"),
+    path("api/ai/search/", views.ai_search_api, name="ai_search_api"),
 
     path(
         "medicine/<int:id>/",

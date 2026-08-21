@@ -13,6 +13,9 @@ from datetime import datetime
 import json
 
 
+from django.views.decorators.csrf import csrf_exempt
+from .ai_search import parse_query_with_ai, haversine_distance, SYMPTOM_MAP
+
 from .models import (
     Medicine,
     Pharmacy,
@@ -103,14 +106,56 @@ def home(request):
 
 
 # ==========================================================
-# Search
+# AI Natural-Language Query Interpretation API
+# ==========================================================
+
+@csrf_exempt
+def ai_search_api(request):
+    """
+    POST /api/ai/search/
+    Parses natural language query into structured search parameters.
+    """
+    query = ""
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+            query = body.get("query", "")
+        except Exception:
+            query = request.POST.get("query", "")
+    else:
+        query = request.GET.get("query", "")
+
+    result = parse_query_with_ai(query)
+    return JsonResponse(result)
+
+
+# ==========================================================
+# Search (AI-Powered Natural-Language Medicine Search)
 # ==========================================================
 
 def search(request):
 
-    query = request.GET.get("medicine", "")
-    category = request.GET.get("category", "")
-    sort = request.GET.get("sort", "")
+    query = request.GET.get("medicine", "").strip()
+    category = request.GET.get("category", "").strip()
+    sort = request.GET.get("sort", "").strip()
+    radius_param = request.GET.get("radius", "").strip()
+    user_lat_param = request.GET.get("lat", "").strip()
+    user_lng_param = request.GET.get("lng", "").strip()
+    ai_interpreted = request.GET.get("ai_interpreted", "").strip()
+
+    ai_result = None
+    warning_msg = None
+
+    if query:
+        ai_result = parse_query_with_ai(query)
+        if ai_result.get("warning"):
+            warning_msg = ai_result.get("warning")
+        
+        if not ai_interpreted and ai_result.get("interpretation"):
+            ai_interpreted = ai_result.get("interpretation")
+            
+        if not radius_param and ai_result.get("radius_km"):
+            radius_param = str(ai_result.get("radius_km"))
 
     current_time = timezone.localtime().time()
 
@@ -133,116 +178,122 @@ def search(request):
         "pharmacy"
     )
 
-    # Search by medicine name or brand
+    # Filtering with AI / Natural-Language Search Terms
     if query:
+        search_terms = [query]
+        if ai_result:
+            if ai_result.get("medicine_name"):
+                search_terms.append(ai_result["medicine_name"])
+            if ai_result.get("generic_name"):
+                search_terms.append(ai_result["generic_name"])
+            if ai_result.get("search_term"):
+                search_terms.append(ai_result["search_term"])
 
-        inventory = inventory.filter(
+        q_objects = Q()
+        for term in set(search_terms):
+            if term:
+                q_objects |= Q(medicine__name__icontains=term)
+                q_objects |= Q(medicine__brand__icontains=term)
+                q_objects |= Q(medicine__description__icontains=term)
+                q_objects |= Q(medicine__uses__icontains=term)
 
-            Q(medicine__name__icontains=query) |
+        if ai_result and ai_result.get("symptom_category"):
+            q_objects |= Q(medicine__category__iexact=ai_result["symptom_category"])
 
-            Q(medicine__brand__icontains=query)
+        inventory = inventory.filter(q_objects)
 
-        )
-
-    # Filter by category
+    # Filter by category if manually specified
     if category and category != "All":
-
         inventory = inventory.filter(
-
             medicine__category=category
-
         )
 
-    # Sort Results
-    if sort == "cheapest":
+    # Convert to list for distance, open status, and sorting
+    inventory_items = list(inventory.distinct())
 
-        inventory = inventory.order_by("price")
+    user_lat = None
+    user_lng = None
+    if user_lat_param and user_lng_param:
+        try:
+            user_lat = float(user_lat_param)
+            user_lng = float(user_lng_param)
+        except ValueError:
+            pass
 
-    # ==========================================
-    # Pharmacy Open / Closed Status
-    # ==========================================
+    radius_km = None
+    if radius_param:
+        try:
+            radius_km = float(radius_param)
+        except ValueError:
+            pass
 
-    for item in inventory:
+    # Pharmacy Open / Closed Status & Distance Calculation
+    for item in inventory_items:
 
         opening = item.pharmacy.opening_time
         closing = item.pharmacy.closing_time
 
         business_hours = (
-        opening <= current_time <= closing
-    )
+            opening <= current_time <= closing
+        )
 
         item.is_open = (
-        item.pharmacy.is_open
-        and
-        business_hours
-    )
+            item.pharmacy.is_open
+            and business_hours
+        )
 
         if item.is_open:
-
-            item.status_text = (
-                f"Closes at {closing.strftime('%I:%M %p')}"
-            )
-
+            item.status_text = f"Closes at {closing.strftime('%I:%M %p')}"
         else:
+            item.status_text = f"Opens at {opening.strftime('%I:%M %p')}"
 
-            item.status_text = (
-                f"Opens at {opening.strftime('%I:%M %p')}"
-            )
+        if user_lat is not None and user_lng is not None:
+            dist = haversine_distance(user_lat, user_lng, item.pharmacy.latitude, item.pharmacy.longitude)
+            item.distance_km = round(dist, 1)
 
-    # ==========================================
+    # Filter by radius if radius_km is specified and user coordinates are available
+    if radius_km is not None and user_lat is not None and user_lng is not None:
+        inventory_items = [item for item in inventory_items if getattr(item, 'distance_km', 0) <= radius_km]
+
+    # Sort Results
+    if sort == "cheapest":
+        inventory_items.sort(key=lambda x: x.price)
+    elif user_lat is not None and user_lng is not None:
+        inventory_items.sort(key=lambda x: getattr(x, 'distance_km', 9999))
+
     # Marker Data
-    # ==========================================
-
     marker_data = []
 
-    for item in inventory:
-
+    for item in inventory_items:
         marker_data.append({
-
             "medicine": item.medicine.name,
-
             "brand": item.medicine.brand,
-
             "pharmacy": item.pharmacy.name,
-
             "address": item.pharmacy.address,
-
             "city": item.pharmacy.city,
-
             "phone": item.pharmacy.phone,
-
             "price": float(item.price),
-
             "quantity": item.quantity,
-
             "is_open": item.is_open,
-
             "latitude": float(item.pharmacy.latitude),
-
             "longitude": float(item.pharmacy.longitude),
-
+            "distance_km": getattr(item, 'distance_km', None)
         })
 
     return render(
-
         request,
-
         "search.html",
-
         {
-
-            "inventory": inventory,
-
+            "inventory": inventory_items,
             "query": query,
-
             "category": category,
-
             "sort": sort,
-
+            "radius": radius_param,
+            "ai_result": ai_result,
+            "ai_interpreted": ai_interpreted,
+            "warning_msg": warning_msg,
             "marker_data": json.dumps(marker_data)
-
         }
-
     )
 def search_suggestions(request):
 

@@ -44,12 +44,12 @@ MediFind | Real-time Pharmacy & Medicine Finder
             <input
               type="text"
               name="medicine"
-              placeholder="Search medicine (e.g. Dolo 650, Amoxicillin, Vitamin C)..."
+              placeholder="Tell us what medicine you need (e.g., Dolo 650 near me)..."
               required>
 
             <button type="submit" class="btn btn-primary">
 
-              <i class="fa-solid fa-magnifying-glass me-2"></i> Search
+              <i class="fa-solid fa-wand-magic-sparkles me-2"></i> AI Search
 
             </button>
 
@@ -57,20 +57,18 @@ MediFind | Real-time Pharmacy & Medicine Finder
 
         </form>
 
-        <!-- Quick Tags -->
+        <!-- Quick AI Tags -->
         <div class="chips">
 
-          <small class="text-white-50 align-self-center me-1 fw-semibold">Popular:</small>
+          <small class="text-white-50 align-self-center me-1 fw-semibold"><i class="fa-solid fa-sparkles text-warning me-1"></i> AI Suggestions:</small>
 
-          <a href="{% url 'search' %}?medicine=Paracetamol"><span>Paracetamol</span></a>
+          <a href="{% url 'search' %}?medicine=Dolo+650+near+me"><span>✨ Dolo 650 near me</span></a>
 
-          <a href="{% url 'search' %}?medicine=Dolo"><span>Dolo 650</span></a>
+          <a href="{% url 'search' %}?medicine=Paracetamol+within+3+km"><span>✨ Paracetamol within 3 km</span></a>
 
-          <a href="{% url 'search' %}?medicine=Amoxicillin"><span>Amoxicillin</span></a>
+          <a href="{% url 'search' %}?medicine=I+need+something+for+fever"><span>✨ Medicine for fever</span></a>
 
-          <a href="{% url 'search' %}?medicine=Vitamin"><span>Vitamin C</span></a>
-
-          <a href="{% url 'search' %}?medicine=Cetirizine"><span>Cetirizine</span></a>
+          <a href="{% url 'search' %}?medicine=Find+Crocin+nearby"><span>✨ Find Crocin nearby</span></a>
 
         </div>
 

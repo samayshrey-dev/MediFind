@@ -103,15 +103,20 @@ Verified
 <!-- SEARCH -->
 <!-- ===================================== -->
 
-<form
+<form method="GET" id="searchForm" autocomplete="off">
+<input type="hidden" name="lat" id="userLat">
+<input type="hidden" name="lng" id="userLng">
+<input type="hidden" name="radius" id="searchRadius" value="{{ radius|default:'' }}">
+<input type="hidden" name="ai_interpreted" id="aiInterpretedHidden" value="{{ ai_interpreted|default:'' }}">
 
-method="GET"
+<div class="search-bar-card p-4 rounded-4 shadow-sm border">
 
-id="searchForm"
-
-autocomplete="off">
-
-<div class="search-bar-card">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold">
+        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI-powered search
+    </span>
+    <small class="text-muted"><i class="fa-solid fa-sparkles me-1 text-primary"></i> Natural Language Enabled</small>
+</div>
 
 <div class="row align-items-center g-3">
 
@@ -120,27 +125,17 @@ autocomplete="off">
 <div class="position-relative">
 
 <input
-
 id="medicineSearch"
-
 type="search"
-
 name="medicine"
-
-class="form-control form-control-lg"
-
-placeholder="Search medicine or brand..."
-
+class="form-control form-control-lg border-2"
+placeholder="Tell us what medicine you need (e.g. 'Dolo 650 near me' or 'Medicine for fever')..."
 autocomplete="off"
-
 value="{{ query|default:'' }}"
-
 required>
 
 <div
-
 id="suggestionsBox"
-
 class="suggestions-box d-none">
 
 </div>
@@ -152,10 +147,9 @@ class="suggestions-box d-none">
 <div class="col-lg-3 d-grid">
 
 <button
-
 type="submit"
-
-class="btn btn-primary btn-lg search-btn">
+id="searchSubmitBtn"
+class="btn btn-primary btn-lg search-btn fw-bold">
 
 <i class="fa-solid fa-magnifying-glass me-2"></i>
 
@@ -165,6 +159,31 @@ Search
 
 </div>
 
+</div>
+
+<!-- AI Suggestion Chips -->
+<div class="mt-3 pt-3 border-top d-flex align-items-center flex-wrap gap-2">
+    <small class="text-muted fw-semibold me-1"><i class="fa-solid fa-lightbulb text-warning me-1"></i> Try searching:</small>
+    <button type="button" class="btn btn-sm ai-chip-btn rounded-pill" data-query="Dolo 650 near me">
+        ✨ "Dolo 650 near me"
+    </button>
+    <button type="button" class="btn btn-sm ai-chip-btn rounded-pill" data-query="Paracetamol within 3 km">
+        ✨ "Paracetamol within 3 km"
+    </button>
+    <button type="button" class="btn btn-sm ai-chip-btn rounded-pill" data-query="I need something for fever">
+        ✨ "Medicine for fever"
+    </button>
+    <button type="button" class="btn btn-sm ai-chip-btn rounded-pill" data-query="Find Crocin nearby">
+        ✨ "Find Crocin nearby"
+    </button>
+</div>
+
+<!-- AI Processing State -->
+<div id="aiProcessingState" class="alert alert-info rounded-3 mt-3 d-none mb-0">
+    <div class="d-flex align-items-center">
+        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+        <span class="fw-semibold text-primary">✨ Understanding your request...</span>
+    </div>
 </div>
 
 </div>
@@ -295,7 +314,30 @@ Search
 <!-- RESULTS -->
 <!-- ===================================== -->
 
-<div class="col-lg-5">
+<!-- AI Interpreted Request Banner -->
+{% if ai_interpreted %}
+<div class="card ai-interpreted-banner rounded-4 p-3 mb-4 shadow-sm">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <span class="badge bg-primary rounded-pill px-3 py-2 me-2">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI Interpreted
+            </span>
+            <strong class="text-dark fs-6 align-middle" id="aiInterpretedDisplay">{{ ai_interpreted }}</strong>
+        </div>
+        {% if warning_msg %}
+        <div>
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ warning_msg }}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% elif warning_msg %}
+<div class="alert alert-warning rounded-4 p-3 mb-4 shadow-sm">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ warning_msg }}
+</div>
+{% endif %}
 
 {% if inventory %}
 
@@ -1296,24 +1338,105 @@ suggestionBox.classList.add("d-none");
 // ==========================================
 // SEARCH BUTTON LOADING
 // ==========================================
+// AI NATURAL LANGUAGE SEARCH & GEOLOCATION
+// ==========================================
 
-document.getElementById(
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        const latInput = document.getElementById("userLat");
+        const lngInput = document.getElementById("userLng");
+        if (latInput) latInput.value = pos.coords.latitude;
+        if (lngInput) lngInput.value = pos.coords.longitude;
+    }, function(err) {
+        console.log("Geolocation check:", err.message);
+    });
+}
 
-"searchForm"
+function getCsrfToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue || '';
+}
 
-).addEventListener("submit",()=>{
+const searchForm = document.getElementById("searchForm");
+const aiProcessingState = document.getElementById("aiProcessingState");
+const searchSubmitBtn = document.getElementById("searchSubmitBtn");
+let isSubmittingAi = false;
 
-document.querySelector(".search-btn").innerHTML=
+async function triggerAiSearchAndSubmit(queryText) {
+    if (isSubmittingAi) return;
+    isSubmittingAi = true;
 
-`
+    if (aiProcessingState) aiProcessingState.classList.remove("d-none");
+    if (searchSubmitBtn) {
+        searchSubmitBtn.disabled = true;
+        searchSubmitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Understanding...`;
+    }
 
-<span class="spinner-border spinner-border-sm me-2"></span>
+    try {
+        const lat = document.getElementById("userLat") ? document.getElementById("userLat").value : "";
+        const lng = document.getElementById("userLng") ? document.getElementById("userLng").value : "";
 
-Searching...
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-`;
+        const response = await fetch("/api/ai/search/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken()
+            },
+            body: JSON.stringify({ query: queryText, lat: lat, lng: lng }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
+        if (response.ok) {
+            const data = await response.json();
+            if (data.interpretation) {
+                const hiddenInterp = document.getElementById("aiInterpretedHidden");
+                if (hiddenInterp) hiddenInterp.value = data.interpretation;
+            }
+            if (data.radius_km) {
+                const hiddenRad = document.getElementById("searchRadius");
+                if (hiddenRad) hiddenRad.value = data.radius_km;
+            }
+        }
+    } catch (e) {
+        console.log("AI Search API fallback active:", e);
+    } finally {
+        searchForm.submit();
+    }
+}
+
+document.querySelectorAll(".ai-chip-btn").forEach(function(chip) {
+    chip.addEventListener("click", function() {
+        const queryText = this.getAttribute("data-query");
+        const searchInput = document.getElementById("medicineSearch");
+        if (searchInput) searchInput.value = queryText;
+        triggerAiSearchAndSubmit(queryText);
+    });
 });
+
+if (searchForm) {
+    searchForm.addEventListener("submit", function(e) {
+        if (!isSubmittingAi) {
+            e.preventDefault();
+            const queryText = document.getElementById("medicineSearch").value;
+            triggerAiSearchAndSubmit(queryText);
+        }
+    });
+}
 
 // ==========================================
 // LOCATE USER
