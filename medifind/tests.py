@@ -572,6 +572,113 @@ class RazorpayAgenticCommerceTests(TestCase):
             self.assertEqual(db_item.pharmacy.name, cand["pharmacy_name"])
             self.assertEqual(db_item.medicine.name, cand["medicine_name"])
 
+    def test_19_full_razorpay_success_flow_confirm_to_order_confirmed(self):
+        """Step 8: Confirm & Pay -> Django Validates -> Razorpay Test Order -> Payment -> Verify -> Order Confirmed."""
+        # 1. User reviews purchase -> Snapshot created
+        snap_resp = self.client.post("/api/commerce/snapshot/", data=json.dumps({
+            "session_id": "session_success_demo",
+            "inventory_id": self.inventory.id,
+            "quantity": 2
+        }), content_type="application/json")
+        self.assertEqual(snap_resp.status_code, 200)
+        order_ref = snap_resp.json()["order_reference"]
+
+        # 2. Confirm & Pay -> Django validates & creates Razorpay Test Order
+        with patch("medifind.commerce_service.AgenticCommerceService.get_razorpay_client") as mock_client:
+            mock_order_api = MagicMock()
+            mock_order_api.create.return_value = {"id": "order_rzp_step8_success", "amount": 4400, "status": "created"}
+            mock_client.return_value.order = mock_order_api
+
+            pay_resp = self.client.post("/api/payments/create-order/", data=json.dumps({
+                "order_reference": order_ref
+            }), content_type="application/json")
+            self.assertEqual(pay_resp.status_code, 200)
+            self.assertEqual(pay_resp.json()["amount"], 4400)
+            self.assertEqual(pay_resp.json()["razorpay_order_id"], "order_rzp_step8_success")
+
+        # 3. Razorpay Checkout -> Payment Completed -> Server Verification
+        rzp_pay_id = "pay_rzp_step8_verified_99"
+        valid_sig = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode("utf-8"),
+            f"order_rzp_step8_success|{rzp_pay_id}".encode("utf-8"),
+            hashlib.sha256
+        ).hexdigest()
+
+        verify_resp = self.client.post("/api/payments/verify/", data=json.dumps({
+            "order_reference": order_ref,
+            "razorpay_order_id": "order_rzp_step8_success",
+            "razorpay_payment_id": rzp_pay_id,
+            "razorpay_signature": valid_sig
+        }), content_type="application/json")
+        self.assertEqual(verify_resp.status_code, 200)
+        self.assertTrue(verify_resp.json()["success"])
+        self.assertEqual(verify_resp.json()["status"], "PAID")
+
+        # 4. Verify Stock decremented & Order Confirmed page displays correctly
+        self.inventory.refresh_from_db()
+        self.assertEqual(self.inventory.quantity, 48)  # 50 - 2
+
+        confirm_page_resp = self.client.get(f"/orders/confirmed/{order_ref}/")
+        self.assertEqual(confirm_page_resp.status_code, 200)
+        self.assertContains(confirm_page_resp, "Order Confirmed!")
+        self.assertContains(confirm_page_resp, order_ref)
+        self.assertContains(confirm_page_resp, "Dolo 650")
+
+    def test_20_full_razorpay_failure_retry_flow(self):
+        """Step 8: Payment failed/cancelled -> Order remains unpaid -> Stock NOT decremented -> Retry succeeds."""
+        # 1. Create snapshot
+        snap_resp = self.client.post("/api/commerce/snapshot/", data=json.dumps({
+            "session_id": "session_retry_demo",
+            "inventory_id": self.inventory.id,
+            "quantity": 1
+        }), content_type="application/json")
+        order_ref = snap_resp.json()["order_reference"]
+
+        # 2. Payment fails or user dismisses checkout
+        fail_resp = self.client.post("/api/payments/fail/", data=json.dumps({
+            "order_reference": order_ref,
+            "reason": "Payment cancelled by user"
+        }), content_type="application/json")
+        self.assertEqual(fail_resp.status_code, 200)
+        self.assertEqual(fail_resp.json()["status"], "PAYMENT_FAILED")
+
+        # Verify stock is NOT deducted
+        self.inventory.refresh_from_db()
+        self.assertEqual(self.inventory.quantity, 50)
+
+        # 3. User clicks "Retry" -> Re-initiates Razorpay Order
+        with patch("medifind.commerce_service.AgenticCommerceService.get_razorpay_client") as mock_client:
+            mock_order_api = MagicMock()
+            mock_order_api.create.return_value = {"id": "order_rzp_step8_retry", "amount": 2200, "status": "created"}
+            mock_client.return_value.order = mock_order_api
+
+            retry_pay_resp = self.client.post("/api/payments/create-order/", data=json.dumps({
+                "order_reference": order_ref
+            }), content_type="application/json")
+            self.assertEqual(retry_pay_resp.status_code, 200)
+            self.assertEqual(retry_pay_resp.json()["razorpay_order_id"], "order_rzp_step8_retry")
+
+        # 4. User completes payment on retry -> Verification succeeds
+        retry_pay_id = "pay_rzp_step8_retry_success"
+        valid_sig = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode("utf-8"),
+            f"order_rzp_step8_retry|{retry_pay_id}".encode("utf-8"),
+            hashlib.sha256
+        ).hexdigest()
+
+        verify_resp = self.client.post("/api/payments/verify/", data=json.dumps({
+            "order_reference": order_ref,
+            "razorpay_order_id": "order_rzp_step8_retry",
+            "razorpay_payment_id": retry_pay_id,
+            "razorpay_signature": valid_sig
+        }), content_type="application/json")
+        self.assertEqual(verify_resp.status_code, 200)
+        self.assertEqual(verify_resp.json()["status"], "PAID")
+
+        # Stock is decremented now
+        self.inventory.refresh_from_db()
+        self.assertEqual(self.inventory.quantity, 49)
+
 
 
 
