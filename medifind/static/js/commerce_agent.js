@@ -336,9 +336,9 @@
                       Store Info
                     </a>
                     ${opt.stock > 0 ? `
-                      <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold btn-select-pharmacy" data-inventory-id="${opt.inventory_id}">
-                        Review &amp; Pay
-                      </button>
+                      <a href="/reserve/${opt.inventory_id}/" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold text-decoration-none">
+                        Review &amp; Reserve &rarr;
+                      </a>
                     ` : `
                       <button class="btn btn-sm btn-light text-muted rounded-pill px-3" disabled>Out of stock</button>
                     `}
