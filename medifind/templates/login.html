@@ -54,7 +54,10 @@ Log In | MedFinder
             </div>
 
             <div class="mb-4">
-              <label class="form-label small fw-semibold text-dark mb-1">Password</label>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small fw-semibold text-dark mb-0">Password</label>
+                <a href="{% url 'password_reset' %}" class="small text-decoration-none text-primary fw-medium">Forgot password?</a>
+              </div>
               <input
                 type="password"
                 id="id_password"
