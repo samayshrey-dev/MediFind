@@ -107,7 +107,8 @@ path(
     path(
         "login/",
         LoginView.as_view(
-            template_name="login.html"
+            template_name="login.html",
+            redirect_authenticated_user=True
         ),
         name="login"
     ),

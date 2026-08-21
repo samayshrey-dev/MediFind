@@ -93,13 +93,27 @@ def home(request):
     pharmacy_inventory_count = 0
     pharmacy_pending_count = 0
 
-    if request.user.is_authenticated and hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
-        user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
-        if not user_pharmacy and request.user.is_superuser:
+    if request.user.is_authenticated:
+        if hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
+            user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+            if not user_pharmacy:
+                # Match by email, username or first pharmacy
+                user_pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first()
+                if not user_pharmacy:
+                    user_pharmacy = Pharmacy.objects.filter(owner_name__icontains=request.user.username).first()
+                if not user_pharmacy:
+                    user_pharmacy = Pharmacy.objects.first()
+                if user_pharmacy:
+                    request.user.userprofile.pharmacy = user_pharmacy
+                    request.user.userprofile.save(update_fields=["pharmacy"])
+            if user_pharmacy:
+                pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
+                pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
+        elif request.user.is_superuser:
             user_pharmacy = Pharmacy.objects.first()
-        if user_pharmacy:
-            pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
-            pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
+            if user_pharmacy:
+                pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
+                pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
 
     medicines = Medicine.objects.all()[:8]
     pharmacies = Pharmacy.objects.filter(is_active=True)[:4]

@@ -28,19 +28,36 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto ms-lg-4 align-items-lg-center">
         {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
+          <!-- Registered Pharmacy Name Pill -->
+          <li class="nav-item me-lg-2">
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+              <i class="fa-solid fa-store"></i>
+              <span>{{ user.userprofile.pharmacy.name|default:"Pharmacy Portal" }}</span>
+            </span>
+          </li>
           <li class="nav-item">
-            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'pharmacy_dashboard' %}">
+            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'pharmacy_dashboard' %}">
               <i class="fa-solid fa-chart-line me-1 text-primary"></i> Dashboard
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'inventory' %}">
+            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'inventory' %}">
               <i class="fa-solid fa-boxes-stacked me-1 text-primary"></i> Inventory
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'reservations' %}">
-              <i class="fa-solid fa-clock me-1 text-primary"></i> Orders
+            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'add_inventory' %}">
+              <i class="fa-solid fa-plus-circle me-1 text-success"></i> Add Stock
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'reservations' %}">
+              <i class="fa-solid fa-clock me-1 text-warning"></i> Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'reservation_history' %}">
+              <i class="fa-solid fa-history me-1 text-muted"></i> History
             </a>
           </li>
         {% else %}
