@@ -50,6 +50,9 @@ Log In | MediAI
               <!-- Login Form -->
               <form method="POST" id="loginForm" novalidate>
                 {% csrf_token %}
+                {% if next %}
+                  <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
 
                 <!-- Username/Email Field -->
                 <div class="mb-3">

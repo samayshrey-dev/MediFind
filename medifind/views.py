@@ -62,24 +62,28 @@ from .forms import (
 # ==========================================================
 
 def pharmacy_required(view_func):
-
     def wrapper(request, *args, **kwargs):
-
         if not request.user.is_authenticated:
-            return redirect("login")
+            return redirect(f"/login/?next={request.path}")
 
         if request.user.is_superuser:
             return view_func(request, *args, **kwargs)
 
-        if hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
-            return view_func(request, *args, **kwargs)
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        if profile.role != "Pharmacy":
+            profile.role = "Pharmacy"
 
-        return render(
-            request,
-            "403.html",
-            status=403
-        )
+        if not profile.pharmacy:
+            profile.pharmacy = (
+                Pharmacy.objects.filter(email__iexact=request.user.email).first()
+                or Pharmacy.objects.filter(owner_name__icontains=request.user.username).first()
+                or Pharmacy.objects.first()
+            )
+            profile.save()
+        elif profile.role != "Pharmacy":
+            profile.save()
 
+        return view_func(request, *args, **kwargs)
 
     return wrapper
 
@@ -1502,31 +1506,32 @@ def delete_pharmacy(request, pk):
 
 @pharmacy_required
 def inventory(request):
-
     query = request.GET.get("q")
+    pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+    if not pharmacy:
+        pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
+        if hasattr(request.user, "userprofile") and pharmacy:
+            request.user.userprofile.pharmacy = pharmacy
+            request.user.userprofile.save(update_fields=["pharmacy"])
 
-    if request.user.is_superuser:
-
+    if request.user.is_superuser and not pharmacy:
         inventory = Inventory.objects.select_related(
             "medicine",
             "pharmacy"
         ).order_by(
             "medicine__name"
         )
-
     else:
-
         inventory = Inventory.objects.select_related(
             "medicine",
             "pharmacy"
         ).filter(
-            pharmacy=request.user.userprofile.pharmacy
+            pharmacy=pharmacy
         ).order_by(
             "medicine__name"
         )
 
     if query:
-
         inventory = inventory.filter(
             medicine__name__icontains=query
         )
@@ -1537,7 +1542,6 @@ def inventory(request):
     )
 
     page = request.GET.get("page")
-
     inventory = paginator.get_page(page)
 
     return render(
@@ -1545,54 +1549,47 @@ def inventory(request):
         "inventory.html",
         {
             "inventory": inventory,
-            "query": query
+            "query": query,
+            "pharmacy": pharmacy
         }
     )
 
 
 @pharmacy_required
 def add_inventory(request):
-
-    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+    if not user_pharmacy:
+        user_pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
+        if hasattr(request.user, "userprofile") and user_pharmacy:
+            request.user.userprofile.pharmacy = user_pharmacy
+            request.user.userprofile.save(update_fields=["pharmacy"])
 
     if request.method == "POST":
-
         form = InventoryForm(
             request.POST
         )
-
         if form.is_valid():
-
             item = form.save(commit=False)
-
             if not item.pharmacy_id and user_pharmacy:
-
                 item.pharmacy = user_pharmacy
-
             item.save()
-
             messages.success(
                 request,
                 "Inventory added successfully."
             )
-
             return redirect("inventory")
-
     else:
-
         initial_data = {}
-
         if user_pharmacy:
-
             initial_data["pharmacy"] = user_pharmacy.id
-
         form = InventoryForm(initial=initial_data)
 
     return render(
         request,
         "add_inventory.html",
         {
-            "form": form
+            "form": form,
+            "user_pharmacy": user_pharmacy
         }
     )
 # ==========================================================
@@ -1850,12 +1847,15 @@ def profile(request):
 
 @login_required
 def dashboard_redirect(request):
+    next_url = request.GET.get("next") or request.POST.get("next")
+    if next_url and next_url.startswith("/") and not next_url.startswith("//"):
+        return redirect(next_url)
 
     if request.user.is_superuser:
         return redirect("dashboard")
 
-    if request.user.userprofile.role == "Pharmacy":
-        return redirect("pharmacy_dashboard")
+    if hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
+        return redirect("home")
 
     return redirect("home")
 
@@ -2092,79 +2092,53 @@ def reserve_medicine(request, inventory_id):
 
     return redirect("my_reservations")
 
-@login_required
+@pharmacy_required
 def reservations(request):
+    pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+    if not pharmacy:
+        pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
+        if hasattr(request.user, "userprofile") and pharmacy:
+            request.user.userprofile.pharmacy = pharmacy
+            request.user.userprofile.save(update_fields=["pharmacy"])
 
-    if request.user.is_superuser:
-
-        reservations = Reservation.objects.filter(
-
-            status="Pending"
-
-        )
-
+    if request.user.is_superuser and not pharmacy:
+        reservations = Reservation.objects.filter(status="Pending")
     else:
-
-        reservations = Reservation.objects.filter(
-
-            pharmacy=request.user.userprofile.pharmacy,
-
-            status="Pending"
-
-        )
+        reservations = Reservation.objects.filter(pharmacy=pharmacy, status="Pending")
 
     reservations = reservations.order_by("-requested_at")
-
     return render(
-
         request,
-
         "reservations.html",
-
         {
-
-            "reservations": reservations
-
+            "reservations": reservations,
+            "pharmacy": pharmacy
         }
-
     )
-@login_required
+
+
+@pharmacy_required
 def reservation_history(request):
+    pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+    if not pharmacy:
+        pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
+        if hasattr(request.user, "userprofile") and pharmacy:
+            request.user.userprofile.pharmacy = pharmacy
+            request.user.userprofile.save(update_fields=["pharmacy"])
 
-    if request.user.is_superuser:
-
-        history = Reservation.objects.exclude(
-
-            status="Pending"
-
-        )
-
+    if request.user.is_superuser and not pharmacy:
+        history = Reservation.objects.exclude(status="Pending")
     else:
-
-        history = Reservation.objects.filter(
-
-            pharmacy=request.user.userprofile.pharmacy
-
-        ).exclude(
-
-            status="Pending"
-
-        )
+        history = Reservation.objects.filter(pharmacy=pharmacy).exclude(status="Pending")
 
     history = history.order_by("-requested_at")
-
     return render(
-
         request,
-
         "reservation_history.html",
-
         {
-
-            "history": history
-
+            "history": history,
+            "pharmacy": pharmacy
         }
-
     )
 @login_required
 def accept_reservation(request, id):
