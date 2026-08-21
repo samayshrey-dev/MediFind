@@ -233,43 +233,45 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
             {% for item in other_items %}
               <div class="col">
-                <div class="card border rounded-4 p-3.5 shadow-sm bg-white h-100 d-flex flex-column justify-content-between hover-elevate" style="transition: all 0.2s ease;">
+                <div class="med-option-card">
                   <div>
                     <!-- Header with Name & Open status -->
-                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                      <h6 class="fw-bold text-dark mb-0 fs-6" title="{{ item.pharmacy.name }}">
+                    <div class="med-option-header">
+                      <h6 class="med-pharmacy-title" title="{{ item.pharmacy.name }}">
                         {{ item.pharmacy.name }}
                       </h6>
-                      <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.72rem; flex-shrink: 0;">
+                      <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2.5 py-1" style="font-size: 0.68rem; font-weight: 600; flex-shrink: 0;">
                         ● {% if item.is_open %}Open{% else %}Closed{% endif %}
                       </span>
                     </div>
 
                     <!-- Price & Stock -->
                     <div class="d-flex justify-content-between align-items-baseline mb-2">
-                      <span class="fs-4 fw-extrabold text-dark">₹{{ item.price }}</span>
-                      <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.75rem;">
+                      <div class="med-price-display">
+                        ₹{{ item.price }}
+                      </div>
+                      <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 500;">
                         {{ item.quantity }} in stock
                       </span>
                     </div>
 
-                    <!-- Distance & Location -->
-                    <div class="text-muted small mb-3">
+                    <!-- Location & Distance -->
+                    <div class="med-location-meta">
                       {% if item.distance_km %}
-                        <div class="text-primary fw-medium mb-1"><i class="fa-solid fa-location-dot me-1"></i> <strong>{{ item.distance_km }} km away</strong></div>
+                        <span class="fw-bold text-dark"><i class="fa-solid fa-location-dot text-primary me-1"></i>{{ item.distance_km }} km</span> &bull;
                       {% endif %}
-                      <div class="text-secondary" style="font-size: 0.82rem;">
+                      <span class="text-secondary text-truncate" style="max-width: 180px;" title="{{ item.pharmacy.address }}, {{ item.pharmacy.city }}">
                         {{ item.pharmacy.address }}, {{ item.pharmacy.city }}
-                      </div>
+                      </span>
                     </div>
                   </div>
 
                   <!-- Actions -->
-                  <div class="pt-3 border-top d-flex gap-2">
-                    <a href="https://maps.google.com/?q={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}" target="_blank" class="btn btn-sm btn-light border rounded-pill flex-fill py-2 text-center text-decoration-none" style="font-size: 0.82rem;">
-                      <i class="fa-solid fa-diamond-turn-right text-primary me-1"></i> Maps
+                  <div class="med-actions-row">
+                    <a href="https://maps.google.com/?q={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}" target="_blank" class="btn-med-directions">
+                      <i class="fa-solid fa-diamond-turn-right me-1 text-primary"></i> Directions
                     </a>
-                    <a href="{% url 'reserve_medicine' item.id %}" class="btn btn-sm btn-outline-primary rounded-pill flex-fill py-2 fw-semibold text-center text-decoration-none" style="font-size: 0.82rem;">
+                    <a href="{% url 'reserve_medicine' item.id %}" class="btn-med-reserve">
                       Reserve &rarr;
                     </a>
                   </div>
