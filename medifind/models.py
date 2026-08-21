@@ -474,4 +474,28 @@ class WebhookEvent(models.Model):
 
     def __str__(self):
         return f"Webhook [{self.event_id}] {self.event_type} - {self.status}"
+
+
+class PasswordResetOTP(models.Model):
+    """
+    Secure One-Time Password (OTP) model for password resets via Email (Gmail) or SMS.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reset_otps")
+    otp_code = models.CharField(max_length=6, db_index=True)
+    target = models.CharField(max_length=150)
+    channel = models.CharField(max_length=20, default="email")
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def is_valid(self):
+        from django.utils import timezone
+        return not self.is_used and timezone.now() <= self.expires_at
+
+    def __str__(self):
+        return f"OTP for {self.user.username} ({self.target}) - Valid: {self.is_valid()}"
+
 

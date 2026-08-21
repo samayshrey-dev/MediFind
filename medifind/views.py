@@ -2404,19 +2404,145 @@ def notifications_api(request):
             time = f"{diff.days} days ago"
 
         data.append({
-
             "id": notification.id,
-
             "title": notification.title,
-
             "message": notification.message,
-
             "type": notification.notification_type,
-
             "is_read": notification.is_read,
-
             "time": time
-
         })
 
     return JsonResponse(data, safe=False)
+
+
+# ==========================================================
+# OTP-based Password Reset Views
+# ==========================================================
+from .otp_service import send_password_reset_otp, verify_and_consume_otp, mask_target_contact
+
+def forgot_password_request(request):
+    """
+    Step 1: User enters their email, username, or registered phone number.
+    Generates and dispatches a 6-digit OTP code to their Gmail/phone.
+    """
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    if request.method == "POST":
+        identifier = request.POST.get("identifier", "").strip()
+        if not identifier:
+            messages.error(request, "Please enter your registered email address, username, or phone number.")
+            return render(request, "password_reset.html")
+
+        # Find matching user by email, username, or profile phone
+        user = None
+        if "@" in identifier:
+            user = User.objects.filter(email__iexact=identifier).first()
+        else:
+            user = User.objects.filter(username__iexact=identifier).first()
+            if not user:
+                pharmacy = Pharmacy.objects.filter(phone=identifier).first()
+                if pharmacy and hasattr(pharmacy, "userprofile"):
+                    user = pharmacy.userprofile.user
+
+        if user:
+            success, msg, otp_obj = send_password_reset_otp(user, target_input=identifier)
+            request.session["pwd_reset_user_id"] = user.id
+            request.session["pwd_reset_target"] = user.email or identifier
+            request.session["pwd_reset_masked"] = mask_target_contact(user.email or identifier)
+            messages.success(request, f"A 6-digit OTP has been sent to {request.session['pwd_reset_masked']}.")
+            return redirect("password_reset_verify")
+        else:
+            messages.info(request, "If an account matches that contact, a 6-digit verification code has been sent.")
+            return redirect("password_reset_verify")
+
+    return render(request, "password_reset.html")
+
+
+def forgot_password_verify(request):
+    """
+    Step 2: User enters the 6-digit OTP received via Gmail/phone along with their new password.
+    """
+    user_id = request.session.get("pwd_reset_user_id")
+    masked_target = request.session.get("pwd_reset_masked", "your registered contact")
+
+    if not user_id:
+        messages.warning(request, "Please enter your email or username first to receive an OTP.")
+        return redirect("password_reset")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        otp_code = request.POST.get("otp_code", "").strip()
+        new_password1 = request.POST.get("new_password1", "").strip()
+        new_password2 = request.POST.get("new_password2", "").strip()
+
+        if not otp_code or len(otp_code) != 6:
+            messages.error(request, "Please enter the complete 6-digit OTP code.")
+            return render(request, "password_reset_verify.html", {"masked_target": masked_target})
+
+        if not new_password1 or not new_password2:
+            messages.error(request, "Please provide and confirm your new password.")
+            return render(request, "password_reset_verify.html", {"masked_target": masked_target})
+
+        if new_password1 != new_password2:
+            messages.error(request, "The passwords do not match. Please re-enter them carefully.")
+            return render(request, "password_reset_verify.html", {"masked_target": masked_target})
+
+        if len(new_password1) < 6:
+            messages.error(request, "Password must be at least 6 characters long.")
+            return render(request, "password_reset_verify.html", {"masked_target": masked_target})
+
+        # Verify OTP
+        is_valid, error_msg = verify_and_consume_otp(user, otp_code)
+        if not is_valid:
+            messages.error(request, error_msg)
+            return render(request, "password_reset_verify.html", {"masked_target": masked_target})
+
+        # Update Password
+        user.set_password(new_password1)
+        user.save()
+
+        # Clean up session
+        request.session.pop("pwd_reset_user_id", None)
+        request.session.pop("pwd_reset_target", None)
+        request.session.pop("pwd_reset_masked", None)
+
+        messages.success(request, "Password reset successfully! You can now log in with your new password.")
+        return redirect("login")
+
+    return render(request, "password_reset_verify.html", {
+        "masked_target": masked_target
+    })
+
+
+def forgot_password_resend_api(request):
+    """
+    API endpoint to resend a fresh 6-digit OTP code with rate-limiting.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    user_id = request.session.get("pwd_reset_user_id")
+    target = request.session.get("pwd_reset_target")
+
+    if not user_id:
+        return JsonResponse({"success": False, "message": "No active reset session found."}, status=400)
+
+    user = User.objects.filter(id=user_id).first()
+    if not user:
+        return JsonResponse({"success": False, "message": "User not found."}, status=404)
+
+    last_otp = PasswordResetOTP.objects.filter(user=user).order_by("-created_at").first()
+    if last_otp and (timezone.now() - last_otp.created_at).total_seconds() < 30:
+        remaining = int(30 - (timezone.now() - last_otp.created_at).total_seconds())
+        return JsonResponse({
+            "success": False,
+            "message": f"Please wait {remaining} seconds before requesting another OTP."
+        }, status=429)
+
+    success, msg, _ = send_password_reset_otp(user, target_input=target)
+    return JsonResponse({
+        "success": True,
+        "message": f"A fresh 6-digit OTP code has been sent to {request.session.get('pwd_reset_masked')}."
+    })

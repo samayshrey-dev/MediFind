@@ -435,11 +435,9 @@ class RazorpayAgenticCommerceTests(TestCase):
             self.assertEqual(res.status, "Accepted")
 
     def test_13_password_reset_flow(self):
-        """User requests password reset and sets a new password."""
+        """User requests OTP password reset, receives 6-digit OTP, and sets a new password."""
         from django.core import mail
-        from django.contrib.auth.tokens import default_token_generator
-        from django.utils.http import urlsafe_base64_encode
-        from django.utils.encoding import force_bytes
+        from medifind.models import PasswordResetOTP
 
         user = User.objects.create_user(username="reset_tester", email="reset@example.com", password="old_password_123")
 
@@ -448,33 +446,41 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertEqual(resp_get.status_code, 200)
         self.assertContains(resp_get, "Forgot password?")
 
-        # 2. POST email to trigger reset link
-        resp_post = self.client.post("/password-reset/", {"email": "reset@example.com"}, follow=True)
+        # 2. POST identifier to trigger 6-digit OTP dispatch
+        resp_post = self.client.post("/password-reset/", {"identifier": "reset@example.com"}, follow=True)
         self.assertEqual(resp_post.status_code, 200)
-        self.assertContains(resp_post, "Check your inbox")
+        self.assertContains(resp_post, "Verify OTP")
         self.assertEqual(len(mail.outbox), 1)
 
-        # 3. Generate token & UID
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
+        # 3. Retrieve generated OTP
+        otp_record = PasswordResetOTP.objects.filter(user=user, is_used=False).first()
+        self.assertIsNotNone(otp_record)
+        self.assertEqual(len(otp_record.otp_code), 6)
 
-        # 4. GET reset confirm page
-        resp_confirm_get = self.client.get(f"/password-reset-confirm/{uid}/{token}/", follow=True)
-        self.assertEqual(resp_confirm_get.status_code, 200)
-        self.assertContains(resp_confirm_get, "Set new password")
-
-        # 5. POST new password to the confirmed session URL
-        target_url = resp_confirm_get.redirect_chain[0][0] if resp_confirm_get.redirect_chain else f"/password-reset-confirm/{uid}/{token}/"
-        resp_confirm_post = self.client.post(target_url, {
+        # 4. Test invalid OTP rejection
+        bad_post = self.client.post("/password-reset/verify/", {
+            "otp_code": "000000",
             "new_password1": "NewSecretPass456!",
             "new_password2": "NewSecretPass456!"
         }, follow=True)
-        self.assertEqual(resp_confirm_post.status_code, 200)
-        self.assertContains(resp_confirm_post, "Password reset successful!")
+        self.assertContains(bad_post, "Invalid OTP code")
+
+        # 5. POST valid OTP and new password
+        resp_verify = self.client.post("/password-reset/verify/", {
+            "otp_code": otp_record.otp_code,
+            "new_password1": "NewSecretPass456!",
+            "new_password2": "NewSecretPass456!"
+        }, follow=True)
+        self.assertEqual(resp_verify.status_code, 200)
+        self.assertContains(resp_verify, "Password reset successfully!")
+
+        otp_record.refresh_from_db()
+        self.assertTrue(otp_record.is_used)
 
         # 6. Verify login with new password
         login_success = self.client.login(username="reset_tester", password="NewSecretPass456!")
         self.assertTrue(login_success)
+
 
 
 

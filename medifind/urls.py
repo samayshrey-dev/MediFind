@@ -120,33 +120,18 @@ path(
 
     path(
         "password-reset/",
-        auth_views.PasswordResetView.as_view(
-            template_name="password_reset.html",
-            email_template_name="password_reset_email.html",
-            subject_template_name="password_reset_subject.txt"
-        ),
+        views.forgot_password_request,
         name="password_reset"
     ),
     path(
-        "password-reset/done/",
-        auth_views.PasswordResetDoneView.as_view(
-            template_name="password_reset_done.html"
-        ),
-        name="password_reset_done"
+        "password-reset/verify/",
+        views.forgot_password_verify,
+        name="password_reset_verify"
     ),
     path(
-        "password-reset-confirm/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
-            template_name="password_reset_confirm.html"
-        ),
-        name="password_reset_confirm"
-    ),
-    path(
-        "password-reset-complete/",
-        auth_views.PasswordResetCompleteView.as_view(
-            template_name="password_reset_complete.html"
-        ),
-        name="password_reset_complete"
+        "api/auth/resend-otp/",
+        views.forgot_password_resend_api,
+        name="password_reset_resend_otp"
     ),
 
     path(
