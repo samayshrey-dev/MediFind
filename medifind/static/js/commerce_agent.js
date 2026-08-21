@@ -95,10 +95,15 @@
 
   // Render Clean Commerce Results with Nearest, Cheapest & Complete Inventory
   function renderCommerceResults(data) {
-    const resultsContainer = document.getElementById('agentResultsArea');
-    if (!resultsContainer) return;
+    const topContainer = document.getElementById('agentTopMatchArea');
+    const otherContainer = document.getElementById('agentOtherOptionsArea');
+    const legacyContainer = document.getElementById('agentResultsArea');
 
-    let html = '';
+    const staticTop = document.getElementById('staticTopMatchArea');
+    const staticOther = document.getElementById('staticOtherOptionsArea');
+
+    let topHtml = '';
+    let otherHtml = '';
 
     // 1. Structured Search Context (Clean metadata chips)
     const intent = data.intent || {};
@@ -107,7 +112,7 @@
       intent.matched_medicine_name.toLowerCase() !== intent.medicine_query.toLowerCase();
 
     if (hasCorrection) {
-      html += `
+      topHtml += `
         <div class="alert alert-info border-0 rounded-4 py-2 px-3 mb-3 d-flex align-items-center justify-content-between shadow-sm">
           <div>
             <i class="fa-solid fa-circle-info text-primary me-2"></i>
@@ -119,7 +124,7 @@
     }
 
     if (intent.medicine_query || intent.max_distance_km) {
-      html += `
+      topHtml += `
         <div class="search-intent-bar shadow-sm mb-3">
           <span class="text-muted small fw-semibold me-1">Filters:</span>
           ${intent.matched_medicine_name ? `<span class="intent-pill"><i class="fa-solid fa-pills text-primary"></i> ${escapeHtml(intent.matched_medicine_name)}</span>` : (intent.medicine_query ? `<span class="intent-pill"><i class="fa-solid fa-pills text-primary"></i> ${escapeHtml(intent.medicine_query)}</span>` : '')}
@@ -131,10 +136,9 @@
       `;
     }
 
-
     // 2. Medical Safety Warning
     if (data.medical_safety_warning) {
-      html += `
+      topHtml += `
         <div class="alert alert-warning rounded-4 p-3 border-0 mb-3 shadow-sm d-flex align-items-start gap-2">
           <i class="fa-solid fa-triangle-exclamation text-warning fs-5 mt-1"></i>
           <div>
@@ -147,7 +151,7 @@
 
     // 3. Ambiguous Query Clarification
     if (data.needs_clarification) {
-      html += `
+      topHtml += `
         <div class="card border rounded-4 p-4 mb-3 shadow-sm bg-white">
           <h5 class="fw-bold text-dark mb-2">${escapeHtml(data.clarification_message || 'Which medicine do you need?')}</h5>
           <div class="d-flex flex-wrap gap-2 mt-3">
@@ -161,15 +165,15 @@
       `;
     }
 
-    // 4. Best Match & Side-by-Side Highlights (Cheapest & Nearest)
+    // 4. Best Match & Highlights
     if (data.best_match) {
       const bm = data.best_match;
       const cheapest = data.cheapest_option;
       const nearest = data.nearest_option;
 
-      html += `
+      topHtml += `
         <!-- BEST MATCH HERO CARD -->
-        <div class="recommended-card mb-4" style="border: 2px solid #10b981; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08);">
+        <div class="card h-100 mb-3" style="border: 2px solid #10b981; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08);">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <span class="badge bg-success text-white rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.5px;">
               ★ BEST MATCH
@@ -245,71 +249,22 @@
             </div>
           </div>
         </div>
-
-        <!-- Quick Comparison: Cheapest vs Nearest Highlights -->
-        <div class="row g-3 mb-4">
-          ${cheapest && cheapest.pharmacy_id !== bm.pharmacy_id ? `
-            <div class="col-md-6">
-              <div class="card border rounded-4 p-3 shadow-sm bg-white h-100" style="border-left: 4px solid #10b981 !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-bold">
-                    <i class="fa-solid fa-tag me-1"></i> Lowest Price Option
-                  </span>
-                  <span class="fs-5 fw-extrabold text-success">₹${parseFloat(cheapest.price).toFixed(2)}</span>
-                </div>
-                <h6 class="fw-bold text-dark mb-0 mt-2">${escapeHtml(cheapest.pharmacy_name)}</h6>
-                <div class="text-muted small mb-3">
-                  ${cheapest.distance_km !== null ? `<i class="fa-solid fa-location-dot text-muted me-1"></i> ${cheapest.distance_km} km away &bull; ` : ''}${cheapest.stock} in stock
-                </div>
-                <div class="mt-auto d-flex justify-content-between align-items-center">
-                  <a href="/pharmacy/${cheapest.pharmacy_id}/" class="text-muted small text-decoration-none">View store</a>
-                  <a href="/reserve/${cheapest.inventory_id}/" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold text-decoration-none">
-                    Review purchase &rarr;
-                  </a>
-                </div>
-              </div>
-            </div>
-          ` : ''}
-
-          ${nearest && nearest.pharmacy_id !== bm.pharmacy_id ? `
-            <div class="col-md-6">
-              <div class="card border rounded-4 p-3 shadow-sm bg-white h-100" style="border-left: 4px solid #0284c7 !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="badge bg-primary-subtle text-primary rounded-pill px-2.5 py-1 small fw-bold">
-                    <i class="fa-solid fa-location-crosshairs me-1"></i> Nearest Pharmacy
-                  </span>
-                  <span class="fs-5 fw-extrabold text-primary">${nearest.distance_km !== null ? `${nearest.distance_km} km` : 'Near you'}</span>
-                </div>
-                <h6 class="fw-bold text-dark mb-0 mt-2">${escapeHtml(nearest.pharmacy_name)}</h6>
-                <div class="text-muted small mb-3">
-                  ₹${parseFloat(nearest.price).toFixed(2)} &bull; ${nearest.stock} in stock &bull; ${nearest.is_open ? 'Open now' : 'Closed'}
-                </div>
-                <div class="mt-auto d-flex justify-content-between align-items-center">
-                  <a href="/pharmacy/${nearest.pharmacy_id}/" class="text-muted small text-decoration-none">View store</a>
-                  <a href="/reserve/${nearest.inventory_id}/" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold text-decoration-none">
-                    Review purchase &rarr;
-                  </a>
-                </div>
-              </div>
-            </div>
-          ` : ''}
-        </div>
       `;
     } else if (!data.needs_clarification && !data.medical_safety_warning) {
-      html += `
-        <div class="card border rounded-4 p-5 text-center my-4 shadow-sm bg-white">
-          <i class="fa-solid fa-box-open fs-2 text-muted mb-3"></i>
+      topHtml += `
+        <div class="card border rounded-4 p-5 text-center my-3 shadow-sm bg-white h-100 d-flex flex-column justify-content-center">
+          <i class="fa-solid fa-box-open fs-1 text-muted mb-3"></i>
           <h5 class="fw-bold text-dark mb-1">No medicines found nearby</h5>
           <p class="text-muted small mb-0">${escapeHtml(data.explanation || 'We could not find matching stock at nearby pharmacies. Try searching with a broader name or increasing your search radius.')}</p>
         </div>
       `;
     }
 
-    // 5. "OTHER OPTIONS" List
+    // 5. "OTHER OPTIONS" List (Full screen width 3-4 column grid)
     const otherOptions = (data.all_options || []).filter(opt => !data.best_match || opt.inventory_id !== data.best_match.inventory_id);
 
     if (otherOptions.length > 0) {
-      html += `
+      otherHtml += `
         <div class="mt-4 mb-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
@@ -318,17 +273,17 @@
             <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
           </div>
 
-          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
             ${otherOptions.map((opt, idx) => `
               <div class="col">
-                <div class="card border rounded-4 p-3 shadow-sm bg-white h-100 d-flex flex-column justify-content-between hover-elevate" style="transition: all 0.2s ease;">
+                <div class="card border rounded-4 p-3.5 shadow-sm bg-white h-100 d-flex flex-column justify-content-between hover-elevate" style="transition: all 0.2s ease;">
                   <div>
                     <!-- Header with Name & Open status -->
-                    <div class="d-flex justify-content-between align-items-start gap-1 mb-2">
-                      <h6 class="fw-bold text-dark mb-0 text-truncate" style="font-size: 0.92rem; max-width: 72%;" title="${escapeHtml(opt.pharmacy_name)}">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                      <h6 class="fw-bold text-dark mb-0 fs-6" title="${escapeHtml(opt.pharmacy_name)}">
                         ${escapeHtml(opt.pharmacy_name)}
                       </h6>
-                      <span class="badge ${opt.is_open ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} rounded-pill px-2 py-0.5" style="font-size: 0.68rem; flex-shrink: 0;">
+                      <span class="badge ${opt.is_open ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} rounded-pill px-2 py-0.5" style="font-size: 0.72rem; flex-shrink: 0;">
                         ● ${opt.is_open ? 'Open' : 'Closed'}
                       </span>
                     </div>
@@ -336,7 +291,7 @@
                     <!-- Price & Stock -->
                     <div class="d-flex justify-content-between align-items-baseline mb-2">
                       <span class="fs-4 fw-extrabold text-dark">₹${parseFloat(opt.price).toFixed(2)}</span>
-                      <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                      <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.75rem;">
                         ${opt.stock > 0 ? `${opt.stock} in stock` : 'Out of stock'}
                       </span>
                     </div>
@@ -344,18 +299,18 @@
                     <!-- Distance & Location -->
                     <div class="text-muted small mb-3">
                       ${opt.distance_km !== null ? `<div class="text-primary fw-medium mb-1"><i class="fa-solid fa-location-dot me-1"></i> <strong>${opt.distance_km} km away</strong></div>` : ''}
-                      <div class="text-truncate text-secondary" style="font-size: 0.78rem;" title="${escapeHtml(opt.pharmacy_address || opt.pharmacy_city || '')}">
+                      <div class="text-secondary" style="font-size: 0.82rem;" title="${escapeHtml(opt.pharmacy_address || opt.pharmacy_city || '')}">
                         ${escapeHtml(opt.pharmacy_address || opt.pharmacy_city || '')}
                       </div>
                     </div>
                   </div>
 
                   <!-- Actions -->
-                  <div class="pt-2 border-top d-flex gap-2">
-                    <a href="https://maps.google.com/?q=${opt.latitude},${opt.longitude}" target="_blank" class="btn btn-sm btn-light border rounded-pill flex-fill py-1.5 text-center text-decoration-none" style="font-size: 0.78rem;">
-                      <i class="fa-solid fa-diamond-turn-right text-primary me-0.5"></i> Maps
+                  <div class="pt-3 border-top d-flex gap-2">
+                    <a href="https://maps.google.com/?q=${opt.latitude},${opt.longitude}" target="_blank" class="btn btn-sm btn-light border rounded-pill flex-fill py-2 text-center text-decoration-none" style="font-size: 0.82rem;">
+                      <i class="fa-solid fa-diamond-turn-right text-primary me-1"></i> Maps
                     </a>
-                    <a href="/reserve/${opt.inventory_id}/" class="btn btn-sm btn-outline-primary rounded-pill flex-fill py-1.5 fw-semibold text-center text-decoration-none" style="font-size: 0.78rem;">
+                    <a href="/reserve/${opt.inventory_id}/" class="btn btn-sm btn-outline-primary rounded-pill flex-fill py-2 fw-semibold text-center text-decoration-none" style="font-size: 0.82rem;">
                       Reserve &rarr;
                     </a>
                   </div>
@@ -365,6 +320,21 @@
           </div>
         </div>
       `;
+    }
+
+    // Write to DOM
+    if (topContainer && otherContainer) {
+      if (staticTop) staticTop.classList.add('d-none');
+      if (staticOther) staticOther.classList.add('d-none');
+
+      topContainer.innerHTML = topHtml;
+      topContainer.classList.remove('d-none');
+
+      otherContainer.innerHTML = otherHtml;
+      otherContainer.classList.remove('d-none');
+    } else if (legacyContainer) {
+      legacyContainer.innerHTML = topHtml + otherHtml;
+      legacyContainer.classList.remove('d-none');
     }
 
     // 6. Developer / Activity Log Details (Collapsible)

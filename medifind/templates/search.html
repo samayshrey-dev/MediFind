@@ -8,7 +8,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
 {% block content %}
 
 <section class="py-4" style="background: var(--surface-secondary); min-height: 85vh;">
-  <div class="container py-2">
+  <div class="container-fluid px-3 px-lg-4 px-xl-5 py-2">
 
     <!-- ===================================== -->
     <!-- CENTERPIECE SEARCH STUDIO -->
@@ -34,7 +34,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
         <input type="hidden" name="lng" id="userLng" value="{{ request.GET.lng|default:'' }}">
 
         <div class="row align-items-center g-2">
-          <div class="col-lg-9">
+          <div class="col-lg-9 col-xl-10">
             <div class="position-relative">
               <input
                 id="medicineSearch"
@@ -49,7 +49,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
             </div>
           </div>
 
-          <div class="col-lg-3 d-grid">
+          <div class="col-lg-3 col-xl-2 d-grid">
             <button
               type="submit"
               id="searchSubmitBtn"
@@ -103,188 +103,184 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
     </div>
 
     <!-- ===================================== -->
-    <!-- MAIN RESULTS & MAP SPLIT -->
+    <!-- TOP ROW: SPOTLIGHT BEST MATCH & MAP -->
     <!-- ===================================== -->
-    <div class="row g-4">
-      <!-- Pharmacy Results Column -->
-      <div class="col-lg-7">
-        <!-- Dynamic Results Area (Populated by search with Best Match, Why, and Other Options) -->
-        <div id="agentResultsArea" class="d-none"></div>
+    <div class="row g-4 mb-4 align-items-stretch">
+      <!-- Best Match Column -->
+      <div class="col-lg-7 col-xl-8">
+        <div id="agentTopMatchArea" class="d-none"></div>
 
-        <div id="staticResultsArea">
-        {% if did_you_mean %}
-          <div class="alert alert-info border-0 rounded-4 py-2 px-3 mb-3 d-flex align-items-center justify-content-between shadow-sm">
-            <div>
-              <i class="fa-solid fa-magnifying-glass text-primary me-2"></i>
-              <span class="text-dark">Showing results for <strong>{{ did_you_mean }}</strong></span>
-              <small class="text-muted ms-1">(searched for "{{ query }}")</small>
+        <div id="staticTopMatchArea">
+          {% if did_you_mean %}
+            <div class="alert alert-info border-0 rounded-4 py-2 px-3 mb-3 d-flex align-items-center justify-content-between shadow-sm">
+              <div>
+                <i class="fa-solid fa-magnifying-glass text-primary me-2"></i>
+                <span class="text-dark">Showing results for <strong>{{ did_you_mean }}</strong></span>
+                <small class="text-muted ms-1">(searched for "{{ query }}")</small>
+              </div>
             </div>
-          </div>
-        {% endif %}
-
-        <div class="d-flex justify-content-between align-items-center mb-3 reveal">
-          <h5 class="fw-bold text-dark mb-0">
-            {{ inventory|length }} Available Results
-          </h5>
-          {% if query %}
-            <span class="text-muted small">for "{% if did_you_mean %}{{ did_you_mean }}{% else %}{{ query }}{% endif %}"</span>
           {% endif %}
-        </div>
 
-
-
-        {% if best_match_item %}
-          <!-- BEST MATCH HERO CARD -->
-          <div class="card mb-4 reveal" style="border: 2px solid #10b981; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08);">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="badge bg-success text-white rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.5px;">
-                ★ BEST MATCH
-              </span>
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge {% if best_match_item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2.5 py-1 small fw-semibold">
-                  ● {% if best_match_item.is_open %}Open Now{% else %}Closed{% endif %}
-                </span>
-                <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">
-                  {{ best_match_item.quantity }} available
-                </span>
-              </div>
-            </div>
-
-            <div class="row align-items-center g-4">
-              <div class="col-lg-7">
-                <div class="d-flex align-items-baseline gap-2 mb-1">
-                  <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹{{ best_match_item.price }}</span>
-                  <span class="text-muted small">/ unit</span>
-                  {% if best_match_item.medicine.prescription_required %}
-                    <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0.5 ms-2" style="font-size: 0.72rem;">
-                      Prescription Required
-                    </span>
-                  {% endif %}
-                </div>
-
-                <h4 class="fw-bold text-dark mb-1">{{ best_match_item.pharmacy.name }}</h4>
-                <p class="text-muted small mb-3">
-                  <i class="fa-solid fa-location-dot text-primary me-1"></i>
-                  {% if best_match_item.distance_km %}<strong>{{ best_match_item.distance_km }} km away</strong> &bull; {% endif %}
-                  {{ best_match_item.pharmacy.address }}, {{ best_match_item.pharmacy.city }}
-                </p>
-
-                <!-- "WHY?" Callout Box -->
-                <div class="p-3 rounded-3 mb-2" style="background: #f0fdf4; border-left: 4px solid #10b981;">
-                  <div class="fw-extrabold text-success small mb-1 d-flex align-items-center gap-1.5" style="letter-spacing: 0.3px;">
-                    <i class="fa-solid fa-circle-check"></i> WHY?
-                  </div>
-                  <div class="text-dark small fw-medium" style="line-height: 1.5;">
-                    {{ explanation }}
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-lg-5 text-lg-end border-start-lg ps-lg-4">
-                <div class="p-3 bg-light rounded-4 border text-start">
-                  <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-muted small fw-semibold">Unit Price:</span>
-                    <span class="fs-4 fw-extrabold text-success">₹{{ best_match_item.price }}</span>
-                  </div>
-                  <div class="d-flex flex-column gap-2">
-                    <a href="{% url 'reserve_medicine' best_match_item.id %}" class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2">
-                      <i class="fa-solid fa-bolt"></i> Reserve &amp; Pay
-                    </a>
-                    <a href="{% url 'pharmacy_detail' best_match_item.pharmacy.id %}" class="btn btn-outline-secondary w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2">
-                      View Store Info
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- OTHER OPTIONS (3-COLUMN RESPONSIVE GRID) -->
-          {% if other_items %}
-            <div class="mt-4 mb-4 reveal">
+          {% if best_match_item %}
+            <!-- BEST MATCH HERO CARD -->
+            <div class="card h-100 reveal" style="border: 2px solid #10b981; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08);">
               <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
-                  OTHER OPTIONS ({{ other_items|length }} stores nearby)
-                </h5>
-                <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
+                <span class="badge bg-success text-white rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.5px;">
+                  ★ BEST MATCH
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge {% if best_match_item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2.5 py-1 small fw-semibold">
+                    ● {% if best_match_item.is_open %}Open Now{% else %}Closed{% endif %}
+                  </span>
+                  <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">
+                    {{ best_match_item.quantity }} available
+                  </span>
+                </div>
               </div>
 
-              <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-                {% for item in other_items %}
-                  <div class="col">
-                    <div class="card border rounded-4 p-3 shadow-sm bg-white h-100 d-flex flex-column justify-content-between hover-elevate" style="transition: all 0.2s ease;">
-                      <div>
-                        <!-- Header with Name & Open status -->
-                        <div class="d-flex justify-content-between align-items-start gap-1 mb-2">
-                          <h6 class="fw-bold text-dark mb-0 text-truncate" style="font-size: 0.92rem; max-width: 72%;" title="{{ item.pharmacy.name }}">
-                            {{ item.pharmacy.name }}
-                          </h6>
-                          <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.68rem; flex-shrink: 0;">
-                            ● {% if item.is_open %}Open{% else %}Closed{% endif %}
-                          </span>
-                        </div>
+              <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                  <div class="d-flex align-items-baseline gap-2 mb-1">
+                    <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹{{ best_match_item.price }}</span>
+                    <span class="text-muted small">/ unit</span>
+                    {% if best_match_item.medicine.prescription_required %}
+                      <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0.5 ms-2" style="font-size: 0.72rem;">
+                        Prescription Required
+                      </span>
+                    {% endif %}
+                  </div>
 
-                        <!-- Price & Stock -->
-                        <div class="d-flex justify-content-between align-items-baseline mb-2">
-                          <span class="fs-4 fw-extrabold text-dark">₹{{ item.price }}</span>
-                          <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
-                            {{ item.quantity }} in stock
-                          </span>
-                        </div>
+                  <h4 class="fw-bold text-dark mb-1">{{ best_match_item.pharmacy.name }}</h4>
+                  <p class="text-muted small mb-3">
+                    <i class="fa-solid fa-location-dot text-primary me-1"></i>
+                    {% if best_match_item.distance_km %}<strong>{{ best_match_item.distance_km }} km away</strong> &bull; {% endif %}
+                    {{ best_match_item.pharmacy.address }}, {{ best_match_item.pharmacy.city }}
+                  </p>
 
-                        <!-- Distance & Location -->
-                        <div class="text-muted small mb-3">
-                          {% if item.distance_km %}
-                            <div class="text-primary fw-medium mb-1"><i class="fa-solid fa-location-dot me-1"></i> <strong>{{ item.distance_km }} km away</strong></div>
-                          {% endif %}
-                          <div class="text-truncate text-secondary" style="font-size: 0.78rem;" title="{{ item.pharmacy.address }}, {{ item.pharmacy.city }}">
-                            {{ item.pharmacy.address }}, {{ item.pharmacy.city }}
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Actions -->
-                      <div class="pt-2 border-top d-flex gap-2">
-                        <a href="https://maps.google.com/?q={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}" target="_blank" class="btn btn-sm btn-light border rounded-pill flex-fill py-1.5 text-center text-decoration-none" style="font-size: 0.78rem;">
-                          <i class="fa-solid fa-diamond-turn-right text-primary me-0.5"></i> Maps
-                        </a>
-                        <a href="{% url 'reserve_medicine' item.id %}" class="btn btn-sm btn-outline-primary rounded-pill flex-fill py-1.5 fw-semibold text-center text-decoration-none" style="font-size: 0.78rem;">
-                          Reserve &rarr;
-                        </a>
-                      </div>
+                  <!-- "WHY?" Callout Box -->
+                  <div class="p-3 rounded-3 mb-2" style="background: #f0fdf4; border-left: 4px solid #10b981;">
+                    <div class="fw-extrabold text-success small mb-1 d-flex align-items-center gap-1.5" style="letter-spacing: 0.3px;">
+                      <i class="fa-solid fa-circle-check"></i> WHY?
+                    </div>
+                    <div class="text-dark small fw-medium" style="line-height: 1.5;">
+                      {{ explanation }}
                     </div>
                   </div>
-                {% endfor %}
+                </div>
+
+                <div class="col-lg-5 text-lg-end border-start-lg ps-lg-4">
+                  <div class="p-3 bg-light rounded-4 border text-start">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <span class="text-muted small fw-semibold">Unit Price:</span>
+                      <span class="fs-4 fw-extrabold text-success">₹{{ best_match_item.price }}</span>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                      <a href="{% url 'reserve_medicine' best_match_item.id %}" class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Reserve &amp; Pay
+                      </a>
+                      <a href="{% url 'pharmacy_detail' best_match_item.pharmacy.id %}" class="btn btn-outline-secondary w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2">
+                        View Store Info
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="card border rounded-4 p-5 text-center bg-white shadow-sm h-100 d-flex flex-column justify-content-center reveal">
+              <i class="fa-solid fa-box-open fs-1 text-muted mb-3"></i>
+              <h5 class="fw-bold text-dark mb-1">No medicines found</h5>
+              <p class="text-muted small mb-3">Try searching by medicine name (e.g. Dolo 650, Paracetamol, Pan 40) or clearing filters.</p>
+              <div>
+                <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">
+                  View all medicines
+                </a>
               </div>
             </div>
           {% endif %}
-        {% else %}
-          <div class="card border rounded-4 p-5 text-center bg-white shadow-sm reveal">
-            <i class="fa-solid fa-box-open fs-1 text-muted mb-3"></i>
-            <h5 class="fw-bold text-dark mb-1">No medicines found</h5>
-            <p class="text-muted small mb-3">Try searching by medicine name (e.g. Dolo 650, Paracetamol, Pan 40) or clearing filters.</p>
-            <div>
-              <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">
-                View all medicines
-              </a>
-            </div>
-          </div>
-        {% endif %}
+        </div>
       </div>
 
       <!-- Map Column -->
-      <div class="col-lg-5">
-        <div class="card border rounded-4 shadow-sm p-3 bg-white sticky-top reveal-scale" style="top: 90px;">
+      <div class="col-lg-5 col-xl-4">
+        <div class="card border rounded-4 shadow-sm p-3 bg-white h-100 reveal-scale" style="min-height: 380px;">
           <div class="d-flex justify-content-between align-items-center mb-2 px-1">
             <span class="fw-bold text-dark small"><i class="fa-solid fa-map-location-dot text-primary me-1"></i> Nearby Stores</span>
             <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted p-0" id="locateMeBtn">
               <i class="fa-solid fa-location-crosshairs me-1"></i> My Location
             </button>
           </div>
-          <div id="map" style="height: 460px; border-radius: var(--radius); z-index: 1;"></div>
+          <div id="map" style="height: 340px; border-radius: var(--radius); z-index: 1;"></div>
         </div>
       </div>
     </div>
+
+    <!-- ===================================== -->
+    <!-- BOTTOM SECTION: OTHER OPTIONS (FULL SCREEN WIDTH 3-4 COLUMNS) -->
+    <!-- ===================================== -->
+    <div id="agentOtherOptionsArea" class="d-none"></div>
+
+    <div id="staticOtherOptionsArea">
+      {% if other_items %}
+        <div class="mt-4 mb-4 reveal">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
+              OTHER OPTIONS ({{ other_items|length }} stores nearby)
+            </h5>
+            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
+          </div>
+
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+            {% for item in other_items %}
+              <div class="col">
+                <div class="card border rounded-4 p-3.5 shadow-sm bg-white h-100 d-flex flex-column justify-content-between hover-elevate" style="transition: all 0.2s ease;">
+                  <div>
+                    <!-- Header with Name & Open status -->
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                      <h6 class="fw-bold text-dark mb-0 fs-6" title="{{ item.pharmacy.name }}">
+                        {{ item.pharmacy.name }}
+                      </h6>
+                      <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.72rem; flex-shrink: 0;">
+                        ● {% if item.is_open %}Open{% else %}Closed{% endif %}
+                      </span>
+                    </div>
+
+                    <!-- Price & Stock -->
+                    <div class="d-flex justify-content-between align-items-baseline mb-2">
+                      <span class="fs-4 fw-extrabold text-dark">₹{{ item.price }}</span>
+                      <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.75rem;">
+                        {{ item.quantity }} in stock
+                      </span>
+                    </div>
+
+                    <!-- Distance & Location -->
+                    <div class="text-muted small mb-3">
+                      {% if item.distance_km %}
+                        <div class="text-primary fw-medium mb-1"><i class="fa-solid fa-location-dot me-1"></i> <strong>{{ item.distance_km }} km away</strong></div>
+                      {% endif %}
+                      <div class="text-secondary" style="font-size: 0.82rem;">
+                        {{ item.pharmacy.address }}, {{ item.pharmacy.city }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="pt-3 border-top d-flex gap-2">
+                    <a href="https://maps.google.com/?q={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}" target="_blank" class="btn btn-sm btn-light border rounded-pill flex-fill py-2 text-center text-decoration-none" style="font-size: 0.82rem;">
+                      <i class="fa-solid fa-diamond-turn-right text-primary me-1"></i> Maps
+                    </a>
+                    <a href="{% url 'reserve_medicine' item.id %}" class="btn btn-sm btn-outline-primary rounded-pill flex-fill py-2 fw-semibold text-center text-decoration-none" style="font-size: 0.82rem;">
+                      Reserve &rarr;
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
   </div>
 </section>
 
