@@ -12,6 +12,7 @@ from collections import Counter
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
+from decimal import Decimal
 import json
 
 
@@ -96,12 +97,14 @@ def home(request):
     user_pharmacy = None
     pharmacy_inventory_count = 0
     pharmacy_pending_count = 0
+    today_orders_count = 0
+    low_stock_count = 0
+    today_sales = Decimal("0.00")
 
     if request.user.is_authenticated:
         if hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
             user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
             if not user_pharmacy:
-                # Match by email, username or first pharmacy
                 user_pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first()
                 if not user_pharmacy:
                     user_pharmacy = Pharmacy.objects.filter(owner_name__icontains=request.user.username).first()
@@ -110,14 +113,24 @@ def home(request):
                 if user_pharmacy:
                     request.user.userprofile.pharmacy = user_pharmacy
                     request.user.userprofile.save(update_fields=["pharmacy"])
-            if user_pharmacy:
-                pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
-                pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
         elif request.user.is_superuser:
             user_pharmacy = Pharmacy.objects.first()
-            if user_pharmacy:
-                pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
-                pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
+
+        if user_pharmacy:
+            pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
+            pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
+            low_stock_count = Inventory.objects.filter(pharmacy=user_pharmacy, quantity__lte=10).count()
+            
+            today_date = timezone.now().date()
+            today_orders_qs = Reservation.objects.filter(pharmacy=user_pharmacy, requested_at__date=today_date)
+            today_orders_count = today_orders_qs.count()
+            
+            # Compute real sales from completed/paid orders today
+            paid_or_collected = today_orders_qs.filter(Q(is_paid=True) | Q(status__in=["Accepted", "Collected"]))
+            for r in paid_or_collected:
+                inv = Inventory.objects.filter(pharmacy=user_pharmacy, medicine=r.medicine).first()
+                if inv and inv.price:
+                    today_sales += (inv.price * r.quantity)
 
     medicines = Medicine.objects.all()[:8]
     pharmacies = Pharmacy.objects.filter(is_active=True)[:4]
@@ -136,6 +149,9 @@ def home(request):
         "user_pharmacy": user_pharmacy,
         "pharmacy_inventory_count": pharmacy_inventory_count,
         "pharmacy_pending_count": pharmacy_pending_count,
+        "today_orders_count": today_orders_count,
+        "low_stock_count": low_stock_count,
+        "today_sales": today_sales,
     }
 
     return render(
@@ -1506,7 +1522,11 @@ def delete_pharmacy(request, pk):
 
 @pharmacy_required
 def inventory(request):
-    query = request.GET.get("q")
+    query = request.GET.get("q", "").strip()
+    category = request.GET.get("category", "").strip()
+    stock_status = request.GET.get("stock_status", "all").strip().lower()
+    sort = request.GET.get("sort", "name").strip()
+
     pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
     if not pharmacy:
         pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
@@ -1515,42 +1535,77 @@ def inventory(request):
             request.user.userprofile.save(update_fields=["pharmacy"])
 
     if request.user.is_superuser and not pharmacy:
-        inventory = Inventory.objects.select_related(
-            "medicine",
-            "pharmacy"
-        ).order_by(
-            "medicine__name"
-        )
+        base_qs = Inventory.objects.select_related("medicine", "pharmacy")
     else:
-        inventory = Inventory.objects.select_related(
-            "medicine",
-            "pharmacy"
-        ).filter(
-            pharmacy=pharmacy
-        ).order_by(
-            "medicine__name"
-        )
+        base_qs = Inventory.objects.select_related("medicine", "pharmacy").filter(pharmacy=pharmacy)
 
+    # Compute overall metric counts before filtering
+    total_count = base_qs.count()
+    in_stock_count = base_qs.filter(quantity__gt=10).count()
+    low_stock_count = base_qs.filter(quantity__gt=0, quantity__lte=10).count()
+    out_of_stock_count = base_qs.filter(quantity=0).count()
+
+    # Search filter
+    filtered_qs = base_qs
     if query:
-        inventory = inventory.filter(
-            medicine__name__icontains=query
+        filtered_qs = filtered_qs.filter(
+            Q(medicine__name__icontains=query) |
+            Q(medicine__brand__icontains=query) |
+            Q(batch_number__icontains=query)
         )
 
-    paginator = Paginator(
-        inventory,
-        10
-    )
+    # Category filter
+    if category and category != "All":
+        filtered_qs = filtered_qs.filter(medicine__category__iexact=category)
 
+    # Stock status filter
+    if stock_status == "in_stock":
+        filtered_qs = filtered_qs.filter(quantity__gt=10)
+    elif stock_status == "low_stock":
+        filtered_qs = filtered_qs.filter(quantity__gt=0, quantity__lte=10)
+    elif stock_status == "out_of_stock":
+        filtered_qs = filtered_qs.filter(quantity=0)
+
+    # Sorting
+    if sort == "price_asc":
+        filtered_qs = filtered_qs.order_by("price")
+    elif sort == "price_desc":
+        filtered_qs = filtered_qs.order_by("-price")
+    elif sort == "stock_asc":
+        filtered_qs = filtered_qs.order_by("quantity")
+    elif sort == "stock_desc":
+        filtered_qs = filtered_qs.order_by("-quantity")
+    elif sort == "updated":
+        filtered_qs = filtered_qs.order_by("-updated_at")
+    else:
+        filtered_qs = filtered_qs.order_by("medicine__name")
+
+    # Categories list
+    categories = [
+        "Pain Relief", "Fever & Cold", "Allergy", "Digestive Health",
+        "Vitamins & Supplements", "Diabetes Care", "Blood Pressure",
+        "Skin Care", "First Aid", "Respiratory", "Antibiotic", "Heart"
+    ]
+
+    paginator = Paginator(filtered_qs, 12)
     page = request.GET.get("page")
-    inventory = paginator.get_page(page)
+    page_obj = paginator.get_page(page)
 
     return render(
         request,
         "inventory.html",
         {
-            "inventory": inventory,
+            "inventory": page_obj,
             "query": query,
-            "pharmacy": pharmacy
+            "category": category,
+            "stock_status": stock_status,
+            "sort": sort,
+            "pharmacy": pharmacy,
+            "total_count": total_count,
+            "in_stock_count": in_stock_count,
+            "low_stock_count": low_stock_count,
+            "out_of_stock_count": out_of_stock_count,
+            "categories": categories,
         }
     )
 
@@ -1565,18 +1620,40 @@ def add_inventory(request):
             request.user.userprofile.save(update_fields=["pharmacy"])
 
     if request.method == "POST":
-        form = InventoryForm(
-            request.POST
-        )
+        form = InventoryForm(request.POST)
         if form.is_valid():
-            item = form.save(commit=False)
-            if not item.pharmacy_id and user_pharmacy:
+            medicine = form.cleaned_data.get("medicine")
+            quantity = form.cleaned_data.get("quantity", 0)
+            price = form.cleaned_data.get("price")
+            batch_number = form.cleaned_data.get("batch_number", "")
+            expiry_date = form.cleaned_data.get("expiry_date")
+            minimum_stock = form.cleaned_data.get("minimum_stock", 10)
+
+            # Smart duplicate check: update existing item instead of crashing
+            existing_item = Inventory.objects.filter(pharmacy=user_pharmacy, medicine=medicine).first()
+            if existing_item:
+                existing_item.quantity += quantity
+                if price is not None:
+                    existing_item.price = price
+                if batch_number:
+                    existing_item.batch_number = batch_number
+                if expiry_date:
+                    existing_item.expiry_date = expiry_date
+                if minimum_stock:
+                    existing_item.minimum_stock = minimum_stock
+                existing_item.save()
+                messages.success(
+                    request,
+                    f"Stock updated for {medicine.name}. New total inventory: {existing_item.quantity} units (₹{existing_item.price})."
+                )
+            else:
+                item = form.save(commit=False)
                 item.pharmacy = user_pharmacy
-            item.save()
-            messages.success(
-                request,
-                "Inventory added successfully."
-            )
+                item.save()
+                messages.success(
+                    request,
+                    f"Successfully added {medicine.name} ({item.quantity} units at ₹{item.price}) to your store inventory."
+                )
             return redirect("inventory")
     else:
         initial_data = {}
@@ -1584,12 +1661,15 @@ def add_inventory(request):
             initial_data["pharmacy"] = user_pharmacy.id
         form = InventoryForm(initial=initial_data)
 
+    medicines = Medicine.objects.all().order_by("name")
+
     return render(
         request,
         "add_inventory.html",
         {
             "form": form,
-            "user_pharmacy": user_pharmacy
+            "user_pharmacy": user_pharmacy,
+            "medicines": medicines,
         }
     )
 # ==========================================================
@@ -1598,15 +1678,15 @@ def add_inventory(request):
 
 @pharmacy_required
 def edit_inventory(request, pk):
-
     item = get_object_or_404(
         Inventory,
         pk=pk
     )
+    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
 
     if (
         not request.user.is_superuser
-        and item.pharmacy != request.user.userprofile.pharmacy
+        and item.pharmacy != user_pharmacy
     ):
         return render(
             request,
@@ -1615,34 +1695,32 @@ def edit_inventory(request, pk):
         )
 
     if request.method == "POST":
-
         form = InventoryForm(
             request.POST,
             instance=item
         )
-
         if form.is_valid():
-
             form.save()
-
             messages.success(
                 request,
-                "Inventory updated successfully."
+                f"Updated stock details for {item.medicine.name}."
             )
-
             return redirect("inventory")
-
     else:
-
         form = InventoryForm(
             instance=item
         )
 
+    medicines = Medicine.objects.all().order_by("name")
     return render(
         request,
         "add_inventory.html",
         {
-            "form": form
+            "form": form,
+            "item": item,
+            "medicines": medicines,
+            "user_pharmacy": user_pharmacy,
+            "is_edit": True,
         }
     )
 
@@ -2094,6 +2172,9 @@ def reserve_medicine(request, inventory_id):
 
 @pharmacy_required
 def reservations(request):
+    tab = request.GET.get("tab", "all").strip().lower()
+    query = request.GET.get("q", "").strip()
+
     pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
     if not pharmacy:
         pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
@@ -2102,17 +2183,60 @@ def reservations(request):
             request.user.userprofile.save(update_fields=["pharmacy"])
 
     if request.user.is_superuser and not pharmacy:
-        reservations = Reservation.objects.filter(status="Pending")
+        base_qs = Reservation.objects.select_related("customer", "medicine", "pharmacy")
     else:
-        reservations = Reservation.objects.filter(pharmacy=pharmacy, status="Pending")
+        base_qs = Reservation.objects.select_related("customer", "medicine", "pharmacy").filter(pharmacy=pharmacy)
 
-    reservations = reservations.order_by("-requested_at")
+    # Tab counts
+    total_count = base_qs.count()
+    pending_count = base_qs.filter(status="Pending").count()
+    accepted_count = base_qs.filter(status="Accepted").count()
+    collected_count = base_qs.filter(status="Collected").count()
+    cancelled_count = base_qs.filter(status__in=["Rejected", "Cancelled"]).count()
+
+    filtered_qs = base_qs
+    if tab == "pending":
+        filtered_qs = filtered_qs.filter(status="Pending")
+    elif tab in ("processing", "ready", "accepted"):
+        filtered_qs = filtered_qs.filter(status="Accepted")
+    elif tab in ("completed", "collected"):
+        filtered_qs = filtered_qs.filter(status="Collected")
+    elif tab in ("cancelled", "rejected"):
+        filtered_qs = filtered_qs.filter(status__in=["Rejected", "Cancelled"])
+
+    if query:
+        filtered_qs = filtered_qs.filter(
+            Q(medicine__name__icontains=query) |
+            Q(customer__username__icontains=query) |
+            Q(customer__first_name__icontains=query)
+        )
+
+    # Attach unit price, formatted total and human-readable order code
+    reservations_list = list(filtered_qs.order_by("-requested_at"))
+    for r in reservations_list:
+        inv = Inventory.objects.filter(pharmacy=r.pharmacy, medicine=r.medicine).first()
+        unit_price = inv.price if inv and inv.price else Decimal("22.00")
+        r.unit_price = unit_price
+        r.calculated_total = unit_price * r.quantity
+        r.order_code = f"MF-{r.id:04d}"
+
+    paginator = Paginator(reservations_list, 15)
+    page = request.GET.get("page")
+    page_obj = paginator.get_page(page)
+
     return render(
         request,
         "reservations.html",
         {
-            "reservations": reservations,
-            "pharmacy": pharmacy
+            "reservations": page_obj,
+            "pharmacy": pharmacy,
+            "tab": tab,
+            "query": query,
+            "total_count": total_count,
+            "pending_count": pending_count,
+            "accepted_count": accepted_count,
+            "collected_count": collected_count,
+            "cancelled_count": cancelled_count,
         }
     )
 
@@ -2126,23 +2250,87 @@ def reservation_history(request):
             request.user.userprofile.pharmacy = pharmacy
             request.user.userprofile.save(update_fields=["pharmacy"])
 
-    if request.user.is_superuser and not pharmacy:
-        history = Reservation.objects.exclude(status="Pending")
-    else:
-        history = Reservation.objects.filter(pharmacy=pharmacy).exclude(status="Pending")
+    reservations_qs = Reservation.objects.filter(pharmacy=pharmacy).select_related("medicine", "customer").order_by("-requested_at")
+    inventory_updates = Inventory.objects.filter(pharmacy=pharmacy).select_related("medicine").order_by("-updated_at")[:20]
 
-    history = history.order_by("-requested_at")
+    timeline_items = []
+    today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
+
+    for r in reservations_qs[:40]:
+        inv = Inventory.objects.filter(pharmacy=r.pharmacy, medicine=r.medicine).first()
+        price = inv.price if inv and inv.price else Decimal("22.00")
+        total = price * r.quantity
+
+        if r.status == "Collected":
+            badge_type = "completed"
+            title = f"Order #{r.id:04d} Completed"
+            desc = f"{r.medicine.name} · {r.quantity} unit(s) · ₹{total} collected by {r.customer.username}"
+            icon = "fa-circle-check"
+            color_class = "success"
+        elif r.status == "Accepted":
+            badge_type = "ready"
+            title = f"Order #{r.id:04d} Ready for Pickup"
+            desc = f"{r.medicine.name} · {r.quantity} unit(s) reserved for {r.customer.username}"
+            icon = "fa-clock"
+            color_class = "primary"
+        elif r.status == "Rejected":
+            badge_type = "cancelled"
+            title = f"Order #{r.id:04d} Rejected"
+            desc = f"Reservation for {r.medicine.name} declined"
+            icon = "fa-circle-xmark"
+            color_class = "danger"
+        else:
+            badge_type = "pending"
+            title = f"New Order #{r.id:04d} Received"
+            desc = f"{r.medicine.name} · {r.quantity} unit(s) from {r.customer.username}"
+            icon = "fa-clipboard-list"
+            color_class = "warning"
+
+        timeline_items.append({
+            "title": title,
+            "description": desc,
+            "timestamp": r.requested_at,
+            "badge_type": badge_type,
+            "icon": icon,
+            "color_class": color_class,
+        })
+
+    for item in inventory_updates:
+        timeline_items.append({
+            "title": f"Stock Updated: {item.medicine.name}",
+            "description": f"Current inventory: {item.quantity} units · ₹{item.price} (Batch: {item.batch_number or 'N/A'})",
+            "timestamp": item.updated_at,
+            "badge_type": "inventory",
+            "icon": "fa-boxes-stacked",
+            "color_class": "info",
+        })
+
+    timeline_items.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    grouped_timeline = {"Today": [], "Yesterday": [], "Earlier": []}
+    for item in timeline_items:
+        item_date = item["timestamp"].date()
+        if item_date == today:
+            grouped_timeline["Today"].append(item)
+        elif item_date == yesterday:
+            grouped_timeline["Yesterday"].append(item)
+        else:
+            grouped_timeline["Earlier"].append(item)
+
     return render(
         request,
         "reservation_history.html",
         {
-            "history": history,
-            "pharmacy": pharmacy
+            "pharmacy": pharmacy,
+            "grouped_timeline": grouped_timeline,
+            "total_activities": len(timeline_items),
         }
     )
-@login_required
-def accept_reservation(request, id):
 
+
+@pharmacy_required
+def accept_reservation(request, id):
     reservation = get_object_or_404(
         Reservation,
         id=id
@@ -2161,23 +2349,29 @@ def accept_reservation(request, id):
     )
 
     inventory.quantity -= reservation.quantity
-
     if inventory.quantity < 0:
         inventory.quantity = 0
-
     inventory.save()
 
     messages.success(
         request,
-        "Reservation accepted successfully."
+        f"Order #MF-{reservation.id:04d} accepted and marked Ready for customer pickup."
     )
-
     return redirect("reservations")
 
 
-@login_required
-def reject_reservation(request, id):
+@pharmacy_required
+def complete_reservation(request, id):
+    reservation = get_object_or_404(Reservation, id=id)
+    reservation.status = "Collected"
+    reservation.save()
+    notify_reservation_update(reservation, "COLLECTED", request.user)
+    messages.success(request, f"Order #MF-{reservation.id:04d} for {reservation.medicine.name} marked as Collected / Completed.")
+    return redirect("reservations")
 
+
+@pharmacy_required
+def reject_reservation(request, id):
     reservation = get_object_or_404(
         Reservation,
         id=id
@@ -2186,19 +2380,17 @@ def reject_reservation(request, id):
     reservation.status = "Rejected"
     reservation.save()
 
-    # Send Bidirectional Notifications for Both Customer & Pharmacy Owner
     notify_reservation_update(reservation, "REJECTED", request.user)
 
     messages.success(
         request,
-        "Reservation rejected."
+        f"Order #MF-{reservation.id:04d} rejected."
     )
-
     return redirect("reservations")
+
 
 @login_required
 def my_reservations(request):
-
     reservations = Reservation.objects.filter(
         customer=request.user
     ).order_by("-requested_at")
@@ -2210,7 +2402,8 @@ def my_reservations(request):
             "reservations": reservations
         }
     )
-@login_required
+
+
 @login_required
 def search_history(request):
     searches = SearchHistory.objects.filter(
@@ -2300,58 +2493,55 @@ def search_history(request):
         }
     )
 
+
 @pharmacy_required
 def pharmacy_dashboard(request):
     pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
     if not pharmacy:
-        if request.user.is_superuser:
-            pharmacy = Pharmacy.objects.first()
-        if not pharmacy:
-            messages.info(request, "Please register a pharmacy first.")
-            return redirect("add_pharmacy")
+        pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
+        if hasattr(request.user, "userprofile") and pharmacy:
+            request.user.userprofile.pharmacy = pharmacy
+            request.user.userprofile.save(update_fields=["pharmacy"])
 
-    inventory = Inventory.objects.filter(
-        pharmacy=pharmacy
-    ).select_related("medicine")
+    current_hour = timezone.localtime().hour
+    if current_hour < 12:
+        greeting = "Good morning"
+    elif current_hour < 17:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
 
+    inventory_qs = Inventory.objects.filter(pharmacy=pharmacy).select_related("medicine")
+    reservations_qs = Reservation.objects.filter(pharmacy=pharmacy).select_related("medicine", "customer").order_by("-requested_at")
 
-    reservations = Reservation.objects.filter(
-        pharmacy=pharmacy
-    ).order_by("-requested_at")[:10]
+    today_date = timezone.now().date()
+    today_orders_qs = reservations_qs.filter(requested_at__date=today_date)
+    today_orders_count = today_orders_qs.count()
+    pending_orders_count = reservations_qs.filter(status="Pending").count()
+    total_medicines_count = inventory_qs.count()
+    low_stock_items = inventory_qs.filter(quantity__lte=10).order_by("quantity")[:8]
+    low_stock_count = inventory_qs.filter(quantity__lte=10).count()
 
-    low_stock = inventory.filter(
-        quantity__lte=10
-    )
+    recent_orders = []
+    for r in reservations_qs[:6]:
+        inv = Inventory.objects.filter(pharmacy=pharmacy, medicine=r.medicine).first()
+        price = inv.price if inv and inv.price else Decimal("22.00")
+        r.unit_price = price
+        r.calculated_total = price * r.quantity
+        r.order_code = f"MF-{r.id:04d}"
+        recent_orders.append(r)
 
     context = {
-
-    "pharmacy": pharmacy,
-
-    "inventory": inventory,
-
-    "inventory_count": inventory.count(),
-
-    "reservation_count": Reservation.objects.filter(
-        pharmacy=pharmacy
-    ).count(),
-
-    "low_stock": low_stock,
-
-    "reservations": reservations,
-
-    "available_stock": inventory.filter(
-        quantity__gt=0
-    ).count(),
-
-    "out_of_stock": inventory.filter(
-        quantity=0
-    ).count(),
-
-    "expiring_stock": inventory.filter(
-        expiry_date__lte=timezone.now().date() + timedelta(days=30)
-    ).count(),
-
-}
+        "pharmacy": pharmacy,
+        "greeting": greeting,
+        "today_orders_count": today_orders_count,
+        "pending_orders_count": pending_orders_count,
+        "total_medicines_count": total_medicines_count,
+        "low_stock_count": low_stock_count,
+        "low_stock_items": low_stock_items,
+        "recent_orders": recent_orders,
+        "available_stock_count": inventory_qs.filter(quantity__gt=10).count(),
+    }
     return render(
         request,
         "pharmacy_dashboard.html",

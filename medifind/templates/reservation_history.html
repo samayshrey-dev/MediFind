@@ -1,203 +1,138 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-Reservation History | MediAI
+History — {{ pharmacy.name|default:"Store Portal" }} | MediAI
 {% endblock %}
 
 {% block content %}
+<div class="container py-5" style="margin-top: 70px; max-width: 960px;">
 
-<section class="py-5 bg-light" style="margin-top: 70px;">
-
-<div class="container py-4">
-
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 pb-4 mb-4 border-bottom reveal hero-entrance">
     <div>
-
-      <h2 class="fw-bold text-dark mb-1">
-
-        <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Reservation Request History
-
-      </h2>
-
-      <p class="text-muted mb-0">Archived log of accepted, rejected, and collected orders.</p>
-
-    </div>
-
-    <a href="{% url 'reservations' %}" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
-
-      <i class="fa-solid fa-arrow-left me-2"></i> Pending Requests
-
-    </a>
-
-  </div>
-
-  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-
-    <div class="card-body p-0">
-
-      <div class="table-responsive">
-
-        <table class="table align-middle table-hover mb-0">
-
-          <thead>
-
-            <tr>
-
-              <th class="ps-4">Customer</th>
-
-              <th>Medicine</th>
-
-              <th>Quantity</th>
-
-              <th>Payment Mode</th>
-
-              <th>Status</th>
-
-              <th>Date & Time</th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {% for reservation in history %}
-
-              <tr>
-
-                <td class="ps-4">
-
-                  <strong class="d-block">{{ reservation.customer.first_name|default:reservation.customer.username }}</strong>
-
-                  <small class="text-muted">{{ reservation.customer.email }}</small>
-
-                </td>
-
-                <td>
-
-                  <strong>
-
-                    <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none hover-primary">
-
-                      {{ reservation.medicine.name }}
-
-                    </a>
-
-                  </strong>
-
-                  <small class="text-muted d-block">{{ reservation.medicine.brand }}</small>
-
-                </td>
-
-                <td>
-
-                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
-
-                    {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}
-
-                  </span>
-
-                </td>
-
-                <td>
-
-                  {% if reservation.is_paid %}
-
-                    <span class="badge bg-emerald-light text-emerald rounded-pill px-3 py-1 fw-bold">
-
-                      <i class="fa-solid fa-circle-check me-1"></i> Paid Online
-
-                    </span>
-
-                  {% else %}
-
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold">
-
-                      <i class="fa-solid fa-store me-1"></i> Pay on Pickup
-
-                    </span>
-
-                  {% endif %}
-
-                </td>
-
-                <td>
-
-                  {% if reservation.status == "Accepted" %}
-
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 fw-bold">
-
-                      <i class="fa-solid fa-circle-check me-1"></i> Accepted
-
-                    </span>
-
-                  {% elif reservation.status == "Rejected" %}
-
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 fw-bold">
-
-                      <i class="fa-solid fa-circle-xmark me-1"></i> Rejected
-
-                    </span>
-
-                  {% elif reservation.status == "Collected" %}
-
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
-
-                      <i class="fa-solid fa-box me-1"></i> Collected
-
-                    </span>
-
-                  {% else %}
-
-                    <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 fw-bold">
-
-                      {{ reservation.status }}
-
-                    </span>
-
-                  {% endif %}
-
-                </td>
-
-                <td>
-
-                  <small class="text-muted fw-semibold">{{ reservation.requested_at|date:"d M Y, h:i A" }}</small>
-
-                </td>
-
-              </tr>
-
-            {% empty %}
-
-              <tr>
-
-                <td colspan="5" class="text-center py-5">
-
-                  <i class="fa-solid fa-clock-rotate-left fa-3x text-muted mb-3"></i>
-
-                  <h5 class="fw-bold text-dark">No Reservation History Found</h5>
-
-                  <p class="text-muted mb-0">Accepted and rejected reservations will appear here once processed.</p>
-
-                </td>
-
-              </tr>
-
-            {% endfor %}
-
-          </tbody>
-
-        </table>
-
+      <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border text-muted small fw-semibold mb-2">
+        <i class="fa-solid fa-clock-rotate-left text-success"></i>
+        <span>{{ pharmacy.name|default:"Partner Store" }} &bull; Operational Logs</span>
       </div>
-
+      <h1 class="fw-extrabold text-dark display-6 mb-1" style="letter-spacing: -0.8px;">
+        History
+      </h1>
+      <p class="text-muted mb-0" style="font-size: 1.05rem;">
+        Chronological activity log of completed orders, stock additions, and inventory updates.
+      </p>
     </div>
 
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'reservations' %}" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold small">
+        <i class="fa-solid fa-clipboard-list me-1.5"></i> Active Orders
+      </a>
+    </div>
   </div>
+
+  <!-- Activity Timeline Container -->
+  {% if total_activities > 0 %}
+    <div class="reveal">
+      <!-- Section: Today -->
+      {% if grouped_timeline.Today %}
+        <div class="mb-5">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge bg-dark text-white rounded-pill px-3 py-1 fw-bold small">Today</span>
+            <span class="text-muted small">({{ grouped_timeline.Today|length }} events)</span>
+          </div>
+
+          <div class="card border rounded-4 bg-white shadow-xs p-3 p-md-4">
+            <div class="d-flex flex-column gap-3">
+              {% for item in grouped_timeline.Today %}
+                <div class="d-flex align-items-start gap-3 p-2.5 rounded-3 bg-light border-0 hover-lift">
+                  <div class="p-2.5 rounded-3 bg-{{ item.color_class }}-subtle text-{{ item.color_class }} mt-0.5 flex-shrink-0" style="font-size: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid {{ item.icon }}"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <strong class="text-dark d-block" style="font-size: 0.95rem;">{{ item.title }}</strong>
+                      <small class="text-muted fw-semibold">{{ item.timestamp|time:"h:i A" }}</small>
+                    </div>
+                    <p class="text-muted small mb-0 mt-0.5">{{ item.description }}</p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Section: Yesterday -->
+      {% if grouped_timeline.Yesterday %}
+        <div class="mb-5">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge bg-secondary text-white rounded-pill px-3 py-1 fw-semibold small">Yesterday</span>
+            <span class="text-muted small">({{ grouped_timeline.Yesterday|length }} events)</span>
+          </div>
+
+          <div class="card border rounded-4 bg-white shadow-xs p-3 p-md-4">
+            <div class="d-flex flex-column gap-3">
+              {% for item in grouped_timeline.Yesterday %}
+                <div class="d-flex align-items-start gap-3 p-2.5 rounded-3 bg-light border-0 hover-lift">
+                  <div class="p-2.5 rounded-3 bg-{{ item.color_class }}-subtle text-{{ item.color_class }} mt-0.5 flex-shrink-0" style="font-size: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid {{ item.icon }}"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <strong class="text-dark d-block" style="font-size: 0.95rem;">{{ item.title }}</strong>
+                      <small class="text-muted fw-semibold">{{ item.timestamp|time:"h:i A" }}</small>
+                    </div>
+                    <p class="text-muted small mb-0 mt-0.5">{{ item.description }}</p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Section: Earlier -->
+      {% if grouped_timeline.Earlier %}
+        <div class="mb-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge bg-light border text-dark rounded-pill px-3 py-1 fw-semibold small">Earlier</span>
+            <span class="text-muted small">({{ grouped_timeline.Earlier|length }} events)</span>
+          </div>
+
+          <div class="card border rounded-4 bg-white shadow-xs p-3 p-md-4">
+            <div class="d-flex flex-column gap-3">
+              {% for item in grouped_timeline.Earlier %}
+                <div class="d-flex align-items-start gap-3 p-2.5 rounded-3 bg-light border-0 hover-lift">
+                  <div class="p-2.5 rounded-3 bg-{{ item.color_class }}-subtle text-{{ item.color_class }} mt-0.5 flex-shrink-0" style="font-size: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid {{ item.icon }}"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <strong class="text-dark d-block" style="font-size: 0.95rem;">{{ item.title }}</strong>
+                      <small class="text-muted">{{ item.timestamp|date:"d M Y, h:i A" }}</small>
+                    </div>
+                    <p class="text-muted small mb-0 mt-0.5">{{ item.description }}</p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="card border rounded-4 bg-white shadow-xs p-5 text-center reveal">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-muted mb-3 mx-auto" style="width: 56px; height: 56px;">
+        <i class="fa-solid fa-clock-rotate-left fs-4"></i>
+      </div>
+      <h5 class="fw-bold text-dark mb-1">Your pharmacy activity will appear here.</h5>
+      <p class="text-muted small mb-0" style="max-width: 420px; margin: 0 auto;">
+        As you update inventory stock, fulfill customer reservations, and confirm collections, your operational history will be logged here.
+      </p>
+    </div>
+  {% endif %}
 
 </div>
-
-</section>
-
 {% endblock %}

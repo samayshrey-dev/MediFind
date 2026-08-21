@@ -1,138 +1,414 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
-Reservation Requests | MediAI
+Orders — {{ pharmacy.name|default:"Store Portal" }} | MediAI
 {% endblock %}
 
 {% block content %}
+<div class="container py-5" style="margin-top: 70px; max-width: 1200px;">
 
-<section class="py-5 bg-light" style="margin-top: 70px;">
-
-<div class="container py-4">
-
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 pb-4 mb-4 border-bottom reveal hero-entrance">
     <div>
-
-      <h2 class="fw-bold text-dark mb-1">
-
-        <i class="fa-solid fa-bell-concierge text-primary me-2"></i> Pending Reservation Requests
-
-      </h2>
-
-      <p class="text-muted mb-0">Manage customer pickup orders for your pharmacy store.</p>
-
+      <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border text-muted small fw-semibold mb-2">
+        <i class="fa-solid fa-clipboard-list text-success"></i>
+        <span>{{ pharmacy.name|default:"Partner Store" }} &bull; Order Management</span>
+      </div>
+      <h1 class="fw-extrabold text-dark display-6 mb-1" style="letter-spacing: -0.8px;">
+        Orders
+      </h1>
+      <p class="text-muted mb-0" style="font-size: 1.05rem;">
+        Manage customer purchases and reservations.
+      </p>
     </div>
 
-    <a href="{% url 'reservation_history' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
-
-      <i class="fa-solid fa-clock-rotate-left me-1"></i> Reservation History
-
-    </a>
-
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'reservation_history' %}" class="btn btn-outline-secondary rounded-pill px-3.5 py-2 fw-semibold small d-flex align-items-center gap-1.5">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span>Activity History</span>
+      </a>
+    </div>
   </div>
 
-  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+  <!-- Status Tabs Navigation & Search -->
+  <div class="card border rounded-4 p-3 bg-white shadow-xs mb-4 reveal">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <!-- Tabs -->
+      <div class="d-flex align-items-center gap-1.5 flex-wrap">
+        <a href="?tab=all{% if query %}&q={{ query }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1.5 {% if tab == 'all' or not tab %}btn-dark text-white fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.82rem;">
+          All <span class="badge bg-secondary-subtle text-dark ms-1">{{ total_count }}</span>
+        </a>
+        <a href="?tab=pending{% if query %}&q={{ query }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1.5 {% if tab == 'pending' %}btn-warning text-dark fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.82rem;">
+          <span class="d-inline-block rounded-circle bg-warning me-1" style="width: 6px; height: 6px;"></span>
+          Pending <span class="badge bg-warning-subtle text-warning-emphasis ms-1">{{ pending_count }}</span>
+        </a>
+        <a href="?tab=ready{% if query %}&q={{ query }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1.5 {% if tab == 'ready' or tab == 'accepted' or tab == 'processing' %}btn-primary text-white fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.82rem;">
+          <span class="d-inline-block rounded-circle bg-primary me-1" style="width: 6px; height: 6px;"></span>
+          Ready / Processing <span class="badge bg-primary-subtle text-primary ms-1">{{ accepted_count }}</span>
+        </a>
+        <a href="?tab=completed{% if query %}&q={{ query }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1.5 {% if tab == 'completed' or tab == 'collected' %}btn-success text-white fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.82rem;">
+          <span class="d-inline-block rounded-circle bg-success me-1" style="width: 6px; height: 6px;"></span>
+          Completed <span class="badge bg-success-subtle text-success ms-1">{{ collected_count }}</span>
+        </a>
+        <a href="?tab=cancelled{% if query %}&q={{ query }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1.5 {% if tab == 'cancelled' or tab == 'rejected' %}btn-danger text-white fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.82rem;">
+          Cancelled <span class="badge bg-danger-subtle text-danger ms-1">{{ cancelled_count }}</span>
+        </a>
+      </div>
 
-    <div class="card-body p-0">
+      <!-- Search Box -->
+      <form method="GET" class="d-flex align-items-center">
+        <input type="hidden" name="tab" value="{{ tab|default:'all' }}">
+        <div class="input-group input-group-sm">
+          <input type="text" name="q" class="form-control bg-light rounded-start-pill ps-3" placeholder="Search orders..." value="{{ query|default:'' }}" style="max-width: 220px;">
+          <button type="submit" class="btn btn-dark rounded-end-pill px-3">
+            <i class="fa-solid fa-magnifying-glass small"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-      {% if reservations %}
-
-        <div class="table-responsive">
-
-          <table class="table align-middle table-hover mb-0">
-
-            <thead>
+  <!-- Orders Data Container -->
+  <div class="card border rounded-4 bg-white shadow-xs overflow-hidden reveal">
+    {% if reservations %}
+      <!-- Desktop Table View -->
+      <div class="table-responsive d-none d-md-block">
+        <table class="table align-middle mb-0 table-hover">
+          <thead class="bg-light">
+            <tr style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;" class="text-muted">
+              <th class="ps-3.5 py-3">Order ID</th>
+              <th class="py-3">Customer</th>
+              <th class="py-3">Medicine &amp; Quantity</th>
+              <th class="py-3">Total Amount</th>
+              <th class="py-3">Payment</th>
+              <th class="py-3">Status</th>
+              <th class="py-3">Date / Time</th>
+              <th class="text-end pe-3.5 py-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reservations %}
               <tr>
-                <th class="ps-4">Customer</th>
-                <th>Medicine</th>
-                <th>Quantity</th>
-                <th>Payment Mode</th>
-                <th>Status</th>
-                <th>Requested Date</th>
-                <th class="text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for reservation in reservations %}
-                <tr>
-                  <td class="ps-4">
-                    <strong class="d-block">{{ reservation.customer.first_name|default:reservation.customer.username }}</strong>
-                    <small class="text-muted">{{ reservation.customer.email }}</small>
-                  </td>
-                  <td>
-                    <strong>
-                      <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none hover-primary">
-                        {{ reservation.medicine.name }}
-                      </a>
-                    </strong>
-                    <small class="text-muted d-block">{{ reservation.medicine.brand }}</small>
-                  </td>
-                  <td>
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
-                      {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}
+                <!-- Order ID -->
+                <td class="ps-3.5 py-3">
+                  <strong class="text-dark">#{{ r.order_code }}</strong>
+                </td>
+
+                <!-- Customer -->
+                <td class="py-3">
+                  <span class="text-dark fw-semibold d-block">{{ r.customer.first_name|default:r.customer.username }}</span>
+                  <small class="text-muted">{{ r.customer.email }}</small>
+                </td>
+
+                <!-- Medicine & Quantity -->
+                <td class="py-3">
+                  <strong class="text-dark d-block">
+                    <a href="{% url 'medicine_detail' r.medicine.id %}" class="text-decoration-none text-dark hover-primary">
+                      {{ r.medicine.name }}
+                    </a>
+                  </strong>
+                  <span class="badge bg-light border text-dark rounded-pill px-2 py-0.5 small">{{ r.quantity }} unit(s)</span>
+                </td>
+
+                <!-- Total Amount -->
+                <td class="py-3 fw-bold text-dark fs-6">
+                  ₹{{ r.calculated_total|floatformat:2 }}
+                </td>
+
+                <!-- Payment Status -->
+                <td class="py-3">
+                  {% if r.is_paid %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold d-inline-flex align-items-center gap-1">
+                      <i class="fa-solid fa-circle-check" style="font-size: 0.7rem;"></i> Paid Online
                     </span>
-                  </td>
-                  <td>
-                    {% if reservation.is_paid %}
-                      <span class="badge bg-emerald-light text-emerald rounded-pill px-3 py-1 fw-bold">
-                        <i class="fa-solid fa-circle-check me-1"></i> Paid Online (Razorpay)
-                      </span>
-                    {% else %}
-                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold">
-                        <i class="fa-solid fa-hand-holding-dollar me-1"></i> Collect at Counter
-                      </span>
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold d-inline-flex align-items-center gap-1">
+                      <i class="fa-solid fa-store" style="font-size: 0.7rem;"></i> Pay on pickup
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Order Status -->
+                <td class="py-3">
+                  {% if r.status == "Pending" %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                      ● Pending
+                    </span>
+                  {% elif r.status == "Accepted" %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                      ● Ready for pickup
+                    </span>
+                  {% elif r.status == "Collected" %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                      ● Completed
+                    </span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                      ● {{ r.status }}
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Date / Time -->
+                <td class="py-3">
+                  <small class="text-muted fw-normal d-block">{{ r.requested_at|date:"d M Y" }}</small>
+                  <small class="text-muted fw-semibold">{{ r.requested_at|time:"h:i A" }}</small>
+                </td>
+
+                <!-- State-Dependent Actions -->
+                <td class="text-end pe-3.5 py-3">
+                  <div class="d-flex align-items-center justify-content-end gap-1.5">
+                    {% if r.status == "Pending" %}
+                      <a href="{% url 'accept_reservation' r.id %}" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold shadow-xs">
+                        Accept &amp; Hold
+                      </a>
+                      <a href="{% url 'reject_reservation' r.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 small" onclick="return confirm('Decline order #{{ r.order_code }}?')">
+                        Reject
+                      </a>
+                    {% elif r.status == "Accepted" %}
+                      <a href="{% url 'complete_reservation' r.id %}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
+                        Mark Collected
+                      </a>
                     {% endif %}
-                  </td>
-                  <td>
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1 fw-bold">
-                      <i class="fa-solid fa-clock me-1"></i> {{ reservation.status }}
-                    </span>
-                  </td>
-                  <td>
-                    <small class="text-muted fw-semibold">{{ reservation.requested_at|date:"d M Y, h:i A" }}</small>
-                  </td>
-                  <td class="text-center">
-                    <div class="btn-group">
-                      <a href="{% url 'accept_reservation' reservation.id %}" class="btn btn-success btn-sm fw-bold px-3">
-                        <i class="fa-solid fa-check me-1"></i> Accept
-                      </a>
-                      <a href="{% url 'reject_reservation' reservation.id %}" class="btn btn-danger btn-sm fw-bold px-3">
-                        <i class="fa-solid fa-xmark me-1"></i> Reject
-                      </a>
-                    </div>
-                  </td>
-                </tr>
+                    <!-- View Details Modal Trigger -->
+                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-dark small" data-bs-toggle="modal" data-bs-target="#orderModal{{ r.id }}" title="View Order Timeline">
+                      Details
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
+      <!-- Mobile Stacked Card View -->
+      <div class="d-md-none p-3 d-flex flex-column gap-3">
+        {% for r in reservations %}
+          <div class="card border rounded-3 p-3 bg-white shadow-xs">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <strong class="text-dark d-block">#{{ r.order_code }}</strong>
+                <small class="text-muted">{{ r.customer.username }} &bull; {{ r.requested_at|date:"d M, H:i" }}</small>
+              </div>
+              <div>
+                {% if r.status == "Pending" %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 small fw-semibold">Pending</span>
+                {% elif r.status == "Accepted" %}
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 small fw-semibold">Ready</span>
+                {% elif r.status == "Collected" %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 small fw-semibold">Completed</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5 small fw-semibold">{{ r.status }}</span>
+                {% endif %}
+              </div>
+            </div>
 
-              {% endfor %}
+            <div class="p-2.5 bg-light rounded-3 my-2">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="text-dark">{{ r.medicine.name }}</strong>
+                <span class="badge bg-white border text-dark">{{ r.quantity }} unit(s)</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center small text-muted">
+                <span>Total: <strong class="text-dark">₹{{ r.calculated_total|floatformat:2 }}</strong></span>
+                <span>{% if r.is_paid %}<span class="text-success fw-bold"><i class="fa-solid fa-circle-check"></i> Paid Online</span>{% else %}Pay on pickup{% endif %}</span>
+              </div>
+            </div>
 
-            </tbody>
+            <div class="d-flex justify-content-between align-items-center mt-2 pt-1 gap-2">
+              <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-muted small" data-bs-toggle="modal" data-bs-target="#orderModal{{ r.id }}">
+                Details
+              </button>
+              <div class="d-flex gap-1.5">
+                {% if r.status == "Pending" %}
+                  <a href="{% url 'accept_reservation' r.id %}" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold shadow-xs">
+                    Accept
+                  </a>
+                  <a href="{% url 'reject_reservation' r.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 small" onclick="return confirm('Decline order?')">
+                    Reject
+                  </a>
+                {% elif r.status == "Accepted" %}
+                  <a href="{% url 'complete_reservation' r.id %}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
+                    Mark Collected
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
 
-          </table>
-
+      <!-- Pagination -->
+      {% if reservations.has_other_pages %}
+        <div class="p-3.5 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <small class="text-muted">
+            Showing page {{ reservations.number }} of {{ reservations.paginator.num_pages }} ({{ reservations.paginator.count }} total orders)
+          </small>
+          <nav aria-label="Orders pagination">
+            <ul class="pagination pagination-sm mb-0">
+              {% if reservations.has_previous %}
+                <li class="page-item">
+                  <a class="page-link rounded-pill px-3 me-1" href="?page={{ reservations.previous_page_number }}{% if tab %}&tab={{ tab }}{% endif %}{% if query %}&q={{ query }}{% endif %}">&larr; Previous</a>
+                </li>
+              {% endif %}
+              {% if reservations.has_next %}
+                <li class="page-item">
+                  <a class="page-link rounded-pill px-3" href="?page={{ reservations.next_page_number }}{% if tab %}&tab={{ tab }}{% endif %}{% if query %}&q={{ query }}{% endif %}">Next &rarr;</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
         </div>
-
-      {% else %}
-
-        <div class="text-center py-5">
-
-          <i class="fa-solid fa-inbox text-muted fa-4x mb-3"></i>
-
-          <h5 class="fw-bold text-dark">No Pending Reservation Requests</h5>
-
-          <p class="text-muted mb-0">When customers reserve medicines from your store, their orders will appear here.</p>
-
-        </div>
-
       {% endif %}
 
-    </div>
-
+    {% else %}
+      <!-- Empty State -->
+      <div class="text-center py-5 px-3">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-muted mb-3" style="width: 56px; height: 56px;">
+          <i class="fa-solid fa-clipboard-list fs-4"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-1">No orders yet.</h5>
+        <p class="text-muted small mb-0" style="max-width: 420px; margin: 0 auto;">
+          {% if query or tab != 'all' %}
+            No orders found under current filter criteria.
+          {% else %}
+            Customer orders and medicine pickup reservations will appear here.
+          {% endif %}
+        </p>
+        {% if query or tab != 'all' %}
+          <div class="mt-3">
+            <a href="{% url 'reservations' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1.5 fw-semibold">
+              View All Orders
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 
 </div>
 
-</section>
+<!-- Order Detail Modals with Timeline Track (Specification 9) -->
+{% for r in reservations %}
+  <div class="modal fade" id="orderModal{{ r.id }}" tabindex="-1" aria-labelledby="orderModalLabel{{ r.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+        <!-- Modal Header -->
+        <div class="modal-header border-bottom bg-light p-3.5">
+          <div>
+            <span class="badge bg-white border text-dark rounded-pill px-2.5 py-1 small fw-semibold">Order Details</span>
+            <h5 class="modal-title fw-bold text-dark mt-1" id="orderModalLabel{{ r.id }}">Order #{{ r.order_code }}</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body p-4">
+          <!-- Item Summary Box -->
+          <div class="p-3 bg-light rounded-3 border mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="fw-bold text-dark mb-0">{{ r.medicine.name }}</h6>
+                <small class="text-muted">{{ r.medicine.brand }} &bull; {{ r.medicine.category }}</small>
+              </div>
+              <span class="badge bg-primary text-white rounded-pill px-2.5 py-1">{{ r.quantity }} unit(s)</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top small">
+              <span class="text-muted">Unit Price: ₹{{ r.unit_price|floatformat:2 }}</span>
+              <span class="fw-bold text-dark fs-6">Total: ₹{{ r.calculated_total|floatformat:2 }}</span>
+            </div>
+          </div>
+
+          <!-- Customer & Payment Metadata -->
+          <div class="row g-3 mb-4 small">
+            <div class="col-6">
+              <span class="text-muted d-block">Customer</span>
+              <strong class="text-dark">{{ r.customer.first_name|default:r.customer.username }}</strong>
+              <small class="text-muted d-block">{{ r.customer.email }}</small>
+            </div>
+            <div class="col-6">
+              <span class="text-muted d-block">Payment Method</span>
+              {% if r.is_paid %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-bold">
+                  <i class="fa-solid fa-circle-check me-1"></i> Paid Online
+                </span>
+              {% else %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 fw-semibold">
+                  Pay on pickup
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Clean Order Timeline Track (Specification 9) -->
+          <h6 class="fw-bold text-dark mb-3 small text-uppercase" style="letter-spacing: 0.5px;">Order Lifecycle Timeline</h6>
+          <div class="position-relative ps-4 pb-2" style="border-left: 2px solid #e2e8f0; margin-left: 12px;">
+            <!-- Step 1: Order received -->
+            <div class="mb-3 position-relative">
+              <div class="position-absolute rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="left: -22px; top: 0; width: 18px; height: 18px; font-size: 0.6rem;">
+                <i class="fa-solid fa-check"></i>
+              </div>
+              <strong class="text-dark d-block small">Order received</strong>
+              <small class="text-muted">{{ r.requested_at|date:"d M Y, h:i A" }}</small>
+            </div>
+
+            <!-- Step 2: Payment confirmation -->
+            <div class="mb-3 position-relative">
+              <div class="position-absolute rounded-circle {% if r.is_paid or r.payment_method %}bg-success text-white{% else %}bg-secondary-subtle text-muted{% endif %} d-flex align-items-center justify-content-center" style="left: -22px; top: 0; width: 18px; height: 18px; font-size: 0.6rem;">
+                {% if r.is_paid %}<i class="fa-solid fa-check"></i>{% else %}&bull;{% endif %}
+              </div>
+              <strong class="text-dark d-block small">
+                {% if r.is_paid %}Payment confirmed (Razorpay){% else %}Payment on counter selected{% endif %}
+              </strong>
+              <small class="text-muted">{% if r.is_paid %}Verified test-mode payment{% else %}To be collected upon customer pickup{% endif %}</small>
+            </div>
+
+            <!-- Step 3: Pharmacy processing / ready -->
+            <div class="mb-3 position-relative">
+              <div class="position-absolute rounded-circle {% if r.status == 'Accepted' or r.status == 'Collected' %}bg-success text-white{% elif r.status == 'Pending' %}bg-warning text-dark{% else %}bg-danger text-white{% endif %} d-flex align-items-center justify-content-center" style="left: -22px; top: 0; width: 18px; height: 18px; font-size: 0.6rem;">
+                {% if r.status == 'Accepted' or r.status == 'Collected' %}<i class="fa-solid fa-check"></i>{% elif r.status == 'Pending' %}&bull;{% else %}&times;{% endif %}
+              </div>
+              <strong class="text-dark d-block small">Pharmacy hold &amp; verification</strong>
+              <small class="text-muted">
+                {% if r.status == 'Accepted' or r.status == 'Collected' %}Stock held &amp; verified for pickup{% elif r.status == 'Pending' %}Awaiting pharmacy confirmation{% else %}Order rejected / cancelled{% endif %}
+              </small>
+            </div>
+
+            <!-- Step 4: Ready / Collected -->
+            <div class="position-relative">
+              <div class="position-absolute rounded-circle {% if r.status == 'Collected' %}bg-success text-white{% else %}bg-light border text-muted{% endif %} d-flex align-items-center justify-content-center" style="left: -22px; top: 0; width: 18px; height: 18px; font-size: 0.6rem;">
+                {% if r.status == 'Collected' %}<i class="fa-solid fa-check"></i>{% else %}&bull;{% endif %}
+              </div>
+              <strong class="text-dark d-block small">Order collected</strong>
+              <small class="text-muted">
+                {% if r.status == 'Collected' %}Customer collected medicine{% else %}Pending store pickup{% endif %}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="modal-footer bg-light p-3 border-top d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+          <div class="d-flex gap-2">
+            {% if r.status == "Pending" %}
+              <a href="{% url 'accept_reservation' r.id %}" class="btn btn-success btn-sm rounded-pill px-3 fw-bold">
+                Accept &amp; Hold
+              </a>
+              <a href="{% url 'reject_reservation' r.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirm('Reject order?')">
+                Reject
+              </a>
+            {% elif r.status == "Accepted" %}
+              <a href="{% url 'complete_reservation' r.id %}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+                Mark Collected
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
 
 {% endblock %}

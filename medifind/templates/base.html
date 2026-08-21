@@ -70,6 +70,37 @@
 
   {% include 'footer.html' %}
 
+  {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
+  <!-- Mobile Merchant Bottom Navigation Bar -->
+  <nav class="merchant-mobile-bottom-nav d-lg-none fixed-bottom bg-white border-top shadow-lg py-1 px-2" style="z-index: 1040; backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.96);">
+    <div class="d-flex justify-content-around align-items-center">
+      <a href="{% url 'pharmacy_dashboard' %}" class="d-flex flex-column align-items-center justify-content-center text-decoration-none py-1 px-2 rounded-2 {% if request.resolver_match.url_name == 'pharmacy_dashboard' %}text-success fw-bold{% else %}text-muted{% endif %}" style="min-width: 54px; min-height: 44px;">
+        <i class="fa-solid fa-chart-pie fs-6 mb-0.5"></i>
+        <span style="font-size: 0.68rem;">Dashboard</span>
+      </a>
+      <a href="{% url 'inventory' %}" class="d-flex flex-column align-items-center justify-content-center text-decoration-none py-1 px-2 rounded-2 {% if request.resolver_match.url_name == 'inventory' %}text-success fw-bold{% else %}text-muted{% endif %}" style="min-width: 54px; min-height: 44px;">
+        <i class="fa-solid fa-boxes-stacked fs-6 mb-0.5"></i>
+        <span style="font-size: 0.68rem;">Inventory</span>
+      </a>
+      <a href="{% url 'add_inventory' %}" class="d-flex flex-column align-items-center justify-content-center text-decoration-none py-1 px-2 rounded-2 {% if request.resolver_match.url_name == 'add_inventory' %}text-success fw-bold{% else %}text-success{% endif %}" style="min-width: 54px; min-height: 44px;">
+        <i class="fa-solid fa-circle-plus fs-5 mb-0.5 text-success"></i>
+        <span style="font-size: 0.68rem; font-weight: 700;">+ Stock</span>
+      </a>
+      <a href="{% url 'reservations' %}" class="d-flex flex-column align-items-center justify-content-center text-decoration-none py-1 px-2 rounded-2 position-relative {% if request.resolver_match.url_name == 'reservations' %}text-success fw-bold{% else %}text-muted{% endif %}" style="min-width: 54px; min-height: 44px;">
+        <i class="fa-solid fa-clipboard-list fs-6 mb-0.5"></i>
+        <span style="font-size: 0.68rem;">Orders</span>
+        {% if pharmacy_pending_count and pharmacy_pending_count > 0 %}
+          <span class="position-absolute top-0 start-75 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 2px 4px;">{{ pharmacy_pending_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'reservation_history' %}" class="d-flex flex-column align-items-center justify-content-center text-decoration-none py-1 px-2 rounded-2 {% if request.resolver_match.url_name == 'reservation_history' %}text-success fw-bold{% else %}text-muted{% endif %}" style="min-width: 54px; min-height: 44px;">
+        <i class="fa-solid fa-clock-rotate-left fs-6 mb-0.5"></i>
+        <span style="font-size: 0.68rem;">History</span>
+      </a>
+    </div>
+  </nav>
+  {% endif %}
+
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

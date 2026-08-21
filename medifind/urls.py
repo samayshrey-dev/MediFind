@@ -170,6 +170,12 @@ path(
 ),
 
 path(
+    "reservations/<int:id>/complete/",
+    views.complete_reservation,
+    name="complete_reservation"
+),
+
+path(
     "reservations/<int:id>/reject/",
     views.reject_reservation,
     name="reject_reservation"

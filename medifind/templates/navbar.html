@@ -28,36 +28,49 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto ms-lg-4 align-items-lg-center">
         {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
-          <!-- Registered Pharmacy Name Pill -->
+          <!-- Store Identifier Badge -->
           <li class="nav-item me-lg-2">
-            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
               <i class="fa-solid fa-store"></i>
-              <span>{{ user.userprofile.pharmacy.name|default:"Pharmacy Portal" }}</span>
+              <span>{{ user.userprofile.pharmacy.name|default:"Partner Store" }}</span>
             </span>
           </li>
+          <!-- 1. Dashboard -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'pharmacy_dashboard' %}">
-              <i class="fa-solid fa-chart-line me-1 text-primary"></i> Dashboard
+            <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'pharmacy_dashboard' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'pharmacy_dashboard' %}">
+              <i class="fa-solid fa-chart-pie {% if request.resolver_match.url_name == 'pharmacy_dashboard' %}text-success{% else %}text-muted{% endif %}"></i>
+              <span>Dashboard</span>
             </a>
           </li>
+          <!-- 2. Inventory -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'inventory' %}">
-              <i class="fa-solid fa-boxes-stacked me-1 text-primary"></i> Inventory
+            <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'inventory' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'inventory' %}">
+              <i class="fa-solid fa-boxes-stacked {% if request.resolver_match.url_name == 'inventory' %}text-success{% else %}text-muted{% endif %}"></i>
+              <span>Inventory</span>
             </a>
           </li>
+          <!-- 3. Add Stock -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'add_inventory' %}">
-              <i class="fa-solid fa-plus-circle me-1 text-success"></i> Add Stock
+            <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'add_inventory' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'add_inventory' %}">
+              <i class="fa-solid fa-circle-plus {% if request.resolver_match.url_name == 'add_inventory' %}text-success{% else %}text-success{% endif %}"></i>
+              <span>Add Stock</span>
             </a>
           </li>
+          <!-- 4. Orders -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'reservations' %}">
-              <i class="fa-solid fa-clock me-1 text-warning"></i> Orders
+            <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'reservations' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservations' %}">
+              <i class="fa-solid fa-clipboard-list {% if request.resolver_match.url_name == 'reservations' %}text-success{% else %}text-muted{% endif %}"></i>
+              <span>Orders</span>
+              {% if pharmacy_pending_count and pharmacy_pending_count > 0 %}
+                <span class="badge bg-warning text-dark rounded-pill px-1.5 py-0.5 small" style="font-size: 0.68rem;">{{ pharmacy_pending_count }}</span>
+              {% endif %}
             </a>
           </li>
+          <!-- 5. History -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 fw-semibold text-dark" href="{% url 'reservation_history' %}">
-              <i class="fa-solid fa-history me-1 text-muted"></i> History
+            <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'reservation_history' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservation_history' %}">
+              <i class="fa-solid fa-clock-rotate-left {% if request.resolver_match.url_name == 'reservation_history' %}text-success{% else %}text-muted{% endif %}"></i>
+              <span>History</span>
             </a>
           </li>
         {% else %}
