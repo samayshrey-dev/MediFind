@@ -1,430 +1,191 @@
 {% extends "base.html" %}
-
 {% load static %}
 
 {% block title %}
-Sign Up | MediFind
+Sign Up | MedFinder
 {% endblock %}
 
 {% block content %}
 
-<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 70px;">
-
+<section class="py-5" style="background: var(--surface-secondary); min-height: 85vh;">
   <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-9">
 
-    <div class="row justify-content-center align-items-center">
-
-      <div class="col-lg-8 col-xl-7">
-
-        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-
-          <!-- Card Header Banner -->
-          <div class="bg-primary bg-gradient text-white p-4 p-md-5 text-center position-relative">
-
-            <div class="badge bg-white text-primary rounded-pill px-3 py-2 fw-semibold mb-3">
-              <i class="fa-solid fa-capsules me-1"></i> Join MediFind Platform
-            </div>
-
-            <h2 class="fw-bold mb-2">Create Your Account</h2>
-
-            <p class="mb-0 text-white-50">
-              Sign up to search medicines, locate pharmacies, and manage reservations seamlessly.
-            </p>
-
-          </div>
-
-          <div class="card-body p-4 p-md-5">
-
-            {% if form.errors %}
-
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
-
-              <div class="d-flex align-items-center">
-
-                <i class="fa-solid fa-circle-exclamation fs-4 me-3"></i>
-
-                <div>
-
-                  <strong>Please correct the errors below:</strong>
-
-                  <ul class="mb-0 mt-1 ps-3">
-
-                    {% for field in form %}
-
-                      {% for error in field.errors %}
-
-                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-
-                      {% endfor %}
-
-                    {% endfor %}
-
-                    {% for error in form.non_field_errors %}
-
-                      <li>{{ error }}</li>
-
-                    {% endfor %}
-
-                  </ul>
-
+        <div class="card border rounded-4 p-4 p-md-5 shadow-sm bg-white">
+          <div class="text-center mb-4">
+            <div class="mb-3 d-inline-flex justify-content-center">
+              <a class="navbar-brand d-inline-flex align-items-center brand-logo-link gap-2 text-decoration-none" href="{% url 'home' %}" aria-label="MedFinder Home">
+                <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: #10b981; border-radius: 10px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 19V8C5 6.89543 5.89543 6 7 6C7.82843 6 8.5657 6.50444 8.86443 7.27364L12 15.28L15.1356 7.27364C15.4343 6.50444 16.1716 6 17 6C18.1046 6 19 6.89543 19 8V19" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="5" r="1.8" fill="#ffffff"/>
+                  </svg>
                 </div>
-
-              </div>
-
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-
-            </div>
-
-            {% endif %}
-
-            <form method="POST" id="signupForm" novalidate>
-
-              {% csrf_token %}
-
-              <!-- Role Selector Tabs -->
-
-              <div class="mb-4 text-center">
-
-                <label class="form-label fw-bold d-block text-secondary mb-2">Account Type</label>
-
-                <div class="btn-group w-100 role-selector" role="group" aria-label="Select Account Type">
-
-                  <input type="radio" class="btn-check" name="role" id="roleCustomer" value="Customer" {% if form.role.value == 'Customer' or not form.role.value %}checked{% endif %}>
-
-                  <label class="btn btn-outline-primary py-3 rounded-start-3 fw-semibold" for="roleCustomer">
-                    <i class="fa-solid fa-user-check me-2 fs-5"></i> Customer / Patient
-                  </label>
-
-                  <input type="radio" class="btn-check" name="role" id="rolePharmacy" value="Pharmacy" {% if form.role.value == 'Pharmacy' %}checked{% endif %}>
-
-                  <label class="btn btn-outline-primary py-3 rounded-end-3 fw-semibold" for="rolePharmacy">
-                    <i class="fa-solid fa-hospital me-2 fs-5"></i> Pharmacy Owner
-                  </label>
-
-                </div>
-
-              </div>
-
-              <!-- User Information Grid -->
-              <div class="row g-3">
-
-                <div class="col-md-6">
-
-                  <label class="form-label fw-semibold text-dark">
-                    <i class="fa-solid fa-user text-primary me-1"></i> Full Name
-                  </label>
-
-                  <div class="input-group">
-
-                    <span class="input-group-text bg-light"><i class="fa-solid fa-id-card text-muted"></i></span>
-
-                    {{ form.first_name }}
-
-                  </div>
-
-                </div>
-
-                <div class="col-md-6">
-
-                  <label class="form-label fw-semibold text-dark">
-                    <i class="fa-solid fa-envelope text-primary me-1"></i> Email Address
-                  </label>
-
-                  <div class="input-group">
-
-                    <span class="input-group-text bg-light"><i class="fa-solid fa-at text-muted"></i></span>
-
-                    {{ form.email }}
-
-                  </div>
-
-                </div>
-
-                <div class="col-md-12">
-
-                  <label class="form-label fw-semibold text-dark">
-                    <i class="fa-solid fa-at text-primary me-1"></i> Username
-                  </label>
-
-                  <div class="input-group">
-
-                    <span class="input-group-text bg-light"><i class="fa-solid fa-user-tag text-muted"></i></span>
-
-                    {{ form.username }}
-
-                  </div>
-
-                </div>
-
-                <div class="col-md-6">
-
-                  <label class="form-label fw-semibold text-dark">
-                    <i class="fa-solid fa-lock text-primary me-1"></i> Password
-                  </label>
-
-                  <div class="input-group">
-
-                    <span class="input-group-text bg-light"><i class="fa-solid fa-key text-muted"></i></span>
-
-                    {{ form.password }}
-
-                    <button class="btn btn-outline-secondary toggle-pass-btn" type="button" data-target="id_password">
-                      <i class="fa-solid fa-eye"></i>
-                    </button>
-
-                  </div>
-
-                </div>
-
-                <div class="col-md-6">
-
-                  <label class="form-label fw-semibold text-dark">
-                    <i class="fa-solid fa-lock text-primary me-1"></i> Confirm Password
-                  </label>
-
-                  <div class="input-group">
-
-                    <span class="input-group-text bg-light"><i class="fa-solid fa-shield-halved text-muted"></i></span>
-
-                    {{ form.confirm_password }}
-
-                    <button class="btn btn-outline-secondary toggle-pass-btn" type="button" data-target="id_confirm_password">
-                      <i class="fa-solid fa-eye"></i>
-                    </button>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              <!-- PHARMACY REGISTRATION SECTION (Dynamically toggled) -->
-
-              <div id="pharmacyDetailsSection" class="mt-4 p-4 border rounded-3 bg-light d-none">
-
-                <div class="d-flex align-items-center mb-3">
-
-                  <div class="bg-primary text-white rounded-circle p-2 me-3">
-                    <i class="fa-solid fa-clinic-medical fs-5"></i>
-                  </div>
-
-                  <div>
-
-                    <h5 class="fw-bold mb-0 text-primary">Pharmacy Account Setup</h5>
-
-                    <small class="text-muted">Link an existing pharmacy or register a new one to manage inventory.</small>
-
-                  </div>
-
-                </div>
-
-                <!-- Pharmacy Option Radio -->
-
-                <div class="mb-3">
-
-                  <div class="form-check form-check-inline">
-
-                    <input class="form-check-input" type="radio" name="pharmacy_option" id="optExisting" value="existing" checked>
-
-                    <label class="form-check-label fw-semibold" for="optExisting">Link Existing Pharmacy</label>
-
-                  </div>
-
-                  <div class="form-check form-check-inline">
-
-                    <input class="form-check-input" type="radio" name="pharmacy_option" id="optNew" value="new">
-
-                    <label class="form-check-label fw-semibold" for="optNew">Create New Pharmacy Profile</label>
-
-                  </div>
-
-                </div>
-
-                <!-- Existing Pharmacy Selector -->
-
-                <div id="existingPharmacyBox" class="mb-3">
-
-                  <label class="form-label fw-semibold text-dark">Select Pharmacy</label>
-
-                  {{ form.existing_pharmacy }}
-
-                </div>
-
-                <!-- New Pharmacy Fields -->
-
-                <div id="newPharmacyBox" class="d-none">
-
-                  <div class="row g-3">
-
-                    <div class="col-md-6">
-
-                      <label class="form-label fw-semibold text-dark">Pharmacy Name</label>
-
-                      {{ form.new_pharmacy_name }}
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                      <label class="form-label fw-semibold text-dark">Phone Number</label>
-
-                      {{ form.new_pharmacy_phone }}
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                      <label class="form-label fw-semibold text-dark">City</label>
-
-                      {{ form.new_pharmacy_city }}
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                      <label class="form-label fw-semibold text-dark">Address</label>
-
-                      {{ form.new_pharmacy_address }}
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              <!-- Submit Button -->
-              <div class="d-grid mt-4">
-
-                <button type="submit" class="btn btn-primary btn-lg rounded-3 fw-bold py-3 shadow-sm">
-
-                  <i class="fa-solid fa-user-plus me-2"></i> Create Account
-
-                </button>
-
-              </div>
-
-            </form>
-
-            <hr class="my-4">
-
-            <div class="text-center">
-
-              <p class="text-muted mb-2">Already have a MediFind account?</p>
-
-              <a href="{% url 'login' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
-
-                <i class="fa-solid fa-right-to-bracket me-2"></i> Log In Here
-
+                <span class="brand-wordmark fw-extrabold" style="font-size: 1.5rem; letter-spacing: -0.4px; font-family: var(--font-sans); line-height: 1; user-select: none;">
+                  <span class="brand-logo-medi">Medi</span><span class="brand-logo-find">Find</span>
+                </span>
               </a>
-
             </div>
 
+            <h4 class="fw-bold text-dark mb-1">Create an account</h4>
+            <p class="text-muted small mb-0">Join MedFinder to search local medicine inventory or manage your pharmacy store.</p>
           </div>
 
+          {% if form.errors %}
+            <div class="alert alert-danger rounded-3 p-3 mb-4 small" role="alert">
+              <strong>Please check the form:</strong>
+              <ul class="mb-0 mt-1 ps-3">
+                {% for field in form %}
+                  {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <form method="POST" id="signupForm" novalidate>
+            {% csrf_token %}
+
+            <!-- Account Type Selection -->
+            <div class="mb-4">
+              <label class="form-label small fw-semibold text-muted d-block mb-2">Account Type</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="role" id="roleCustomer" value="Customer" {% if form.role.value == 'Customer' or not form.role.value %}checked{% endif %}>
+                <label class="btn btn-outline-secondary py-2 fw-semibold" for="roleCustomer">
+                  <i class="fa-solid fa-user me-1"></i> Customer
+                </label>
+
+                <input type="radio" class="btn-check" name="role" id="rolePharmacy" value="Pharmacy" {% if form.role.value == 'Pharmacy' %}checked{% endif %}>
+                <label class="btn btn-outline-secondary py-2 fw-semibold" for="rolePharmacy">
+                  <i class="fa-solid fa-hospital me-1"></i> Pharmacy Owner
+                </label>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-dark mb-1">Username</label>
+                {{ form.username }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-dark mb-1">Full Name</label>
+                {{ form.first_name }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark mb-1">Email Address</label>
+              {{ form.email }}
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-dark mb-1">Password</label>
+                {{ form.password }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-dark mb-1">Confirm Password</label>
+                {{ form.confirm_password }}
+              </div>
+            </div>
+
+            <!-- Pharmacy Specific Fields -->
+            <div id="pharmacyDetailsSection" class="p-3 bg-light rounded-3 border mb-3 d-none">
+              <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hospital text-primary me-1"></i> Pharmacy Information</h6>
+              
+              <div class="mb-3">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="pharmacy_option" id="optExisting" value="existing" {% if form.pharmacy_option.value == 'existing' or not form.pharmacy_option.value %}checked{% endif %}>
+                  <label class="form-check-label small" for="optExisting">Claim existing store</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="pharmacy_option" id="optNew" value="new" {% if form.pharmacy_option.value == 'new' %}checked{% endif %}>
+                  <label class="form-check-label small" for="optNew">Register new store</label>
+                </div>
+              </div>
+
+              <div id="existingPharmacyBox" class="mb-3">
+                <label class="form-label small fw-semibold text-dark mb-1">Select Pharmacy</label>
+                {{ form.existing_pharmacy }}
+              </div>
+
+              <div id="newPharmacyBox" class="d-none">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">Pharmacy Name</label>
+                    {{ form.new_pharmacy_name }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">Phone</label>
+                    {{ form.new_pharmacy_phone }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">City</label>
+                    {{ form.new_pharmacy_city }}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">Address</label>
+                    {{ form.new_pharmacy_address }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold mb-3">
+              Create Account
+            </button>
+          </form>
+
+          <div class="text-center pt-3 border-top text-muted small">
+            Already have an account? <a href="{% url 'login' %}" class="fw-semibold text-primary text-decoration-none">Log in</a>
+          </div>
         </div>
 
       </div>
-
     </div>
-
   </div>
-
 </section>
 
 <script>
-
 document.addEventListener("DOMContentLoaded", function() {
-
   const roleInputs = document.querySelectorAll('input[name="role"]');
-
   const pharmacySection = document.getElementById("pharmacyDetailsSection");
-
   const optExisting = document.getElementById("optExisting");
-
   const optNew = document.getElementById("optNew");
-
   const existingBox = document.getElementById("existingPharmacyBox");
-
   const newBox = document.getElementById("newPharmacyBox");
 
   function toggleRole() {
-
     const selectedRole = document.querySelector('input[name="role"]:checked')?.value;
-
     if (selectedRole === "Pharmacy") {
-
       pharmacySection.classList.remove("d-none");
-
     } else {
-
       pharmacySection.classList.add("d-none");
-
     }
-
   }
 
   function togglePharmacyOption() {
-
-    if (optExisting.checked) {
-
-      existingBox.classList.remove("d-none");
-
-      newBox.classList.add("d-none");
-
+    if (optExisting && optExisting.checked) {
+      if (existingBox) existingBox.classList.remove("d-none");
+      if (newBox) newBox.classList.add("d-none");
     } else {
-
-      existingBox.classList.add("d-none");
-
-      newBox.classList.remove("d-none");
-
+      if (existingBox) existingBox.classList.add("d-none");
+      if (newBox) newBox.classList.remove("d-none");
     }
-
   }
 
   roleInputs.forEach(input => input.addEventListener("change", toggleRole));
-
-  optExisting.addEventListener("change", togglePharmacyOption);
-
-  optNew.addEventListener("change", togglePharmacyOption);
+  if (optExisting) optExisting.addEventListener("change", togglePharmacyOption);
+  if (optNew) optNew.addEventListener("change", togglePharmacyOption);
 
   toggleRole();
-
   togglePharmacyOption();
-
-  // Password Visibility Toggle
-
-  document.querySelectorAll(".toggle-pass-btn").forEach(btn => {
-
-    btn.addEventListener("click", function() {
-
-      const targetId = this.getAttribute("data-target");
-
-      const input = document.getElementById(targetId);
-
-      const icon = this.querySelector("i");
-
-      if (input.type === "password") {
-
-        input.type = "text";
-
-        icon.classList.replace("fa-eye", "fa-eye-slash");
-
-      } else {
-
-        input.type = "password";
-
-        icon.classList.replace("fa-eye-slash", "fa-eye");
-
-      }
-
-    });
-
-  });
-
 });
-
 </script>
 
 {% endblock %}

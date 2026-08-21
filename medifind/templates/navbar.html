@@ -1,386 +1,154 @@
-<nav class="navbar navbar-expand-lg bg-white shadow-sm fixed-top">
-
-<div class="container">
-
-<!-- ================= LOGO ================= -->
-
-{% if user.is_authenticated and not user.is_superuser and user.userprofile.role == "Pharmacy" %}
-
-<a class="navbar-brand fw-bold text-primary"
-href="{% url 'pharmacy_dashboard' %}">
-
-<i class="fa-solid fa-hospital me-2"></i>
-
-MediFind
-
-</a>
-
-{% else %}
-
-<a class="navbar-brand fw-bold text-primary"
-href="{% url 'home' %}">
-
-<i class="fa-solid fa-capsules me-2"></i>
-
-MediFind
-
-</a>
-
-{% endif %}
-
-<!-- Mobile Toggle -->
-
-<button
-class="navbar-toggler"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#navbarNav">
-
-<span class="navbar-toggler-icon"></span>
-
-</button>
-
-<div class="collapse navbar-collapse"
-id="navbarNav">
-
-<ul class="navbar-nav ms-auto align-items-center">
-
-<!-- ================= THEME TOGGLE ================= -->
-<li class="nav-item me-2">
-    <button id="theme-toggle" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width: 38px; height: 38px;" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
-        <i class="fa-solid fa-moon text-dark fs-6" id="theme-icon"></i>
-    </button>
-</li>
-
-{% if not user.is_authenticated %}
-
-<!-- ================= VISITOR ================= -->
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'home' %}">
-        Home
-    </a>
-</li>
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'search' %}">
-        Search Medicines
-    </a>
-</li>
-
-<li class="nav-item mx-2">
-    <a class="btn btn-outline-primary rounded-pill px-4"
-       href="{% url 'login' %}">
-        Login
-    </a>
-</li>
-
-<li class="nav-item mx-2">
-    <a class="btn btn-primary rounded-pill px-4"
-       href="{% url 'register' %}">
-        Sign Up
-    </a>
-</li>
-
-{% else %}
-
-{% if user.is_superuser %}
-
-<!-- ================= ADMIN ================= -->
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'dashboard' %}">
-        Dashboard
-    </a>
-</li>
-
-{% elif user.userprofile.role == "Pharmacy" %}
-
-<!-- ================= PHARMACY ================= -->
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'pharmacy_dashboard' %}">
-        Dashboard
-    </a>
-</li>
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'inventory' %}">
-        Inventory
-    </a>
-</li>
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'medicines' %}">
-        Medicines
-    </a>
-</li>
-
-<li class="nav-item dropdown mx-2">
-
-    <a
-        class="nav-link dropdown-toggle"
-        href="#"
-        role="button"
-        data-bs-toggle="dropdown"
-        aria-expanded="false">
-
-        Reservations
-
+{% load static %}
+<nav class="navbar navbar-expand-lg fixed-top shadow-sm" style="background: var(--surface); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <!-- Brand Logo -->
+    <a class="navbar-brand d-flex align-items-center brand-logo-link gap-2" href="{% url 'home' %}" aria-label="MedFinder Home">
+      <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #10b981; border-radius: 9px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 19V8C5 6.89543 5.89543 6 7 6C7.82843 6 8.5657 6.50444 8.86443 7.27364L12 15.28L15.1356 7.27364C15.4343 6.50444 16.1716 6 17 6C18.1046 6 19 6.89543 19 8V19" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="5" r="1.8" fill="#ffffff"/>
+        </svg>
+      </div>
+      <span class="brand-wordmark fw-extrabold" style="font-size: 1.35rem; letter-spacing: -0.4px; font-family: var(--font-sans); line-height: 1; user-select: none;">
+        <span class="brand-logo-medi">Medi</span><span class="brand-logo-find">Find</span>
+      </span>
     </a>
 
-    <ul class="dropdown-menu shadow border-0 rounded-3">
 
-        <li>
-
-            <a
-                class="dropdown-item py-2"
-                href="{% url 'reservations' %}">
-
-                <i class="fa-solid fa-clock me-2"></i>
-
-                Pending Requests
-
-            </a>
-
-        </li>
-
-        <li>
-
-            <a
-                class="dropdown-item py-2"
-                href="{% url 'reservation_history' %}">
-
-                <i class="fa-solid fa-clock-rotate-left me-2"></i>
-
-                Reservation History
-
-            </a>
-
-        </li>
-
-    </ul>
-
-</li>
-
-{% else %}
-
-<!-- ================= CUSTOMER ================= -->
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'home' %}">
-        Home
-    </a>
-</li>
-
-<li class="nav-item mx-2">
-    <a class="nav-link" href="{% url 'search' %}">
-        Search Medicines
-    </a>
-</li>
-
-{% endif %}
-<!-- ================= NOTIFICATIONS ================= -->
-
-<li class="nav-item dropdown me-3">
-
-    <a
-        class="nav-link position-relative"
-        href="#"
-        role="button"
-        data-bs-toggle="dropdown">
-
-        <i class="fa-solid fa-bell fs-5"></i>
-
-        <span
-            id="notification-count"
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-            style="display:none;">
-
-            0
-
-        </span>
-
-    </a>
-
-    <ul
-        id="notification-list"
-        class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4"
-        style="width:370px; max-height:420px; overflow-y:auto;">
-
-        <li class="dropdown-header fw-bold">
-
-            Notifications
-
-        </li>
-
-        <li>
-
-            <hr class="dropdown-divider">
-
-        </li>
-
-        <li class="text-center text-muted py-3">
-
-            No notifications
-
-        </li>
-
-    </ul>
-
-</li>
-
-                    <li class="nav-item dropdown ms-3">
-
-<a
-class="nav-link dropdown-toggle d-flex align-items-center"
-href="#"
-role="button"
-data-bs-toggle="dropdown">
-
-{% if user.userprofile.role == "Pharmacy" and user.userprofile.pharmacy %}
-
-<i class="fa-solid fa-hospital text-primary me-2 fs-4"></i>
-
-<div class="text-start">
-
-<div class="fw-bold lh-1">
-
-{{ user.username }}
-
-</div>
-
-<small class="text-muted">
-
-{{ user.userprofile.pharmacy.city }}
-
-</small>
-
-</div>
-
-{% else %}
-
-<i class="fa-solid fa-circle-user me-2"></i>
-
-<span>
-
-{{ user.first_name|default:user.username }}
-
-</span>
-
-{% endif %}
-
-</a>
-
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4">
-
-                            <li>
-                                <a class="dropdown-item py-2"
-                                   href="{% url 'profile' %}">
-                                    <i class="fa-solid fa-user me-2"></i>
-                                    My Profile
-                                </a>
-                            </li>
-
-                            {% if not user.is_superuser and user.userprofile.role == "Customer" %}
-
-                            <li>
-                                <a class="dropdown-item py-2"
-                                   href="{% url 'search_history' %}">
-                                    <i class="fa-solid fa-clock-rotate-left me-2"></i>
-                                    Search History
-                                </a>
-                            </li>
-
-                            <li>
-                                <a class="dropdown-item py-2"
-                                   href="{% url 'my_reservations' %}">
-                                    <i class="fa-solid fa-prescription-bottle-medical me-2"></i>
-                                    My Reservations
-                                </a>
-                            </li>
-
-                            <li>
-                                <a class="dropdown-item py-2"
-                                   href="{% url 'search' %}">
-                                    <i class="fa-solid fa-pills me-2"></i>
-                                    Find Medicines
-                                </a>
-                            </li>
-
-                            {% endif %}
-
-                            {% if not user.is_superuser and user.userprofile.role == "Pharmacy" %}
-
-<li>
-    <a class="dropdown-item py-2"
-       href="{% url 'pharmacy_dashboard' %}">
-        <i class="fa-solid fa-chart-line me-2"></i>
-        Dashboard
-    </a>
-</li>
-
-<li>
-    <a class="dropdown-item py-2"
-       href="{% url 'inventory' %}">
-        <i class="fa-solid fa-boxes-stacked me-2"></i>
-        Inventory
-    </a>
-</li>
-
-<li>
-    <a class="dropdown-item py-2"
-       href="{% url 'medicines' %}">
-        <i class="fa-solid fa-pills me-2"></i>
-        Medicines
-    </a>
-</li>
-
-<li>
-    <a class="dropdown-item py-2"
-       href="{% url 'reservations' %}">
-        <i class="fa-solid fa-bell-concierge me-2"></i>
-        Reservation Requests
-    </a>
-</li>
-
-{% endif %}
-
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-
-                            <li>
-
-                                <form method="POST"
-                                      action="{% url 'logout' %}">
-
-                                    {% csrf_token %}
-
-                                    <button
-                                        type="submit"
-                                        class="dropdown-item text-danger py-2">
-
-                                        <i class="fa-solid fa-right-from-bracket me-2"></i>
-
-                                        Logout
-
-                                    </button>
-
-                                </form>
-
-                            </li>
-
-                        </ul>
-
-                    </li>
-
-                {% endif %}
-
-            </ul>
-
-        </div>
-
+    <!-- Mobile Menu Actions -->
+    <div class="d-flex align-items-center gap-2 d-lg-none">
+      <button type="button" class="staggered-menu-trigger" title="Open Staggered Menu" aria-label="Open navigation menu">
+        <i class="fa-solid fa-bars-staggered fs-6"></i>
+      </button>
+      <button class="navbar-toggler border-0 p-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+        <i class="fa-solid fa-bars fs-5 text-dark"></i>
+      </button>
     </div>
 
+
+    <!-- Navigation Menu -->
+    <!-- Navigation Menu -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto ms-lg-4 align-items-lg-center">
+        {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'pharmacy_dashboard' %}">
+              <i class="fa-solid fa-chart-line me-1 text-primary"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'inventory' %}">
+              <i class="fa-solid fa-boxes-stacked me-1 text-primary"></i> Inventory
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'reservations' %}">
+              <i class="fa-solid fa-clock me-1 text-primary"></i> Orders
+            </a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'home' %}">
+              Home
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'search' %}">
+              Search
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'medicines' %}">
+              Medicines
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-medium text-dark" href="{% url 'pharmacies' %}">
+              Pharmacies
+            </a>
+          </li>
+          {% if user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link px-3 fw-medium text-dark" href="{% url 'my_reservations' %}">
+                Orders
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link px-3 fw-medium text-dark" href="{% url 'search_history' %}">
+                Activity
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
+      </ul>
+
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+        {% if not user.is_authenticated %}
+          <!-- Guest Actions -->
+          <li class="nav-item">
+            <a class="btn btn-sm btn-link text-decoration-none text-dark fw-medium px-3" href="{% url 'login' %}">
+              Log in
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-sm btn-primary rounded-pill px-4 fw-semibold" href="{% url 'register' %}">
+              Get Started
+            </a>
+          </li>
+        {% else %}
+          <!-- Notifications -->
+          <li class="nav-item dropdown">
+            <a class="btn btn-sm btn-outline-secondary rounded-circle position-relative d-flex align-items-center justify-content-center p-0" href="#" role="button" data-bs-toggle="dropdown" style="width: 36px; height: 36px;">
+              <i class="fa-regular fa-bell text-dark"></i>
+              <span id="notification-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size: 0.65rem;">
+                0
+              </span>
+            </a>
+            <ul id="notification-list" class="dropdown-menu dropdown-menu-end shadow border rounded-3 p-2" style="width: 320px; max-height: 380px; overflow-y: auto;">
+              <li class="dropdown-header fw-bold text-dark px-2 py-1">Notifications</li>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li class="text-center text-muted small py-3">No notifications</li>
+            </ul>
+          </li>
+
+          <!-- User Menu -->
+          <li class="nav-item dropdown ms-lg-1">
+            <a class="nav-link dropdown-toggle d-flex align-items-center text-dark fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
+              <span class="me-1">{{ user.first_name|default:user.username }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow border rounded-3 py-2">
+              {% if user.is_superuser %}
+                <li><a class="dropdown-item py-2" href="{% url 'dashboard' %}"><i class="fa-solid fa-chart-pie me-2 text-muted"></i> Admin Dashboard</a></li>
+              {% elif user.userprofile.role == "Pharmacy" %}
+                <li><a class="dropdown-item py-2" href="{% url 'pharmacy_dashboard' %}"><i class="fa-solid fa-chart-line me-2 text-muted"></i> Dashboard</a></li>
+                <li><a class="dropdown-item py-2" href="{% url 'inventory' %}"><i class="fa-solid fa-boxes-stacked me-2 text-muted"></i> Inventory</a></li>
+                <li><a class="dropdown-item py-2" href="{% url 'reservations' %}"><i class="fa-solid fa-clock me-2 text-muted"></i> Orders</a></li>
+              {% else %}
+                <li><a class="dropdown-item py-2" href="{% url 'my_reservations' %}"><i class="fa-solid fa-bag-shopping me-2 text-muted"></i> Orders</a></li>
+                <li><a class="dropdown-item py-2" href="{% url 'search_history' %}"><i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i> Activity</a></li>
+              {% endif %}
+              <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i class="fa-regular fa-user me-2 text-muted"></i> Profile Settings</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="POST" action="{% url 'logout' %}" class="px-2">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger w-100 text-start border-0 py-1">
+                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log out
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        {% endif %}
+
+        <!-- Staggered Menu Trigger (Desktop & Mobile) -->
+        <li class="nav-item ms-lg-1 d-none d-lg-block">
+          <button type="button" class="staggered-menu-trigger" title="Open Menu" aria-label="Open navigation menu">
+            <i class="fa-solid fa-bars-staggered fs-6"></i>
+          </button>
+        </li>
+      </ul>
+
+    </div>
+  </div>
 </nav>

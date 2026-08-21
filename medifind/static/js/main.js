@@ -1,57 +1,30 @@
-window.addEventListener("scroll",()=>{
+// MedFinder Main Global Interactions
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. Navbar Scroll elevation
+    const nav = document.querySelector(".navbar");
+    if (nav) {
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 40) {
+                nav.classList.add("scrolled");
+            } else {
+                nav.classList.remove("scrolled");
+            }
+        });
+    }
 
-const nav=document.querySelector(".navbar");
-
-if(window.scrollY>70){
-
-nav.classList.add("scrolled");
-
-}else{
-
-nav.classList.remove("scrolled");
-
-}
-
-});
-
-document.querySelectorAll(".chips span").forEach(chip=>{
-
-chip.onclick=()=>{
-
-document.querySelector(".search-box input").value=chip.innerText;
-
-};
-
-});
-
-const counters=document.querySelectorAll(".counter");
-
-const speed=200;
-
-counters.forEach(counter=>{
-
-const update=()=>{
-
-const target=+counter.getAttribute("data-target");
-
-const count=+counter.innerText;
-
-const increment=target/speed;
-
-if(count<target){
-
-counter.innerText=Math.ceil(count+increment);
-
-setTimeout(update,10);
-
-}else{
-
-counter.innerText=target.toLocaleString();
-
-}
-
-};
-
-update();
-
+    // 2. Chip Search Tag Autofill
+    document.querySelectorAll(".chips span, .search-tag-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            const searchInput = document.querySelector(".search-box input, #medicineSearch, input[name='medicine']");
+            if (searchInput) {
+                const queryText = chip.getAttribute("data-query") || chip.innerText.trim();
+                searchInput.value = queryText;
+                const form = searchInput.closest("form");
+                if (form) {
+                    const submitBtn = form.querySelector("button[type='submit']");
+                    if (submitBtn) submitBtn.focus();
+                }
+            }
+        });
+    });
 });

@@ -2,721 +2,517 @@
 {% load static %}
 
 {% block title %}
-MediFind | Real-time Pharmacy & Medicine Finder
+{% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
+{{ user_pharmacy.name|default:"Pharmacy Portal" }} | MedFinder Pharmacy
+{% else %}
+MedFinder | Real-time Medicine Availability &amp; Pharmacy Locator
+{% endif %}
 {% endblock %}
 
 {% block content %}
 
+{% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
 <!-- ======================================= -->
-<!-- HERO SECTION -->
+<!-- REGISTERED PHARMACY LANDING PAGE -->
 <!-- ======================================= -->
-<section class="hero">
 
-  <div class="container">
-
+<!-- Pharmacy Hero Section -->
+<section class="py-5 position-relative" style="background: var(--surface); border-bottom: 1px solid var(--border); overflow: hidden;">
+  <div class="aurora-container"></div>
+  <div class="container py-lg-4 position-relative" style="z-index: 2;">
     <div class="row align-items-center g-5">
-
       <div class="col-lg-7">
-
-        <div class="badge rounded-pill px-3 py-2 mb-3 bg-white text-dark shadow-sm border border-light fw-bold">
-
-          <i class="fa-solid fa-location-dot text-primary me-2"></i> Live GPS Pharmacy Finder
-
+        <div
+          class="reveal hero-entrance d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill border bg-light small fw-semibold text-muted">
+          <span class="d-inline-block rounded-circle bg-success" style="width: 8px; height: 8px;"></span>
+          <span>Verified Pharmacy Operations &bull; {{ user_pharmacy.city|default:"Chennai" }}</span>
         </div>
 
-        <h1 class="display-4 fw-extrabold mb-3">
-
-          Find Your Medicine at <span>Nearby Pharmacies</span>
-
+        <h1 class="reveal hero-entrance display-4 fw-extrabold text-dark mb-2 text-type-heading"
+          style="letter-spacing: -1.2px; line-height: 1.15; min-height: 1.2em;">
+          <span id="pharmacyTextTypeContent"
+            data-pharmacy-name="{{ user_pharmacy.name|default:'Your Registered Pharmacy' }}">{{
+            user_pharmacy.name|default:"Your Registered Pharmacy" }}</span><span id="pharmacyTextTypeCursor"
+            class="text-type-cursor">_</span>
         </h1>
 
-        <p class="lead mb-4">
 
-          Search medicines in real-time, compare prices across local pharmacies, check live stock availability, and reserve in one click.
-
+        <p class="reveal hero-entrance lead text-muted mb-4" style="font-size: 1.15rem; max-width: 580px;">
+          {{ user_pharmacy.address|default:"Store Management Portal" }} &bull; <i
+            class="fa-solid fa-phone text-primary ms-1 me-1"></i> {{ user_pharmacy.phone|default:"Contact" }}
         </p>
 
-        <!-- Search Card -->
-        <form action="{% url 'search' %}" method="GET">
+        <!-- Quick Store Action Buttons -->
+        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-3 mb-4">
+          <a href="{% url 'pharmacy_dashboard' %}"
+            class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Open Dashboard</span>
+          </a>
+          <a href="{% url 'inventory' %}"
+            class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span>Manage Inventory ({{ pharmacy_inventory_count }})</span>
+          </a>
+          <a href="{% url 'reservations' %}"
+            class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
+            <i class="fa-solid fa-clock"></i>
+            <span>Pending Orders ({{ pharmacy_pending_count }})</span>
+          </a>
+        </div>
 
-          <div class="search-box">
+        <!-- Quick Status Pills -->
+        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-2 text-muted small">
+          <span class="fw-semibold">Store Status:</span>
+          <span
+            class="badge {% if user_pharmacy.is_open %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} rounded-pill px-3 py-1 fw-bold">
+            {% if user_pharmacy.is_open %}● OPEN FOR CUSTOMERS{% else %}● CURRENTLY CLOSED{% endif %}
+          </span>
+          <span class="badge bg-light border text-dark rounded-pill px-3 py-1">
+            <i class="fa-solid fa-clock me-1 text-primary"></i> {{ user_pharmacy.opening_time|time:"h:i A" }} - {{
+            user_pharmacy.closing_time|time:"h:i A" }}
+          </span>
+        </div>
+      </div>
 
-            <input
-              type="text"
-              name="medicine"
-              placeholder="Tell us what medicine you need (e.g., Dolo 650 near me)..."
-              required>
-
-            <button type="submit" class="btn btn-primary">
-
-              <i class="fa-solid fa-wand-magic-sparkles me-2"></i> AI Search
-
-            </button>
-
+      <!-- Right Column: Live Pharmacy Control Card -->
+      <div class="col-lg-5">
+        <div class="reveal-scale hero-entrance card border rounded-4 shadow p-4 bg-white"
+          style="transition: var(--transition);">
+          <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
+            <div>
+              <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 small fw-semibold">Store
+                Operations</span>
+              <h5 class="fw-bold text-dark mb-0 mt-1">{{ user_pharmacy.name }}</h5>
+              <small class="text-muted">{{ user_pharmacy.city|default:"Chennai" }}</small>
+            </div>
+            <div class="text-end">
+              <a href="{% url 'toggle_pharmacy_status' %}"
+                class="btn btn-sm {% if user_pharmacy.is_open %}btn-outline-danger{% else %}btn-outline-success{% endif %} rounded-pill px-3 fw-semibold">
+                {% if user_pharmacy.is_open %}Close Store{% else %}Open Store{% endif %}
+              </a>
+            </div>
           </div>
 
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <div class="p-3 rounded-3 bg-light border text-center">
+                <span class="text-muted small d-block">Stocked Medicines</span>
+                <h3 class="fw-bold text-dark mb-0">{{ pharmacy_inventory_count }}</h3>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 rounded-3 bg-light border text-center">
+                <span class="text-muted small d-block">Pending Orders</span>
+                <h3 class="fw-bold text-primary mb-0">{{ pharmacy_pending_count }}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <a href="{% url 'add_inventory' %}" class="btn btn-primary btn-sm rounded-pill fw-bold py-2">
+              <i class="fa-solid fa-plus me-1"></i> Add New Inventory Item
+            </a>
+            <a href="{% url 'reservations' %}" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold py-2">
+              <i class="fa-solid fa-list-check me-1"></i> Review Customer Orders
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pharmacy Management Hub Modules -->
+<section class="py-5 bg-light border-top">
+  <div class="container py-lg-3">
+    <div class="mb-4">
+      <h3 class="fw-bold text-dark mb-1">Store Management Hub</h3>
+      <p class="text-muted small mb-0">Direct access to your inventory, incoming orders, and pharmacy settings.</p>
+    </div>
+
+    <div class="row g-4 reveal-stagger">
+      <!-- Card 1: Inventory -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-primary-subtle text-primary"
+            style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Live Inventory</h5>
+          <p class="text-muted small mb-3">Track medicine stocks, update pricing, batch numbers, and expiry dates.</p>
+          <a href="{% url 'inventory' %}" class="btn btn-sm btn-outline-primary rounded-pill w-100 mt-auto">
+            Manage Stock &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2: Reservations -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-warning-subtle text-warning-emphasis"
+            style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="fa-solid fa-clock"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Pending Orders</h5>
+          <p class="text-muted small mb-3">Accept or reject incoming customer reservations with instant notifications.
+          </p>
+          <a href="{% url 'reservations' %}"
+            class="btn btn-sm btn-outline-warning text-dark rounded-pill w-100 mt-auto">
+            Review Orders ({{ pharmacy_pending_count }}) &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3: Dashboard Analytics -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-success-subtle text-success"
+            style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Store Analytics</h5>
+          <p class="text-muted small mb-3">View live revenue, fulfillment metrics, out of stock alerts, and trends.</p>
+          <a href="{% url 'pharmacy_dashboard' %}" class="btn btn-sm btn-outline-success rounded-pill w-100 mt-auto">
+            View Analytics &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 4: Store Profile -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-info-subtle text-info-emphasis"
+            style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="fa-solid fa-store"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Profile &amp; Hours</h5>
+          <p class="text-muted small mb-3">Update your pharmacy address, contact number, and daily opening hours.</p>
+          <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-secondary rounded-pill w-100 mt-auto">
+            Edit Store Details &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% else %}
+<!-- ======================================= -->
+<!-- CONSUMER / GUEST LANDING PAGE -->
+<!-- ======================================= -->
+
+<!-- HERO SECTION -->
+<section class="py-5 position-relative" style="background: var(--surface); border-bottom: 1px solid var(--border); overflow: hidden;">
+  <div class="aurora-container"></div>
+  <div class="container py-lg-4 position-relative" style="z-index: 2;">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <div
+          class="reveal hero-entrance d-inline-flex align-items-center gap-2 px-3 py-1 mb-4 rounded-pill border bg-light small fw-semibold text-muted">
+          <span class="d-inline-block rounded-circle bg-success" style="width: 8px; height: 8px;"></span>
+          <span>Verified Pharmacy Network &bull; Live Inventory</span>
+        </div>
+
+        <h1 class="reveal hero-entrance display-4 fw-extrabold text-dark mb-3 text-type-heading"
+          style="letter-spacing: -1.2px; line-height: 1.15; min-height: 1.2em;">
+          <span id="textTypeContent">Find the medicine you need.</span><span id="textTypeCursor" class="text-type-cursor">_</span>
+        </h1>
+
+        <p class="reveal hero-entrance lead text-muted mb-4" style="font-size: 1.15rem; max-width: 580px;">
+          Search nearby pharmacies, compare availability and prices, and choose the option that works best for you.
+        </p>
+
+        <!-- Search Bar -->
+        <form action="{% url 'search' %}" method="GET" class="reveal hero-entrance mb-4">
+          <div class="p-2 rounded-4 border bg-white shadow-sm d-flex align-items-center gap-2"
+            style="max-width: 600px;">
+            <i class="fa-solid fa-magnifying-glass text-muted ms-3 fs-5"></i>
+            <input type="text" name="medicine" class="form-control border-0 shadow-none ps-2"
+              placeholder="Search for a medicine (e.g. Dolo 650, Paracetamol, Cetirizine)..." style="font-size: 1rem;"
+              required>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold py-2">
+              Search
+            </button>
+          </div>
         </form>
 
-        <!-- Quick AI Tags -->
-        <div class="chips">
-
-          <small class="text-white-50 align-self-center me-1 fw-semibold"><i class="fa-solid fa-sparkles text-warning me-1"></i> AI Suggestions:</small>
-
-          <a href="{% url 'search' %}?medicine=Dolo+650+near+me"><span>✨ Dolo 650 near me</span></a>
-
-          <a href="{% url 'search' %}?medicine=Paracetamol+within+3+km"><span>✨ Paracetamol within 3 km</span></a>
-
-          <a href="{% url 'search' %}?medicine=I+need+something+for+fever"><span>✨ Medicine for fever</span></a>
-
-          <a href="{% url 'search' %}?medicine=Find+Crocin+nearby"><span>✨ Find Crocin nearby</span></a>
-
+        <!-- Primary & Secondary CTAs -->
+        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-3 mb-4">
+          <a href="{% url 'search' %}"
+            class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search medicines</span>
+          </a>
+          <a href="{% url 'pharmacies' %}"
+            class="btn btn-outline-dark rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
+            <i class="fa-solid fa-location-dot text-primary"></i>
+            <span>Find pharmacies</span>
+          </a>
         </div>
 
+        <!-- Search Suggestions -->
+        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-2 text-muted small">
+          <span class="fw-semibold">Popular:</span>
+          <a href="{% url 'search' %}?medicine=Dolo+650"
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Dolo 650</a>
+          <a href="{% url 'search' %}?medicine=Paracetamol+500"
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Paracetamol 500
+            mg</a>
+          <a href="{% url 'search' %}?medicine=Cetirizine+10"
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Cetirizine</a>
+          <a href="{% url 'search' %}?medicine=Crocin"
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Crocin</a>
+        </div>
       </div>
 
+      <!-- Hero Product Preview Graphic -->
       <div class="col-lg-5">
-
-        <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
-
-          <div class="carousel-inner">
-
-            <div class="carousel-item active">
-
-              <div class="hero-slide">
-
-                <img src="{% static 'images/medicine1.png' %}" class="img-fluid hero-slider-img" alt="Find Medicines">
-
-                <div class="slide-content">
-
-                  <h4>Real-Time Medicine Search</h4>
-
-                  <p>Check stock across 2,500+ verified partner pharmacies.</p>
-
-                </div>
-
-              </div>
-
+        <div class="reveal-scale hero-entrance card border rounded-4 shadow p-4 bg-white"
+          style="transition: var(--transition);">
+          <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
+            <div>
+              <span class="text-muted small fw-semibold">Live Comparison Preview</span>
+              <h5 class="fw-bold text-dark mb-0 mt-1">Dolo 650 Tablet</h5>
+              <small class="text-muted">Paracetamol 650 mg &bull; Strip of 15</small>
             </div>
-
-            <div class="carousel-item">
-
-              <div class="hero-slide">
-
-                <img src="{% static 'images/medicine2.png' %}" class="img-fluid hero-slider-img" alt="Live Inventory">
-
-                <div class="slide-content">
-
-                  <h4>Live Inventory Tracking</h4>
-
-                  <p>Instant price comparisons and stock status updates.</p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            <div class="carousel-item">
-
-              <div class="hero-slide">
-
-                <img src="{% static 'images/medicine3.png' %}" class="img-fluid hero-slider-img" alt="GPS Directions">
-
-                <div class="slide-content">
-
-                  <h4>GPS Pharmacy Navigation</h4>
-
-                  <p>Get turn-by-turn directions to the closest open pharmacy.</p>
-
-                </div>
-
-              </div>
-
-            </div>
-
+            <span
+              class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold">
+              ● In Stock
+            </span>
           </div>
 
-          <div class="carousel-indicators position-relative mt-3">
-
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
-
+          <!-- Pharmacy 1: Best Price -->
+          <div class="p-3 rounded-3 bg-light border mb-2 d-flex justify-content-between align-items-center"
+            style="border-left: 3px solid #10b981 !important;">
+            <div>
+              <div class="fw-bold text-dark d-flex align-items-center gap-1.5">
+                <span>MedPlus Pharmacy</span>
+                <span class="badge bg-success-subtle text-success rounded-pill px-2 py-0"
+                  style="font-size: 0.7rem;">Lowest price</span>
+              </div>
+              <small class="text-muted">2.1 km &bull; 12 available</small>
+            </div>
+            <div class="text-end">
+              <strong class="text-dark fs-5">₹22.00</strong>
+              <div class="text-muted" style="font-size: 0.75rem;">Open Now</div>
+            </div>
           </div>
 
+          <!-- Pharmacy 2 -->
+          <div class="p-3 rounded-3 bg-light border mb-2 d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold text-dark">Apollo Pharmacy</div>
+              <small class="text-muted">1.2 km &bull; 50 available</small>
+            </div>
+            <div class="text-end">
+              <strong class="text-dark fs-5">₹25.00</strong>
+              <div class="text-muted" style="font-size: 0.75rem;">Open Now</div>
+            </div>
+          </div>
+
+          <!-- Pharmacy 3 -->
+          <div class="p-3 rounded-3 bg-light border mb-3 d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold text-dark">Wellness Forever</div>
+              <small class="text-muted">0.6 km &bull; 30 available</small>
+            </div>
+            <div class="text-end">
+              <strong class="text-dark fs-5">₹27.00</strong>
+              <div class="text-muted" style="font-size: 0.75rem;">Open Now</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center text-muted small pt-1">
+            <span><i class="fa-solid fa-shield-check text-primary me-1"></i> Verified Local Inventories</span>
+            <a href="{% url 'search' %}?medicine=Dolo+650" class="fw-bold text-primary text-decoration-none">
+              Explore Live &rarr;
+            </a>
+          </div>
         </div>
-
       </div>
-
     </div>
-
   </div>
-
 </section>
 
-<!-- ======================================= -->
-<!-- STATS SECTION -->
-<!-- ======================================= -->
-<section class="stats-section bg-white border-bottom py-5">
-
+<!-- METRICS OVERVIEW (With Smooth Count-Up) -->
+<section class="py-4 border-bottom bg-light">
   <div class="container">
-
-    <div class="row g-4 text-center">
-
+    <div class="row g-4 text-center reveal-stagger">
       <div class="col-6 col-md-3">
-
-        <div class="p-3">
-
-          <h2 class="fw-extrabold text-primary mb-1 display-5">{{ medicine_count|default:"15" }}+</h2>
-
-          <p class="text-muted fw-semibold mb-0">Medicines Cataloged</p>
-
+        <div class="fs-3 fw-extrabold text-dark counter" data-target="{{ medicine_count|default:'29' }}"
+          data-suffix="+">
+          {{ medicine_count|default:"29" }}+
         </div>
-
+        <div class="text-muted small">Verified Medicines</div>
       </div>
-
       <div class="col-6 col-md-3">
-
-        <div class="p-3">
-
-          <h2 class="fw-extrabold text-primary mb-1 display-5">{{ pharmacy_count|default:"3" }}+</h2>
-
-          <p class="text-muted fw-semibold mb-0">Partner Pharmacies</p>
-
+        <div class="fs-3 fw-extrabold text-dark counter" data-target="{{ pharmacy_count|default:'5' }}" data-suffix="+">
+          {{ pharmacy_count|default:"5" }}+
         </div>
-
+        <div class="text-muted small">Partner Pharmacies</div>
       </div>
-
       <div class="col-6 col-md-3">
-
-        <div class="p-3">
-
-          <h2 class="fw-extrabold text-primary mb-1 display-5">{{ user_count|default:"10" }}+</h2>
-
-          <p class="text-muted fw-semibold mb-0">Active Platform Users</p>
-
+        <div class="fs-3 fw-extrabold text-dark counter" data-target="100" data-suffix="%">
+          100%
         </div>
-
+        <div class="text-muted small">Live Inventory Tracking</div>
       </div>
-
       <div class="col-6 col-md-3">
-
-        <div class="p-3">
-
-          <h2 class="fw-extrabold text-primary mb-1 display-5">99.9%</h2>
-
-          <p class="text-muted fw-semibold mb-0">Location Accuracy</p>
-
-        </div>
-
+        <div class="fs-3 fw-extrabold text-dark">&lt; 1 sec</div>
+        <div class="text-muted small">Search Discovery Speed</div>
       </div>
-
     </div>
-
   </div>
-
 </section>
 
-<!-- ======================================= -->
-<!-- CATEGORIES EXPLORER -->
-<!-- ======================================= -->
-<section class="py-5 bg-light">
-
-  <div class="container py-4">
-
-    <div class="text-center mb-5">
-
-      <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-2">Therapeutic Categories</span>
-
-      <h2 class="fw-bold text-dark mb-2">Browse Medicines by Category</h2>
-
-      <p class="text-muted">Find medicines quickly tailored to your healthcare requirement.</p>
-
-    </div>
-
-    <div class="row g-3">
-
-      <div class="col-6 col-md-4 col-lg-2">
-
-        <a href="{% url 'search' %}?category=Pain Relief" class="text-decoration-none">
-
-          <div class="category-card">
-
-            <div class="category-icon">
-
-              <i class="fa-solid fa-capsules"></i>
-
-            </div>
-
-            <h6 class="category-title">Pain Relief</h6>
-
-          </div>
-
-        </a>
-
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-2">
-
-        <a href="{% url 'search' %}?category=Antibiotic" class="text-decoration-none">
-
-          <div class="category-card">
-
-            <div class="category-icon">
-
-              <i class="fa-solid fa-shield-virus"></i>
-
-            </div>
-
-            <h6 class="category-title">Antibiotics</h6>
-
-          </div>
-
-        </a>
-
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-2">
-
-        <a href="{% url 'search' %}?category=Vitamin" class="text-decoration-none">
-
-          <div class="category-card">
-
-            <div class="category-icon">
-
-              <i class="fa-solid fa-apple-whole"></i>
-
-            </div>
-
-            <h6 class="category-title">Vitamins</h6>
-
-          </div>
-
-        </a>
-
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-2">
-
-        <a href="{% url 'search' %}?category=Allergy" class="text-decoration-none">
-
-          <div class="category-card">
-
-            <div class="category-icon">
-
-              <i class="fa-solid fa-feather"></i>
-
-            </div>
-
-            <h6 class="category-title">Allergy Care</h6>
-
-          </div>
-
-        </a>
-
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-2">
-
-        <a href="{% url 'search' %}?category=Diabetes" class="text-decoration-none">
-
-          <div class="category-card">
-
-            <div class="category-icon">
-
-              <i class="fa-solid fa-syringe"></i>
-
-            </div>
-
-            <h6 class="category-title">Diabetes</h6>
-
-          </div>
-
-        </a>
-
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-2">
-
-        <a href="{% url 'search' %}?category=Heart" class="text-decoration-none">
-
-          <div class="category-card">
-
-            <div class="category-icon">
-
-              <i class="fa-solid fa-heart-pulse"></i>
-
-            </div>
-
-            <h6 class="category-title">Heart Care</h6>
-
-          </div>
-
-        </a>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-<!-- ======================================= -->
-<!-- FEATURES SHOWCASE -->
-<!-- ======================================= -->
-<section class="features">
-
-  <div class="container">
-
-    <div class="text-center mb-5">
-
-      <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-2">Platform Features</span>
-
-      <h2 class="fw-bold text-dark mb-2">Everything You Need to Find Medicine</h2>
-
-      <p class="text-muted">Intuitive tools built for patients and healthcare seekers.</p>
-
-    </div>
-
-    <div class="row g-4">
-
-      <div class="col-lg-3 col-md-6">
-
-        <div class="feature-card">
-
-          <i class="fa-solid fa-magnifying-glass-location"></i>
-
-          <h4>Live Stock Search</h4>
-
-          <p>Search over 15,000 medicines in real-time across nearby stores.</p>
-
-        </div>
-
-      </div>
-
-      <div class="col-lg-3 col-md-6">
-
-        <div class="feature-card">
-
-          <i class="fa-solid fa-map-location-dot"></i>
-
-          <h4>GPS Nearby Stores</h4>
-
-          <p>Locate the closest open pharmacy with 1-click map directions.</p>
-
-        </div>
-
-      </div>
-
-      <div class="col-lg-3 col-md-6">
-
-        <div class="feature-card">
-
-          <i class="fa-solid fa-shield-halved"></i>
-
-          <h4>Verified Pharmacies</h4>
-
-          <p>Partnered exclusively with licensed and authentic pharmacies.</p>
-
-        </div>
-
-      </div>
-
-      <div class="col-lg-3 col-md-6">
-
-        <div class="feature-card">
-
-          <i class="fa-solid fa-bookmark"></i>
-
-          <h4>Instant Reservation</h4>
-
-          <p>Reserve your medicine online before traveling to the store.</p>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-<!-- ======================================= -->
-<!-- HOW IT WORKS -->
-<!-- ======================================= -->
-<section class="steps">
-
-  <div class="container">
-
-    <div class="text-center mb-5">
-
-      <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-2">Simple Process</span>
-
-      <h2 class="fw-bold text-dark mb-2">Find Medicines in 3 Easy Steps</h2>
-
-      <p class="text-muted">No more walking from pharmacy to pharmacy looking for stock.</p>
-
-    </div>
-
-    <div class="row g-4">
-
-      <div class="col-lg-4">
-
-        <div class="step-card">
-
-          <div class="step-number">1</div>
-
-          <h4>Search Medicine</h4>
-
-          <p>Type the name or brand of the prescribed medicine in the search bar.</p>
-
-        </div>
-
-      </div>
-
-      <div class="col-lg-4">
-
-        <div class="step-card">
-
-          <div class="step-number">2</div>
-
-          <h4>Compare Price & Stock</h4>
-
-          <p>View which nearby pharmacies have the medicine in stock and compare prices.</p>
-
-        </div>
-
-      </div>
-
-      <div class="col-lg-4">
-
-        <div class="step-card">
-
-          <div class="step-number">3</div>
-
-          <h4>Reserve & Pickup</h4>
-
-          <p>Reserve online or get turn-by-turn GPS directions to pick up your medicine.</p>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-<!-- ======================================= -->
-<!-- POPULAR MEDICINES GRID WITH PRODUCT IMAGES -->
-<!-- ======================================= -->
-<section class="py-5 bg-light">
-
-  <div class="container py-4">
-
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-
-      <div>
-
-        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold mb-1">Catalog Showcase</span>
-
-        <h3 class="fw-bold text-dark mb-0">Popular Medicines in Stock</h3>
-
-      </div>
-
-      <a href="{% url 'medicines' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
-
-        View All Catalog <i class="fa-solid fa-arrow-right ms-1"></i>
-
-      </a>
-
-    </div>
-
-    <div class="row g-4">
-
-      {% if popular_medicines %}
-
-        {% for med in popular_medicines %}
-
-          <div class="col-md-6 col-lg-3">
-
-            <div class="card shadow-sm border-0 rounded-4 h-100 bg-white p-3 d-flex flex-column justify-content-between">
-
-              <div>
-
-                <div class="rounded-3 overflow-hidden mb-3 bg-light text-center p-2" style="height: 180px;">
-
-                  {% if med.image %}
-
-                    <img src="{{ med.image.url }}" class="w-100 h-100 object-fit-contain" alt="{{ med.name }}">
-
-                  {% else %}
-
-                    <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-primary-subtle text-primary">
-
-                      <i class="fa-solid fa-capsules fa-3x"></i>
-
-                    </div>
-
-                  {% endif %}
-
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-2">
-
-                  <span class="badge {% if med.prescription_required %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} px-3 py-1">
-
-                    {% if med.prescription_required %}Rx Required{% else %}OTC Medicine{% endif %}
-
-                  </span>
-
-                  <small class="text-muted fw-semibold">{{ med.category }}</small>
-
-                </div>
-
-                <h5 class="fw-bold text-dark mb-1">{{ med.name }}</h5>
-
-                <p class="text-muted small mb-3">{{ med.brand }} &bull; {{ med.dosage }}</p>
-
-              </div>
-
-              <div>
-
-                <a href="{% url 'medicine_detail' med.id %}" class="btn btn-primary w-100 rounded-3 fw-bold py-2 shadow-sm">
-
-                  <i class="fa-solid fa-eye me-1"></i> View Details
-
-                </a>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        {% endfor %}
-
-      {% endif %}
-
-    </div>
-
-  </div>
-
-</section>
-
-<!-- ======================================= -->
-<!-- PARTNER PHARMACIES SHOWCASE WITH STOREFRONT PHOTOS -->
-<!-- ======================================= -->
+<!-- HOW IT WORKS (Scroll Reveal) -->
 <section class="py-5 bg-white">
+  <div class="container py-lg-4">
+    <div class="text-center mb-5 reveal" style="max-width: 600px; margin: 0 auto;">
+      <h2 class="fw-bold text-dark mb-2">How MedFinder works</h2>
+      <p class="text-muted">A fast, reliable way to check pharmacy inventory before visiting or ordering.</p>
+    </div>
 
-  <div class="container py-4">
-
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-
-      <div>
-
-        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 fw-semibold mb-1">Partner Stores</span>
-
-        <h3 class="fw-bold text-dark mb-0">Verified Local Pharmacies</h3>
-
+    <div class="row g-4 reveal-stagger">
+      <div class="col-md-4">
+        <div class="p-4 rounded-4 border bg-light h-100 card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-white border text-primary"
+            style="width: 44px; height: 44px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">1. Search your medicine</h5>
+          <p class="text-muted small mb-0">Type any brand name, active ingredient, or requirement in simple words.</p>
+        </div>
       </div>
 
-      <a href="{% url 'pharmacies' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
-
-        View All Stores <i class="fa-solid fa-arrow-right ms-1"></i>
-
-      </a>
-
-    </div>
-
-    <div class="row g-4">
-
-      {% if pharmacies %}
-
-        {% for pharm in pharmacies %}
-
-          <div class="col-md-6 col-lg-3">
-
-            <div class="card shadow-sm border-0 rounded-4 h-100 bg-white p-3 d-flex flex-column justify-content-between">
-
-              <div>
-
-                <div class="rounded-3 overflow-hidden mb-3 bg-light position-relative" style="height: 140px;">
-
-                  <img src="{% static 'images/medicine3.png' %}" class="w-100 h-100 object-fit-cover" alt="{{ pharm.name }}">
-
-                  <div class="position-absolute top-0 end-0 p-2">
-
-                    <span class="badge {% if pharm.is_open %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} px-3 py-1 shadow-sm">
-
-                      {% if pharm.is_open %}Open Now{% else %}Closed{% endif %}
-
-                    </span>
-
-                  </div>
-
-                </div>
-
-                <h5 class="fw-bold text-dark mb-1">{{ pharm.name }}</h5>
-
-                <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot text-primary me-1"></i> {{ pharm.address }}, {{ pharm.city }}</p>
-
-                <p class="text-muted small mb-3"><i class="fa-solid fa-phone me-1"></i> {{ pharm.phone }}</p>
-
-              </div>
-
-              <div>
-
-                <a href="{% url 'pharmacy_detail' pharm.id %}" class="btn btn-outline-primary w-100 rounded-3 fw-semibold">
-
-                  View Store Profile
-
-                </a>
-
-              </div>
-
-            </div>
-
+      <div class="col-md-4">
+        <div class="p-4 rounded-4 border bg-light h-100 card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-white border text-primary"
+            style="width: 44px; height: 44px;">
+            <i class="fa-solid fa-scale-balanced"></i>
           </div>
+          <h5 class="fw-bold text-dark mb-2">2. Compare options</h5>
+          <p class="text-muted small mb-0">View live stock, verified prices, operating hours, and distance from your
+            location.</p>
+        </div>
+      </div>
 
-        {% endfor %}
-
-      {% endif %}
-
+      <div class="col-md-4">
+        <div class="p-4 rounded-4 border bg-light h-100 card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-white border text-primary"
+            style="width: 44px; height: 44px;">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">3. Reserve or pickup</h5>
+          <p class="text-muted small mb-0">Confirm your selection and reserve in one click with instant status
+            confirmation.</p>
+        </div>
+      </div>
     </div>
-
   </div>
-
 </section>
 
-<!-- ======================================= -->
-<!-- CALL TO ACTION (CTA) -->
-<!-- ======================================= -->
-<section class="cta">
-
-  <div class="container">
-
-    <div class="cta-box">
-
-      <h2>Can't Find Your Prescribed Medicine?</h2>
-
-      <p>Search thousands of real-time inventory items across verified local pharmacies instantly.</p>
-
-      <a href="{% url 'search' %}" class="btn btn-light btn-lg rounded-pill px-5 fw-bold text-primary shadow">
-
-        <i class="fa-solid fa-magnifying-glass me-2"></i> Start Live Search Now
-
+<!-- POPULAR MEDICINES (Staggered Cards) -->
+{% if popular_medicines %}
+<section class="py-5 bg-light border-top">
+  <div class="container py-lg-3">
+    <div class="d-flex justify-content-between align-items-center mb-4 reveal">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">Common Medicines</h3>
+        <p class="text-muted small mb-0">Quickly check availability for frequently searched items.</p>
+      </div>
+      <a href="{% url 'medicines' %}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+        View catalog &rarr;
       </a>
-
     </div>
 
+    <div class="row g-3 reveal-stagger">
+      {% for med in popular_medicines %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <a href="{% url 'medicine_detail' med.id %}"
+          class="card border rounded-3 p-3 h-100 text-decoration-none shadow-sm bg-white"
+          style="transition: var(--transition);">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">{{ med.category }}</span>
+            {% if med.prescription_required %}
+            <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 small"
+              title="Prescription Required">Rx</span>
+            {% endif %}
+          </div>
+          <h6 class="fw-bold text-dark mb-1 text-truncate">{{ med.name }}</h6>
+          <p class="text-muted small mb-0 text-truncate">{{ med.brand }} &bull; {{ med.dosage }}</p>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-
 </section>
+{% endif %}
 
+<!-- PARTNER PHARMACIES (Staggered Cards) -->
+{% if pharmacies %}
+<section class="py-5 bg-white border-top">
+  <div class="container py-lg-3">
+    <div class="d-flex justify-content-between align-items-center mb-4 reveal">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">Partner Pharmacies</h3>
+        <p class="text-muted small mb-0">Verified local stores connected to MedFinder.</p>
+      </div>
+      <a href="{% url 'pharmacies' %}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+        All pharmacies &rarr;
+      </a>
+    </div>
+
+    <div class="row g-4 reveal-stagger">
+      {% for pharm in pharmacies %}
+      <div class="col-md-6 col-lg-3">
+        <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white" style="transition: var(--transition);">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span
+              class="badge {% if pharm.is_open %}bg-success{% else %}bg-secondary{% endif %} rounded-pill px-2 py-1 small">
+              ● {% if pharm.is_open %}Open{% else %}Closed{% endif %}
+            </span>
+            <small class="text-muted">{{ pharm.city }}</small>
+          </div>
+          <h5 class="fw-bold text-dark mb-1">{{ pharm.name }}</h5>
+          <p class="text-muted small mb-3 text-truncate">{{ pharm.address }}</p>
+          <div class="mt-auto pt-2 border-top">
+            <a href="{% url 'pharmacy_detail' pharm.id %}" class="btn btn-sm btn-outline-primary rounded-pill w-100">
+              View Store
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endif %}
+
+<style>
+.text-type-cursor {
+  display: inline-block;
+  color: var(--primary, #10b981);
+  font-weight: 800;
+  animation: textTypeBlink 0.5s infinite alternate;
+  margin-left: 2px;
+  line-height: 1;
+}
+
+@keyframes textTypeBlink {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+</style>
+
+<script src="{% static 'js/text_type.js' %}"></script>
 {% endblock %}

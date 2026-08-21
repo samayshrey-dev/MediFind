@@ -1,0 +1,224 @@
+/* ==========================================================================
+   MedFinder StaggeredMenu Component Styles
+   Animated Overlay Navigation with Staggered Link Reveals & Social Items
+   ========================================================================== */
+
+/* Menu Trigger Button */
+.staggered-menu-trigger {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #ffffff);
+  color: var(--dark, #0f172a);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  box-shadow: var(--shadow-subtle, 0 1px 3px rgba(0,0,0,0.05));
+}
+
+.staggered-menu-trigger:hover {
+  background: var(--surface-secondary, #f8fafc);
+  border-color: var(--primary, #10b981);
+  color: var(--primary, #10b981);
+  transform: scale(1.05);
+}
+
+/* Staggered Menu Backdrop Overlay */
+.staggered-menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1090;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.staggered-menu-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Staggered Menu Drawer Panel */
+.staggered-menu-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-width: 460px;
+  height: 100vh;
+  background: #0f172a;
+  color: #ffffff;
+  z-index: 1095;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  transform: translateX(100%);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 40px;
+  overflow-y: auto;
+}
+
+.staggered-menu-panel.open {
+  transform: translateX(0);
+}
+
+/* Header Area */
+.staggered-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 36px;
+}
+
+.staggered-menu-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.staggered-menu-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+/* Menu Items List */
+.staggered-menu-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-grow: 1;
+}
+
+.staggered-menu-item {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.staggered-menu-panel.open .staggered-menu-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered transition delays for up to 8 items */
+.staggered-menu-panel.open .staggered-menu-item:nth-child(1) { transition-delay: 0.08s; }
+.staggered-menu-panel.open .staggered-menu-item:nth-child(2) { transition-delay: 0.14s; }
+.staggered-menu-panel.open .staggered-menu-item:nth-child(3) { transition-delay: 0.20s; }
+.staggered-menu-panel.open .staggered-menu-item:nth-child(4) { transition-delay: 0.26s; }
+.staggered-menu-panel.open .staggered-menu-item:nth-child(5) { transition-delay: 0.32s; }
+.staggered-menu-panel.open .staggered-menu-item:nth-child(6) { transition-delay: 0.38s; }
+.staggered-menu-panel.open .staggered-menu-item:nth-child(7) { transition-delay: 0.44s; }
+.staggered-menu-panel.open .staggered-menu-item:nth-child(8) { transition-delay: 0.50s; }
+
+/* Menu Link */
+.staggered-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  transition: all 0.25s ease;
+  background: transparent;
+}
+
+.staggered-menu-number {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #10b981;
+  font-family: ui-monospace, Menlo, monospace;
+  opacity: 0.7;
+  transition: opacity 0.25s ease;
+}
+
+.staggered-menu-link:hover {
+  background: rgba(16, 185, 129, 0.12);
+  color: #ffffff;
+  transform: translateX(8px);
+}
+
+.staggered-menu-link:hover .staggered-menu-number {
+  opacity: 1;
+  color: #34d399;
+}
+
+/* Footer & Social Items */
+.staggered-menu-footer {
+  margin-top: auto;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.staggered-menu-socials-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.staggered-menu-socials {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.staggered-menu-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.staggered-menu-social-link:hover {
+  background: #10b981;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 576px) {
+  .staggered-menu-panel {
+    max-width: 100%;
+    padding: 24px;
+  }
+  .staggered-menu-link {
+    font-size: 1.1rem;
+  }
+}

@@ -43,100 +43,67 @@ Reservation Requests | MediFind
           <table class="table align-middle table-hover mb-0">
 
             <thead>
-
               <tr>
-
                 <th class="ps-4">Customer</th>
-
                 <th>Medicine</th>
-
                 <th>Quantity</th>
-
+                <th>Payment Mode</th>
                 <th>Status</th>
-
                 <th>Requested Date</th>
-
                 <th class="text-center">Action</th>
-
               </tr>
-
             </thead>
-
             <tbody>
-
               {% for reservation in reservations %}
-
                 <tr>
-
                   <td class="ps-4">
-
                     <strong class="d-block">{{ reservation.customer.first_name|default:reservation.customer.username }}</strong>
-
                     <small class="text-muted">{{ reservation.customer.email }}</small>
-
                   </td>
-
                   <td>
-
                     <strong>
-
                       <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none hover-primary">
-
                         {{ reservation.medicine.name }}
-
                       </a>
-
                     </strong>
-
+                    <small class="text-muted d-block">{{ reservation.medicine.brand }}</small>
                   </td>
-
                   <td>
-
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
-
-                      {{ reservation.quantity }} units
-
+                      {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}
                     </span>
-
                   </td>
-
                   <td>
-
+                    {% if reservation.is_paid %}
+                      <span class="badge bg-emerald-light text-emerald rounded-pill px-3 py-1 fw-bold">
+                        <i class="fa-solid fa-circle-check me-1"></i> Paid Online (Razorpay)
+                      </span>
+                    {% else %}
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold">
+                        <i class="fa-solid fa-hand-holding-dollar me-1"></i> Collect at Counter
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1 fw-bold">
-
                       <i class="fa-solid fa-clock me-1"></i> {{ reservation.status }}
-
                     </span>
-
                   </td>
-
                   <td>
-
                     <small class="text-muted fw-semibold">{{ reservation.requested_at|date:"d M Y, h:i A" }}</small>
-
                   </td>
-
                   <td class="text-center">
-
                     <div class="btn-group">
-
                       <a href="{% url 'accept_reservation' reservation.id %}" class="btn btn-success btn-sm fw-bold px-3">
-
                         <i class="fa-solid fa-check me-1"></i> Accept
-
                       </a>
-
                       <a href="{% url 'reject_reservation' reservation.id %}" class="btn btn-danger btn-sm fw-bold px-3">
-
                         <i class="fa-solid fa-xmark me-1"></i> Reject
-
                       </a>
-
                     </div>
-
                   </td>
-
                 </tr>
+
 
               {% endfor %}
 

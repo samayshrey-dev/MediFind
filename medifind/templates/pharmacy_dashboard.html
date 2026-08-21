@@ -259,56 +259,44 @@ Pharmacy Control Center | MediFind
               <thead class="bg-light">
 
                 <tr>
-
                   <th class="ps-3">Customer</th>
-
                   <th>Medicine</th>
-
                   <th>Qty</th>
-
+                  <th>Payment</th>
                   <th>Requested</th>
-
                   <th class="text-center">Actions</th>
-
                 </tr>
-
               </thead>
-
               <tbody>
-
                 {% for res in reservations %}
-
                   <tr>
-
                     <td class="ps-3">
-
                       <strong class="d-block text-dark">{{ res.customer.first_name|default:res.customer.username }}</strong>
-
                       <small class="text-muted">{{ res.customer.email }}</small>
-
                     </td>
-
                     <td>
-
                       <strong><a href="{% url 'medicine_detail' res.medicine.id %}" class="text-decoration-none text-dark hover-primary">{{ res.medicine.name }}</a></strong>
-
                     </td>
-
                     <td><span class="badge bg-primary-subtle text-primary border px-3 py-1">{{ res.quantity }}</span></td>
-
+                    <td>
+                      {% if res.is_paid %}
+                        <span class="badge bg-emerald-light text-emerald rounded-pill px-2 py-1 small fw-bold">
+                          <i class="fa-solid fa-circle-check me-1"></i> Paid Online
+                        </span>
+                      {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small fw-semibold">
+                          <i class="fa-solid fa-store me-1"></i> Collect on Pickup
+                        </span>
+                      {% endif %}
+                    </td>
                     <td><small class="text-muted">{{ res.requested_at|date:"d M H:i" }}</small></td>
-
                     <td class="text-center">
-
                       {% if res.status == "Pending" %}
-
                         <div class="btn-group">
-
                           <a href="{% url 'accept_reservation' res.id %}" class="btn btn-success btn-sm rounded-start fw-bold px-3">Accept</a>
-
                           <a href="{% url 'reject_reservation' res.id %}" class="btn btn-danger btn-sm rounded-end fw-bold px-3">Reject</a>
-
                         </div>
+
 
                       {% else %}
 

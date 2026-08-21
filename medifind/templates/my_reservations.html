@@ -1,181 +1,237 @@
 {% extends "base.html" %}
 
 {% block title %}
-My Reservations
+My Orders | MedFinder
 {% endblock %}
 
 {% block content %}
 
-<div class="container py-5" style="margin-top:100px;">
+<section class="py-5" style="background: var(--surface-secondary); min-height: 85vh;">
+  <div class="container py-3">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
-        <h2>
-
-            <i class="fa-solid fa-bell-concierge text-primary me-2"></i>
-
-            My Reservations
-
-        </h2>
-
-        <a href="{% url 'search' %}" class="btn btn-primary">
-
-            <i class="fa-solid fa-magnifying-glass me-2"></i>
-
-            Search Medicines
-
-        </a>
-
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">My Orders</h3>
+        <p class="text-muted small mb-0">Track and manage your local pharmacy orders, pickup confirmations, and payments.</p>
+      </div>
+      <a href="{% url 'search' %}" class="btn btn-sm btn-primary rounded-pill px-4 fw-semibold">
+        <i class="fa-solid fa-magnifying-glass me-1"></i> Search Medicines
+      </a>
     </div>
 
     {% if reservations %}
-
-    <div class="table-responsive shadow rounded">
-
-        <table class="table table-hover align-middle mb-0">
-
-            <thead class="table-primary">
-
-                <tr>
-
-                    <th>Medicine</th>
-
-                    <th>Pharmacy</th>
-
-                    <th>Quantity</th>
-
-                    <th>Status</th>
-
-                    <th>Requested On</th>
-
-                </tr>
-
+      <div class="card border rounded-4 shadow-sm bg-white overflow-hidden mb-4">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4">Medicine</th>
+                <th>Pharmacy</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Requested Date</th>
+                <th class="text-end pe-4">Payment &amp; Actions</th>
+              </tr>
             </thead>
-
             <tbody>
-
-                {% for reservation in reservations %}
-
+              {% for reservation in reservations %}
                 <tr>
+                  <td class="ps-4">
+                    <strong>
+                      <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-dark text-decoration-none">
+                        {{ reservation.medicine.name }}
+                      </a>
+                    </strong>
+                    <small class="text-muted d-block">{{ reservation.medicine.brand }}</small>
+                  </td>
+                  <td>
+                    <a href="{% url 'pharmacy_detail' reservation.pharmacy.id %}" class="text-dark text-decoration-none fw-semibold">
+                      <i class="fa-solid fa-hospital text-primary me-1"></i> {{ reservation.pharmacy.name }}
+                    </a>
+                    <small class="text-muted d-block">{{ reservation.pharmacy.city }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark border px-3 py-1 rounded-pill">
+                      {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if reservation.status == "Pending" %}
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">
+                        ● Pending Confirmation
+                      </span>
+                    {% elif reservation.status == "Accepted" %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                        ● Ready for Pickup
+                      </span>
+                    {% elif reservation.status == "Rejected" %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                        ● Unavailable
+                      </span>
+                    {% elif reservation.status == "Collected" %}
+                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
+                        ● Collected
+                      </span>
+                    {% else %}
+                      <span class="badge bg-secondary rounded-pill px-3 py-1">
+                        {{ reservation.status }}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="text-muted small">
+                    {{ reservation.requested_at|date:"d M Y, h:i A" }}
+                  </td>
+                  <td class="text-end pe-4">
+                    {% if reservation.is_paid %}
+                      <span class="badge bg-emerald-light text-emerald rounded-pill px-3 py-2 fw-bold">
+                        <i class="fa-solid fa-circle-check me-1"></i> Paid Online (Razorpay)
+                      </span>
+                    {% elif reservation.status != "Rejected" and reservation.status != "Cancelled" %}
+                      <div class="d-flex flex-column align-items-end gap-1">
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 small">
+                          <i class="fa-solid fa-store me-1"></i> Pay on Pickup
+                        </span>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold btn-pay-reservation mt-1"
+                          data-reservation-id="{{ reservation.id }}"
+                          data-med-name="{{ reservation.medicine.name }}"
+                          data-pharm-name="{{ reservation.pharmacy.name }}">
+                          <i class="fa-solid fa-credit-card me-1"></i> Pay Online Now
+                        </button>
+                      </div>
+                    {% else %}
+                      <span class="text-muted small">N/A</span>
+                    {% endif %}
 
-                    <td>
-
-                        <strong>
-
-                            <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-decoration-none text-dark hover-primary">
-
-                                {{ reservation.medicine.name }}
-
-                            </a>
-
-                        </strong>
-
-                    </td>
-
-                    <td>
-
-                        <a href="{% url 'pharmacy_detail' reservation.pharmacy.id %}" class="text-decoration-none text-secondary">
-
-                            <i class="fa-solid fa-clinic-medical text-primary me-1"></i> {{ reservation.pharmacy.name }}
-
-                        </a>
-
-                    </td>
-
-                    <td>
-
-                        {{ reservation.quantity }}
-
-                    </td>
-
-                    <td>
-
-                        {% if reservation.status == "Pending" %}
-
-                            <span class="badge bg-warning text-dark">
-
-                                Pending
-
-                            </span>
-
-                        {% elif reservation.status == "Accepted" %}
-
-                            <span class="badge bg-success">
-
-                                Accepted
-
-                            </span>
-
-                        {% elif reservation.status == "Rejected" %}
-
-                            <span class="badge bg-danger">
-
-                                Rejected
-
-                            </span>
-
-                        {% elif reservation.status == "Collected" %}
-
-                            <span class="badge bg-primary">
-
-                                Collected
-
-                            </span>
-
-                        {% else %}
-
-                            <span class="badge bg-secondary">
-
-                                {{ reservation.status }}
-
-                            </span>
-
-                        {% endif %}
-
-                    </td>
-
-                    <td>
-
-                        {{ reservation.requested_at|date:"d M Y, h:i A" }}
-
-                    </td>
-
+                  </td>
                 </tr>
-
-                {% endfor %}
-
+              {% endfor %}
             </tbody>
-
-        </table>
-
-    </div>
-
+          </table>
+        </div>
+      </div>
     {% else %}
-
-    <div class="alert alert-info shadow">
-
-        <h5>
-
-            No Reservations Yet
-
-        </h5>
-
-        <p>
-
-            Reserve a medicine from the search page and it will appear here.
-
-        </p>
-
-        <a href="{% url 'search' %}" class="btn btn-primary">
-
+      <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
+        <i class="fa-solid fa-bag-shopping fs-1 text-muted mb-3"></i>
+        <h5 class="fw-bold text-dark mb-1">No orders yet</h5>
+        <p class="text-muted small mb-3">Reserve a medicine from any partner pharmacy and it will appear here.</p>
+        <div>
+          <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">
             Search Medicines
-
-        </a>
-
-    </div>
-
+          </a>
+        </div>
+      </div>
     {% endif %}
 
-</div>
+  </div>
+</section>
+
+<!-- Direct Razorpay Merchant Payment Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function getCsrfToken() {
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('csrftoken='))
+      ?.split('=')[1];
+    return cookieValue || '';
+  }
+
+  document.querySelectorAll(".btn-pay-reservation").forEach(button => {
+    button.addEventListener("click", async function (e) {
+      e.preventDefault();
+      const resId = this.getAttribute("data-reservation-id");
+      const originalText = this.innerHTML;
+
+      this.disabled = true;
+      this.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Preparing Payment...`;
+
+      try {
+        const response = await fetch(`/api/payments/pay-reservation/${resId}/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+          }
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          alert(data.message || "Could not initialize payment.");
+          this.disabled = false;
+          this.innerHTML = originalText;
+          return;
+        }
+
+        if (typeof Razorpay === "undefined") {
+          alert("Razorpay SDK is loading. Please try again.");
+          this.disabled = false;
+          this.innerHTML = originalText;
+          return;
+        }
+
+        const btn = this;
+        const options = {
+          key: data.key_id,
+          amount: data.amount,
+          currency: data.currency || "INR",
+          name: "MedFinder Pharmacy Checkout",
+          description: `${data.medicine_name} at ${data.pharmacy_name}`,
+          order_id: data.razorpay_order_id,
+          notes: {
+            order_reference: data.order_reference,
+            reservation_id: resId
+          },
+          theme: {
+            color: "#10b981"
+          },
+          handler: async function (rzpResponse) {
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Verifying...`;
+            const verifyResp = await fetch("/api/payments/verify/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken()
+              },
+              body: JSON.stringify({
+                order_reference: data.order_reference,
+                razorpay_order_id: rzpResponse.razorpay_order_id,
+                razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                razorpay_signature: rzpResponse.razorpay_signature
+              })
+            });
+
+            const verifyData = await verifyResp.json();
+            if (verifyData.success) {
+              window.location.href = `/orders/confirmed/${data.order_reference}/`;
+            } else {
+              alert("Payment verification failed: " + (verifyData.message || "Invalid signature."));
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+      } catch (err) {
+        console.error("Payment error:", err);
+        alert("Server connection error. Please try again.");
+        this.disabled = false;
+        this.innerHTML = originalText;
+      }
+    });
+  });
+});
+</script>
 
 {% endblock %}

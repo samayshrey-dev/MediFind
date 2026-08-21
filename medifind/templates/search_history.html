@@ -1,131 +1,82 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Search History | MediFind
+Activity | MedFinder
 {% endblock %}
 
 {% block content %}
 
-<section class="py-5 bg-light" style="margin-top: 70px;">
+<section class="py-5 bg-light" style="margin-top: 70px; min-height: 85vh;">
+  <div class="container py-3">
 
-<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <div>
+        <h2 class="fw-bold text-dark mb-1">
+          <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Activity
+        </h2>
+        <p class="text-muted mb-0">Timeline of your medicine searches, recommendations, order approvals, and payments.</p>
+      </div>
 
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-
-    <div>
-
-      <h2 class="fw-bold text-dark mb-1">
-
-        <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Medicine Search History
-
-      </h2>
-
-      <p class="text-muted mb-0">Quickly re-search medicines you previously looked up on MediFind.</p>
-
+      <a href="{% url 'search' %}" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
+        <i class="fa-solid fa-magnifying-glass me-2"></i> Search Medicines
+      </a>
     </div>
 
-    <a href="{% url 'search' %}" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
+    {% if activities %}
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white p-4">
+        <div class="activity-timeline">
+          {% for act in activities %}
+            <div class="d-flex align-items-start gap-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+              <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ act.badge_class }}" style="width: 42px; height: 42px;">
+                <i class="fa-solid {{ act.icon }} fs-6"></i>
+              </div>
 
-      <i class="fa-solid fa-magnifying-glass me-2"></i> New Search
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <h6 class="fw-bold text-dark mb-0">{{ act.title }}</h6>
+                  <small class="text-muted">{{ act.timestamp|date:"d M Y, h:i A" }}</small>
+                </div>
 
-    </a>
+                <p class="text-secondary small mb-1 mt-1">{{ act.description }}</p>
 
-  </div>
-
-  <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
-
-    <div class="card-body p-0">
-
-      {% if searches %}
-
-        <div class="table-responsive">
-
-          <table class="table align-middle table-hover mb-0">
-
-            <thead class="bg-light">
-
-              <tr>
-
-                <th class="ps-4">Searched Query</th>
-
-                <th>Searched On</th>
-
-                <th class="text-end pe-4">Action</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {% for item in searches %}
-
-                <tr>
-
-                  <td class="ps-4">
-
-                    <div class="d-flex align-items-center gap-2">
-
-                      <i class="fa-solid fa-clock text-muted"></i>
-
-                      <strong class="text-dark fs-6">{{ item.medicine }}</strong>
-
-                    </div>
-
-                  </td>
-
-                  <td>
-
-                    <small class="text-muted fw-semibold">{{ item.searched_at|date:"d M Y, h:i A" }}</small>
-
-                  </td>
-
-                  <td class="text-end pe-4">
-
-                    <a href="{% url 'search' %}?medicine={{ item.medicine }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
-
+                {% if act.type == 'search' %}
+                  <div class="mt-2">
+                    <a href="{% url 'search' %}?medicine={{ act.raw_details.query }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0 fw-semibold" style="font-size: 0.78rem;">
                       <i class="fa-solid fa-magnifying-glass me-1"></i> Search Again
-
                     </a>
-
-                  </td>
-
-                </tr>
-
-              {% endfor %}
-
-            </tbody>
-
-          </table>
-
+                  </div>
+                {% elif act.raw_details %}
+                  <details class="mt-2">
+                    <summary class="small text-muted fw-semibold" style="cursor: pointer; user-select: none;">
+                      <i class="fa-solid fa-code me-1"></i> View audit details
+                    </summary>
+                    <div class="p-3 bg-light rounded-3 border mt-2 small font-monospace text-dark" style="max-height: 200px; overflow-y: auto; font-size: 0.75rem;">
+                      {% for k, v in act.raw_details.items %}
+                        <div><strong>{{ k }}:</strong> {{ v }}</div>
+                      {% endfor %}
+                    </div>
+                  </details>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
         </div>
-
-      {% else %}
-
-        <div class="text-center py-5">
-
-          <i class="fa-solid fa-history text-muted fa-4x mb-3"></i>
-
-          <h5 class="fw-bold text-dark">No Search History Found</h5>
-
-          <p class="text-muted mb-4">Your search activity will be saved here for quick reference.</p>
-
+      </div>
+    {% else %}
+      <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
+        <i class="fa-solid fa-clock-rotate-left text-muted fa-3x mb-3"></i>
+        <h5 class="fw-bold text-dark mb-1">No Activity Yet</h5>
+        <p class="text-muted small mb-4">Your search activity and order milestones will be safely recorded here.</p>
+        <div>
           <a href="{% url 'search' %}" class="btn btn-primary rounded-pill px-4 fw-semibold">
-
             <i class="fa-solid fa-magnifying-glass me-1"></i> Start Searching
-
           </a>
-
         </div>
-
-      {% endif %}
-
-    </div>
+      </div>
+    {% endif %}
 
   </div>
-
-</div>
-
 </section>
 
 {% endblock %}

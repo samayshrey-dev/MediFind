@@ -1,0 +1,124 @@
+{% load static %}
+<!-- StaggeredMenu Overlay & Off-Canvas Panel -->
+<div id="staggeredMenuBackdrop" class="staggered-menu-backdrop" aria-hidden="true"></div>
+
+<aside id="staggeredMenuPanel" class="staggered-menu-panel" role="dialog" aria-label="Navigation Menu" aria-modal="true">
+  <!-- Header with Brand Logo & Close Button -->
+  <div class="staggered-menu-header">
+    <div class="d-flex align-items-center gap-2">
+      <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #10b981; border-radius: 9px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 19V8C5 6.89543 5.89543 6 7 6C7.82843 6 8.5657 6.50444 8.86443 7.27364L12 15.28L15.1356 7.27364C15.4343 6.50444 16.1716 6 17 6C18.1046 6 19 6.89543 19 8V19" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="5" r="1.8" fill="#ffffff"/>
+        </svg>
+      </div>
+      <span class="brand-wordmark fw-extrabold" style="font-size: 1.35rem; letter-spacing: -0.4px; line-height: 1; user-select: none;">
+        <span style="color: #ffffff;">Medi</span><span style="color: #10b981;">Find</span>
+      </span>
+    </div>
+
+    <button type="button" id="staggeredMenuClose" class="staggered-menu-close" aria-label="Close navigation menu">
+      <i class="fa-solid fa-xmark fs-5"></i>
+    </button>
+  </div>
+
+  <!-- Staggered Numbered Navigation Items -->
+  <nav class="d-flex flex-column flex-grow-1">
+    <ul class="staggered-menu-nav">
+      {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
+        <li class="staggered-menu-item">
+          <a href="{% url 'pharmacy_dashboard' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">01</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="staggered-menu-item">
+          <a href="{% url 'inventory' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">02</span>
+            <span>Inventory</span>
+          </a>
+        </li>
+        <li class="staggered-menu-item">
+          <a href="{% url 'reservations' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">03</span>
+            <span>Orders</span>
+          </a>
+        </li>
+        <li class="staggered-menu-item">
+          <a href="{% url 'profile' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">04</span>
+            <span>Profile Settings</span>
+          </a>
+        </li>
+      {% else %}
+        <li class="staggered-menu-item">
+          <a href="{% url 'home' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">01</span>
+            <span>Home</span>
+          </a>
+        </li>
+
+        <li class="staggered-menu-item">
+          <a href="{% url 'search' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">02</span>
+            <span>Search</span>
+          </a>
+        </li>
+
+        <li class="staggered-menu-item">
+          <a href="{% url 'medicines' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">03</span>
+            <span>Medicines</span>
+          </a>
+        </li>
+
+        <li class="staggered-menu-item">
+          <a href="{% url 'pharmacies' %}" class="staggered-menu-link">
+            <span class="staggered-menu-number">04</span>
+            <span>Pharmacies</span>
+          </a>
+        </li>
+
+        {% if user.is_authenticated %}
+          <li class="staggered-menu-item">
+            <a href="{% url 'my_reservations' %}" class="staggered-menu-link">
+              <span class="staggered-menu-number">05</span>
+              <span>Orders</span>
+            </a>
+          </li>
+          <li class="staggered-menu-item">
+            <a href="{% url 'search_history' %}" class="staggered-menu-link">
+              <span class="staggered-menu-number">06</span>
+              <span>Activity</span>
+            </a>
+          </li>
+          <li class="staggered-menu-item">
+            <a href="{% url 'profile' %}" class="staggered-menu-link">
+              <span class="staggered-menu-number">07</span>
+              <span>Profile</span>
+            </a>
+          </li>
+        {% else %}
+          <li class="staggered-menu-item">
+            <a href="{% url 'login' %}" class="staggered-menu-link">
+              <span class="staggered-menu-number">05</span>
+              <span>Log In</span>
+            </a>
+          </li>
+          <li class="staggered-menu-item">
+            <a href="{% url 'register' %}" class="staggered-menu-link">
+              <span class="staggered-menu-number">06</span>
+              <span>Create Account</span>
+            </a>
+          </li>
+        {% endif %}
+      {% endif %}
+    </ul>
+
+  </nav>
+
+  <!-- Footer & Info -->
+  <div class="staggered-menu-footer">
+    <p class="text-white-50 small mb-0">&copy; 2026 MedFinder Healthcare</p>
+  </div>
+</aside>

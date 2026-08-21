@@ -1,247 +1,133 @@
 {% extends "base.html" %}
 
 {% block title %}
-My Profile
+Account Profile & Activity | MedFinder
 {% endblock %}
 
 {% block content %}
 
-<div class="container py-5" style="margin-top:100px;">
-
-<div class="row">
-
-<!-- Sidebar -->
-
-<div class="col-lg-3">
-
-<div class="card shadow border-0 rounded-4">
-
-<div class="card-body text-center">
-
-<i class="fa-solid fa-circle-user fa-5x text-primary mb-3"></i>
-
-<h4>{{ user.first_name|default:user.username }}</h4>
-
-<p class="text-muted">{{ user.email }}</p>
-
-<hr>
-
-<div class="list-group list-group-flush">
-
-<a href="{% url 'profile' %}" class="list-group-item list-group-item-action active">
-
-<i class="fa-solid fa-user me-2"></i>
-
-My Profile
-
-</a>
-
-<a href="{% url 'search_history' %}" class="list-group-item list-group-item-action">
-
-<i class="fa-solid fa-clock-rotate-left me-2"></i>
-
-Search History
-
-</a>
-
-<a href="{% url 'my_reservations' %}" class="list-group-item list-group-item-action">
-
-<i class="fa-solid fa-bell-concierge me-2"></i>
-
-My Reservations
-
-</a>
-
-<a href="{% url 'search' %}" class="list-group-item list-group-item-action">
-
-<i class="fa-solid fa-magnifying-glass me-2"></i>
-
-Search Medicines
-
-</a>
-
-<form method="POST" action="{% url 'logout' %}">
-
-{% csrf_token %}
-
-<button class="btn btn-danger w-100 mt-3">
-
-Logout
-
-</button>
-
-</form>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- Main Content -->
-
-<div class="col-lg-9">
-
-<h2 class="mb-4">
-
-Welcome,
-
-{{ user.first_name|default:user.username }}
-
-👋
-
-</h2>
-
-<div class="row g-4">
-
-<div class="col-md-3">
-
-<div class="card shadow border-0 text-center">
-
-<div class="card-body">
-
-<h2>{{ search_count }}</h2>
-<p>Searches</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-3">
-
-<div class="card shadow border-0 text-center">
-
-<div class="card-body">
-
-<h2>{{ reservation_count }}</h2>
-<p>Reservations</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-3">
-
-<div class="card shadow border-0 text-center">
-
-<div class="card-body">
-
-<h2>0</h2>
-
-<p>Completed</p>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="col-md-3">
-
-<div class="card shadow border-0 text-center">
-
-<div class="card-body">
-
-<h2>0</h2>
-
-<p>Favourites</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="card shadow border-0 mt-5">
-
-<div class="card-header bg-primary text-white">
-
-Recent Activity
-
-</div>
-
-<div class="card-body">
-
-<h5 class="mb-3">Recent Searches</h5>
-
-{% if recent_searches %}
-
-<ul class="list-group mb-4">
-
-{% for search in recent_searches %}
-
-<li class="list-group-item d-flex justify-content-between">
-
-<span>{{ search.medicine }}</span>
-
-<small class="text-muted">
-
-{{ search.searched_at|date:"d M Y H:i" }}
-
-</small>
-
-</li>
-
-{% endfor %}
-
-</ul>
-
-{% else %}
-
-<p>No searches yet.</p>
-
-{% endif %}
-
-<h5 class="mb-3">Recent Reservations</h5>
-
-{% if recent_reservations %}
-
-<ul class="list-group">
-
-{% for reservation in recent_reservations %}
-
-<li class="list-group-item d-flex justify-content-between">
-
-<span>
-
-{{ reservation.medicine.name }}
-
-</span>
-
-<span class="badge bg-primary">
-
-{{ reservation.status }}
-
-</span>
-
-</li>
-
-{% endfor %}
-
-</ul>
-
-{% else %}
-
-<p>No reservations yet.</p>
-
-{% endif %}
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
+<section class="py-5" style="background: var(--surface-secondary); min-height: 85vh;">
+  <div class="container py-3">
+
+    <div class="row g-4">
+      <!-- Profile Sidebar -->
+      <div class="col-lg-4">
+        <div class="card border rounded-4 p-4 shadow-sm bg-white text-center">
+          <div class="d-inline-flex align-items-center justify-content-center mb-3 rounded-circle bg-light border" style="width: 72px; height: 72px;">
+            <i class="fa-solid fa-user fs-2 text-primary"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-1">{{ user.first_name|default:user.username }}</h5>
+          <p class="text-muted small mb-3">{{ user.email|default:"Registered User" }}</p>
+
+          <div class="d-flex justify-content-center gap-2 mb-4">
+            <span class="badge bg-light text-dark border rounded-pill px-3 py-1 small">
+              {{ user.userprofile.role|default:"Customer" }} Account
+            </span>
+          </div>
+
+          <div class="list-group list-group-flush text-start border-top pt-2">
+            <a href="{% url 'profile' %}" class="list-group-item list-group-item-action border-0 py-2 fw-semibold text-primary">
+              <i class="fa-solid fa-user me-2"></i> Profile Overview
+            </a>
+            {% if user.userprofile.role == "Customer" %}
+              <a href="{% url 'my_reservations' %}" class="list-group-item list-group-item-action border-0 py-2 text-dark">
+                <i class="fa-solid fa-bag-shopping me-2 text-muted"></i> Orders
+              </a>
+              <a href="{% url 'search_history' %}" class="list-group-item list-group-item-action border-0 py-2 text-dark">
+                <i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i> Activity
+              </a>
+            {% elif user.userprofile.role == "Pharmacy" %}
+              <a href="{% url 'pharmacy_dashboard' %}" class="list-group-item list-group-item-action border-0 py-2 text-dark">
+                <i class="fa-solid fa-chart-line me-2 text-muted"></i> Dashboard
+              </a>
+              <a href="{% url 'inventory' %}" class="list-group-item list-group-item-action border-0 py-2 text-dark">
+                <i class="fa-solid fa-boxes-stacked me-2 text-muted"></i> Inventory
+              </a>
+            {% endif %}
+            <form method="POST" action="{% url 'logout' %}" class="mt-2">
+              {% csrf_token %}
+              <button type="submit" class="list-group-item list-group-item-action border-0 py-2 text-danger">
+                <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log out
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Overview -->
+      <div class="col-lg-8">
+        <!-- Quick Stats -->
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <div class="card border rounded-4 p-4 shadow-sm bg-white">
+              <span class="text-muted small fw-semibold">Total Reservations</span>
+              <h3 class="fw-bold text-dark mt-1 mb-0">{{ reservation_count|default:"0" }}</h3>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="card border rounded-4 p-4 shadow-sm bg-white">
+              <span class="text-muted small fw-semibold">Account Status</span>
+              <h3 class="fw-bold text-success mt-1 mb-0 fs-4">
+                <i class="fa-solid fa-circle-check me-1"></i> Active
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Information Card -->
+        <div class="card border rounded-4 shadow-sm bg-white p-4 mb-4">
+          <h6 class="fw-bold text-dark mb-3">Account Information</h6>
+          <div class="row g-3 small">
+            <div class="col-sm-6">
+              <span class="text-muted d-block">Username</span>
+              <strong class="text-dark">{{ user.username }}</strong>
+            </div>
+            <div class="col-sm-6">
+              <span class="text-muted d-block">Email</span>
+              <strong class="text-dark">{{ user.email|default:"Not specified" }}</strong>
+            </div>
+            <div class="col-sm-6">
+              <span class="text-muted d-block">Account Type</span>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
+                {{ user.userprofile.role|default:"Customer" }}
+              </span>
+            </div>
+            <div class="col-sm-6">
+              <span class="text-muted d-block">Member Since</span>
+              <strong class="text-dark">{{ user.date_joined|date:"d M Y" }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Reservations Card -->
+        <div class="card border rounded-4 shadow-sm bg-white p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-dark mb-0">Recent Orders</h6>
+            <a href="{% url 'my_reservations' %}" class="btn btn-sm btn-link text-decoration-none text-muted p-0">View all &rarr;</a>
+          </div>
+
+          {% if recent_reservations %}
+            <ul class="list-group list-group-flush">
+              {% for res in recent_reservations %}
+                <li class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="text-dark fw-medium">{{ res.medicine.name }}</span>
+                    <small class="text-muted d-block">{{ res.pharmacy.name }} &bull; {{ res.requested_at|date:"d M Y" }}</small>
+                  </div>
+                  <span class="badge {% if res.status == 'Accepted' %}bg-success-subtle text-success{% elif res.status == 'Pending' %}bg-warning-subtle text-warning-emphasis{% else %}bg-secondary{% endif %} rounded-pill px-3 py-1">
+                    {{ res.status }}
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small mb-0">No reservations placed yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
 
 {% endblock %}

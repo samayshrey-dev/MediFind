@@ -1,0 +1,235 @@
+/* ==========================================================================
+   MedFinder Commerce Platform — Clean Production Stylesheet
+   Minimalist, Trustworthy, Healthcare Commerce Interface
+   ========================================================================== */
+
+/* Search Container & Bar */
+.search-studio-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.search-studio-container:focus-within {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.08);
+}
+
+/* Quick Search Suggestions */
+.search-quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.search-tag-chip {
+  background: var(--surface-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.search-tag-chip:hover {
+  background: var(--border);
+  color: var(--dark);
+  border-color: var(--text-muted);
+}
+
+/* Intent Context Tags (Clean, Minimalist Badges) */
+.search-intent-bar {
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.intent-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Recommended Option / Best Match Card */
+.recommended-card {
+  background: var(--surface);
+  border: 1.5px solid var(--primary, #10b981);
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  margin-top: 24px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  transition: var(--transition);
+}
+
+.recommended-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--primary, #10b981);
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 6px 16px;
+  border-bottom-left-radius: var(--radius);
+  text-transform: uppercase;
+}
+
+.recommended-price {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--primary, #10b981);
+  line-height: 1;
+}
+
+.reasoning-callout {
+  background: var(--surface-secondary);
+  border-left: 3px solid var(--primary, #10b981);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .reasoning-callout {
+  background: rgba(16, 185, 129, 0.08);
+  color: #e2e8f0;
+}
+
+/* Review Order / Purchase Approval Gate */
+.order-review-box {
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.btn-confirm-order {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-confirm-order:hover {
+  background: var(--primary-hover);
+  color: #ffffff;
+}
+
+.order-approved-banner {
+  background: var(--success-light);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #065f46;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .order-approved-banner {
+  background: rgba(16, 185, 129, 0.15);
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Alternative Verified Options Grid */
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.option-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: var(--transition);
+}
+
+.option-card:hover {
+  border-color: var(--brand-blue);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Skeleton Loading State */
+.skeleton-box {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+[data-theme="dark"] .skeleton-box {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Medical Safety Banner */
+.safety-notice-banner {
+  background: var(--warning-light);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-left: 4px solid var(--warning);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-top: 18px;
+  color: #92400e;
+}
+
+[data-theme="dark"] .safety-notice-banner {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Audit Log Drawer */
+.audit-drawer {
+  background: #0f172a;
+  color: #94a3b8;
+  border-radius: var(--radius);
+  padding: 16px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  max-height: 280px;
+  overflow-y: auto;
+}

@@ -50,6 +50,8 @@ Reservation History | MediFind
 
               <th>Quantity</th>
 
+              <th>Payment Mode</th>
+
               <th>Status</th>
 
               <th>Date & Time</th>
@@ -84,15 +86,39 @@ Reservation History | MediFind
 
                   </strong>
 
+                  <small class="text-muted d-block">{{ reservation.medicine.brand }}</small>
+
                 </td>
 
                 <td>
 
                   <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold">
 
-                    {{ reservation.quantity }} units
+                    {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}
 
                   </span>
+
+                </td>
+
+                <td>
+
+                  {% if reservation.is_paid %}
+
+                    <span class="badge bg-emerald-light text-emerald rounded-pill px-3 py-1 fw-bold">
+
+                      <i class="fa-solid fa-circle-check me-1"></i> Paid Online
+
+                    </span>
+
+                  {% else %}
+
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold">
+
+                      <i class="fa-solid fa-store me-1"></i> Pay on Pickup
+
+                    </span>
+
+                  {% endif %}
 
                 </td>
 

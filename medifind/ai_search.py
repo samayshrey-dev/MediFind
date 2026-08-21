@@ -4,8 +4,10 @@ import json
 import urllib.request
 import urllib.error
 import math
+from .fuzzy_search import MedicineMatcher
 
 # ==========================================================
+
 # Symptom & Category Mapping for Medical Safety & Search Normalization
 # ==========================================================
 SYMPTOM_MAP = {
@@ -160,12 +162,18 @@ def local_fallback_parser(query: str) -> dict:
     elif re.search(r'\b(insulin|injection|vial|pen)\b', q_lower):
         dosage_form = "injection"
 
-    # Check for known medicine name match
+    # Check for known medicine name match (direct or fuzzy typo tolerance)
     matched_med = None
     for med in KNOWN_MEDICINES:
         if med.lower() in q_lower:
             matched_med = med
             break
+
+    if not matched_med:
+        fuzzy_matches = MedicineMatcher.find_matching_medicines(query, threshold=0.52)
+        if fuzzy_matches:
+            matched_med = fuzzy_matches[0]["medicine"].name
+
 
     # Check for symptom match
     matched_symptom = None

@@ -85,19 +85,26 @@
 }
 
 #medicineSearch:focus {
-    border-color: #0f766e !important;
-    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12) !important;
+    border-color: var(--brand-blue) !important;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
 }
 
 .search-btn {
     height: 52px;
-    border-radius: 12px;
-    font-weight: 700;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
     font-size: 15px;
-    background: linear-gradient(135deg, #0f766e, #0d9488);
+    background: var(--primary);
     border: none;
     color: #ffffff;
-    box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.search-btn:hover {
+    background: var(--primary-hover);
+    color: #ffffff;
+}
 }
 
 .search-btn:hover {

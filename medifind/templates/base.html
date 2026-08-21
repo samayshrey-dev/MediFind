@@ -6,92 +6,91 @@
 
 <head>
 
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>{% block title %}MediFind - Real-time Pharmacy & Medicine Locator{% endblock %}</title>
+  <title>{% block title %}MedFinder - Real-time Pharmacy & Medicine Locator{% endblock %}</title>
 
-<!-- Modern Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
 
-<!-- Bootstrap 5 & FontAwesome -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
-<!-- Custom Application Styles -->
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
-<link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-<link rel="stylesheet" href="{% static 'css/hero.css' %}">
-<link rel="stylesheet" href="{% static 'css/stats.css' %}">
-<link rel="stylesheet" href="{% static 'css/cards.css' %}">
-<link rel="stylesheet" href="{% static 'css/footer.css' %}">
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<link rel="stylesheet" href="{% static 'css/search.css' %}">
-<link rel="stylesheet" href="{% static 'css/notification.css' %}">
+  <!-- Bootstrap 5 & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
-<!-- Theme System Handler -->
-<script src="{% static 'js/theme.js' %}"></script>
+  <!-- Custom Application Styles -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+  <link rel="stylesheet" href="{% static 'css/hero.css' %}">
+  <link rel="stylesheet" href="{% static 'css/stats.css' %}">
+  <link rel="stylesheet" href="{% static 'css/cards.css' %}">
+  <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/search.css' %}">
+  <link rel="stylesheet" href="{% static 'css/notification.css' %}">
+  <link rel="stylesheet" href="{% static 'css/commerce_agent.css' %}">
+  <link rel="stylesheet" href="{% static 'css/motion.css' %}">
+  <link rel="stylesheet" href="{% static 'css/staggered_menu.css' %}">
+  <link rel="stylesheet" href="{% static 'css/scroll_stack.css' %}">
+  <link rel="stylesheet" href="{% static 'css/aurora.css' %}">
 
+  <!-- Theme System Handler -->
+  <script src="{% static 'js/theme.js' %}"></script>
 </head>
+
 
 <body>
 
-{% include 'navbar.html' %}
+  <!-- Top Scroll Progress Indicator -->
+  <div id="scrollProgressBar"></div>
 
-<div class="container" style="max-width: 850px; position: relative; z-index: 100; margin-top: 95px; margin-bottom: -70px;">
+  {% include 'navbar.html' %}
 
-{% if messages %}
-
-  {% for message in messages %}
-
-  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'primary' }}{% endif %} alert-dismissible fade show rounded-4 shadow-sm border-0 d-flex align-items-center mb-3" role="alert">
-
-    <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation text-danger{% else %}fa-circle-check text-success{% endif %} fs-4 me-3"></i>
-
-    <div class="fw-semibold text-dark me-auto">{{ message }}</div>
-
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-
+  {% if messages %}
+  <div class="container position-relative" style="max-width: 850px; z-index: 1080; margin-top: 15px; margin-bottom: 15px;">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'primary' }}{% endif %} alert-dismissible fade show rounded-4 shadow-sm border-0 d-flex align-items-center mb-3" role="alert">
+      <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation text-danger{% else %}fa-circle-check text-success{% endif %} fs-4 me-3"></i>
+      <div class="fw-semibold text-dark me-auto">{{ message }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
   </div>
+  {% endif %}
 
-  {% endfor %}
+  {% block content %}
+  {% endblock %}
 
-{% endif %}
+  {% include 'footer.html' %}
+  {% include 'components/staggered_menu.html' %}
 
-</div>
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="{% static 'js/main.js' %}"></script>
+  <script src="{% static 'js/map.js' %}"></script>
+  <script src="{% static 'js/motion.js' %}"></script>
+  <script src="{% static 'js/commerce_agent.js' %}"></script>
+  <script src="{% static 'js/staggered_menu.js' %}"></script>
+  <script src="{% static 'js/scroll_stack.js' %}"></script>
+  <script src="{% static 'js/aurora.js' %}"></script>
+  <script src="{% static 'js/text_type.js' %}"></script>
 
-{% block content %}
-{% endblock %}
-
-{% include 'footer.html' %}
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="{% static 'js/main.js' %}"></script>
-<script src="{% static 'js/map.js' %}"></script>
-
-{% if user.is_authenticated %}
-<script src="{% static 'js/notification.js' %}"></script>
-{% endif %}
-
-<script>
-window.addEventListener("scroll", function() {
-    const navbar = document.querySelector(".navbar");
-    if (navbar) {
-        if (window.scrollY > 30) {
-            navbar.classList.add("scrolled");
-        } else {
-            navbar.classList.remove("scrolled");
-        }
-    }
-});
-</script>
+  {% if user.is_authenticated %}
+  <script src="{% static 'js/notification.js' %}"></script>
+  {% endif %}
 
 </body>
+
 
 </html>

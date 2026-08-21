@@ -3,6 +3,8 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.conf import settings
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Q
@@ -15,6 +17,16 @@ import json
 
 from django.views.decorators.csrf import csrf_exempt
 from .ai_search import parse_query_with_ai, haversine_distance, SYMPTOM_MAP
+from .fuzzy_search import MedicineMatcher
+from .commerce_agent import (
+
+    AICommerceAgent,
+    IntentParser,
+    AgentAuditService,
+    AgentAuditLog,
+    AgentState,
+    OptimizationGoal
+)
 
 from .models import (
     Medicine,
@@ -24,7 +36,18 @@ from .models import (
     SearchHistory,
     Notification,
     UserProfile,
+    AgentAuditLog as AgentAuditLogModel,
+    Order,
+    WebhookEvent,
 )
+
+from .commerce_service import (
+    AgenticCommerceService,
+    PriceMismatchError,
+    OutOfStockError,
+    CommerceError,
+)
+
 
 from .forms import (
     MedicineForm,
@@ -48,7 +71,7 @@ def pharmacy_required(view_func):
         if request.user.is_superuser:
             return view_func(request, *args, **kwargs)
 
-        if request.user.userprofile.role == "Pharmacy":
+        if hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
             return view_func(request, *args, **kwargs)
 
         return render(
@@ -56,6 +79,7 @@ def pharmacy_required(view_func):
             "403.html",
             status=403
         )
+
 
     return wrapper
 
@@ -65,48 +89,465 @@ def pharmacy_required(view_func):
 # ==========================================================
 
 def home(request):
+    user_pharmacy = None
+    pharmacy_inventory_count = 0
+    pharmacy_pending_count = 0
+
+    if request.user.is_authenticated and hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
+        user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+        if not user_pharmacy and request.user.is_superuser:
+            user_pharmacy = Pharmacy.objects.first()
+        if user_pharmacy:
+            pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
+            pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
 
     medicines = Medicine.objects.all()[:8]
-
     pharmacies = Pharmacy.objects.filter(is_active=True)[:4]
-
     medicine_count = Medicine.objects.count()
-
     pharmacy_count = Pharmacy.objects.count()
-
     reservation_count = Reservation.objects.count()
-
     user_count = User.objects.count()
 
     context = {
-
         "popular_medicines": medicines,
-
         "pharmacies": pharmacies,
-
         "medicine_count": medicine_count,
-
         "pharmacy_count": pharmacy_count,
-
         "reservation_count": reservation_count,
-
         "user_count": user_count,
-
+        "user_pharmacy": user_pharmacy,
+        "pharmacy_inventory_count": pharmacy_inventory_count,
+        "pharmacy_pending_count": pharmacy_pending_count,
     }
 
     return render(
-
         request,
-
         "home.html",
-
         context
-
     )
 
 
+
 # ==========================================================
-# AI Natural-Language Query Interpretation API
+# AI Commerce Agent API Endpoints
+# ==========================================================
+
+@csrf_exempt
+def ai_commerce_agent_interpret(request):
+    """
+    POST /api/ai/interpret/
+    Parses natural language query into structured commerce intent.
+    """
+    query = ""
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+            query = body.get("query", "")
+        except Exception:
+            query = request.POST.get("query", "")
+    else:
+        query = request.GET.get("query", "")
+
+    intent = IntentParser.parse_with_ai(query)
+    return JsonResponse(intent)
+
+
+@csrf_exempt
+def ai_commerce_agent_search(request):
+    """
+    POST /api/ai/agent/search/
+    Full AI Commerce Agent execution: Intent -> Search -> Rank -> Recommend -> Await Approval.
+    """
+    query = ""
+    user_lat = None
+    user_lng = None
+    session_id = None
+
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+            query = body.get("query", "")
+            user_lat = body.get("lat")
+            user_lng = body.get("lng")
+            session_id = body.get("session_id")
+        except Exception:
+            query = request.POST.get("query", "")
+            user_lat = request.POST.get("lat")
+            user_lng = request.POST.get("lng")
+            session_id = request.POST.get("session_id")
+    else:
+        query = request.GET.get("query", "")
+        user_lat = request.GET.get("lat")
+        user_lng = request.GET.get("lng")
+        session_id = request.GET.get("session_id")
+
+    try:
+        if user_lat is not None:
+            user_lat = float(user_lat)
+        if user_lng is not None:
+            user_lng = float(user_lng)
+    except (ValueError, TypeError):
+        user_lat = None
+        user_lng = None
+
+    user = request.user if request.user.is_authenticated else None
+
+    # Track search in history if authenticated
+    if user and query and hasattr(user, "userprofile") and user.userprofile.role == "Customer":
+        try:
+            SearchHistory.objects.create(user=user, medicine=query)
+        except Exception:
+            pass
+
+    agent_result = AICommerceAgent.execute_search_flow(
+        query=query,
+        user_lat=user_lat,
+        user_lng=user_lng,
+        user=user,
+        session_id=session_id
+    )
+
+    return JsonResponse(agent_result)
+
+
+@csrf_exempt
+def ai_commerce_agent_approve(request):
+    """
+    POST /api/ai/agent/approve/
+    User approval gate: confirms purchase intent without charging payment.
+    Transitions state: AWAITING_APPROVAL -> APPROVED.
+    """
+    session_id = None
+    inventory_id = None
+
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+            session_id = body.get("session_id")
+            inventory_id = body.get("inventory_id")
+        except Exception:
+            session_id = request.POST.get("session_id")
+            inventory_id = request.POST.get("inventory_id")
+
+    if not session_id or not inventory_id:
+        return JsonResponse({
+            "success": False,
+            "message": "session_id and inventory_id are required."
+        }, status=400)
+
+    try:
+        inventory_id = int(inventory_id)
+    except (ValueError, TypeError):
+        return JsonResponse({
+            "success": False,
+            "message": "Invalid inventory_id."
+        }, status=400)
+
+    user = request.user if request.user.is_authenticated else None
+    approval_result = AICommerceAgent.handle_user_approval(
+        session_id=session_id,
+        inventory_id=inventory_id,
+        user=user
+    )
+
+    return JsonResponse(approval_result)
+
+
+@csrf_exempt
+def ai_commerce_agent_audit(request, session_id):
+    """
+    GET /api/ai/agent/audit/<session_id>/
+    Returns internal audit trail logs for an agent session.
+    """
+    logs = AgentAuditLogModel.objects.filter(session_id=session_id).order_by("created_at")
+    trail = []
+    for log in logs:
+        trail.append({
+            "id": log.id,
+            "session_id": log.session_id,
+            "event_type": log.event_type,
+            "state": log.state,
+            "payload": log.payload,
+            "created_at": log.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+    return JsonResponse({
+        "session_id": session_id,
+        "count": len(trail),
+        "audit_trail": trail
+    })
+
+
+# ==========================================================
+# Phase 2: Razorpay Agentic Commerce API Endpoints
+# ==========================================================
+
+@csrf_exempt
+def commerce_create_snapshot(request):
+    """
+    POST /api/commerce/snapshot/
+    Creates a server-side immutable transaction snapshot when user reviews recommendation.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        body = request.POST
+
+    session_id = body.get("session_id")
+    inventory_id = body.get("inventory_id")
+    quantity = int(body.get("quantity", 1))
+
+    if not session_id or not inventory_id:
+        return JsonResponse({"success": False, "message": "session_id and inventory_id are required."}, status=400)
+
+    try:
+        user = request.user if request.user.is_authenticated else None
+        order = AgenticCommerceService.create_transaction_snapshot(
+            session_id=session_id,
+            inventory_id=int(inventory_id),
+            quantity=quantity,
+            user=user
+        )
+        return JsonResponse({
+            "success": True,
+            "order_reference": order.order_reference,
+            "session_id": order.session_id,
+            "medicine_name": order.medicine.name,
+            "medicine_brand": order.medicine.brand,
+            "pharmacy_name": order.pharmacy.name,
+            "quantity": order.quantity,
+            "unit_price": float(order.unit_price),
+            "total_amount": float(order.total_amount),
+            "currency": order.currency,
+            "status": order.status,
+            "snapshot_data": order.snapshot_data
+        })
+    except CommerceError as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "message": f"Server error: {str(e)}"}, status=500)
+
+
+@csrf_exempt
+def commerce_create_razorpay_order(request):
+    """
+    POST /api/payments/create-order/
+    Explicit user confirmation -> Revalidates inventory & creates Razorpay Test Order.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        body = request.POST
+
+    order_reference = body.get("order_reference")
+    if not order_reference:
+        return JsonResponse({"success": False, "message": "order_reference is required."}, status=400)
+
+    try:
+        user = request.user if request.user.is_authenticated else None
+        result = AgenticCommerceService.create_razorpay_test_order(
+            order_reference=order_reference,
+            user=user
+        )
+        return JsonResponse(result)
+    except PriceMismatchError as e:
+        return JsonResponse({
+            "success": False,
+            "error_type": "PRICE_CHANGED",
+            "message": str(e),
+            "old_price": e.old_price,
+            "new_price": e.new_price
+        }, status=409)
+    except OutOfStockError as e:
+        return JsonResponse({
+            "success": False,
+            "error_type": "OUT_OF_STOCK",
+            "message": str(e)
+        }, status=409)
+    except CommerceError as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "message": f"Payment initialization failed: {str(e)}"}, status=500)
+
+
+@csrf_exempt
+@login_required
+def commerce_pay_reservation(request, reservation_id):
+    """
+    POST /api/payments/pay-reservation/<int:reservation_id>/
+    Allows customer to directly pay merchant via Razorpay Test Mode for an existing reservation.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        result = AgenticCommerceService.create_reservation_payment_order(
+            reservation_id=reservation_id,
+            user=request.user
+        )
+        return JsonResponse(result)
+    except PriceMismatchError as e:
+        return JsonResponse({
+            "success": False,
+            "error_type": "PRICE_CHANGED",
+            "message": str(e),
+            "old_price": e.old_price,
+            "new_price": e.new_price
+        }, status=409)
+    except OutOfStockError as e:
+        return JsonResponse({
+            "success": False,
+            "error_type": "OUT_OF_STOCK",
+            "message": str(e)
+        }, status=409)
+    except CommerceError as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "message": f"Payment initialization failed: {str(e)}"}, status=500)
+
+
+
+@csrf_exempt
+def commerce_verify_payment(request):
+    """
+    POST /api/payments/verify/
+    Verifies Razorpay HMAC SHA256 payment signature server-side.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        body = request.POST
+
+    order_reference = body.get("order_reference")
+    razorpay_order_id = body.get("razorpay_order_id")
+    razorpay_payment_id = body.get("razorpay_payment_id")
+    razorpay_signature = body.get("razorpay_signature")
+
+    if not all([order_reference, razorpay_order_id, razorpay_payment_id, razorpay_signature]):
+        return JsonResponse({
+            "success": False,
+            "message": "Missing required verification parameters."
+        }, status=400)
+
+    user = request.user if request.user.is_authenticated else None
+    result = AgenticCommerceService.verify_payment_signature(
+        order_reference=order_reference,
+        razorpay_order_id=razorpay_order_id,
+        razorpay_payment_id=razorpay_payment_id,
+        razorpay_signature=razorpay_signature,
+        user=user
+    )
+
+    status_code = 200 if result.get("success") else 400
+    return JsonResponse(result, status=status_code)
+
+
+@csrf_exempt
+def commerce_fail_payment(request):
+    """
+    POST /api/payments/fail/
+    Handles payment cancellation, decline, or checkout abandonment.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        body = request.POST
+
+    order_reference = body.get("order_reference")
+    reason = body.get("reason", "Payment failed or cancelled by user.")
+
+    if not order_reference:
+        return JsonResponse({"success": False, "message": "order_reference is required."}, status=400)
+
+    user = request.user if request.user.is_authenticated else None
+    result = AgenticCommerceService.record_payment_failure(
+        order_reference=order_reference,
+        reason=reason,
+        user=user
+    )
+    return JsonResponse(result)
+
+
+@csrf_exempt
+def commerce_razorpay_webhook(request):
+    """
+    POST /api/payments/razorpay/webhook/
+    Public webhook receiver with raw-body HMAC SHA256 signature verification and idempotency.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    raw_body = request.body
+    signature_header = request.headers.get("X-Razorpay-Signature", "")
+    event_id_header = request.headers.get("X-Razorpay-Event-Id", "")
+
+    try:
+        result = AgenticCommerceService.process_webhook(
+            raw_body=raw_body,
+            signature_header=signature_header,
+            event_id=event_id_header
+        )
+        status_code = 200 if result.get("success") else 400
+        return JsonResponse(result, status=status_code)
+    except CommerceError as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "message": f"Webhook processing error: {str(e)}"}, status=500)
+
+
+@csrf_exempt
+def commerce_order_status(request, order_reference):
+    """
+    GET /api/orders/<order_reference>/
+    Returns order details and transaction status.
+    """
+    try:
+        order = Order.objects.select_related("medicine", "pharmacy", "inventory").get(order_reference=order_reference)
+        return JsonResponse({
+            "success": True,
+            "order_reference": order.order_reference,
+            "medicine_name": order.medicine.name,
+            "pharmacy_name": order.pharmacy.name,
+            "quantity": order.quantity,
+            "unit_price": float(order.unit_price),
+            "total_amount": float(order.total_amount),
+            "currency": order.currency,
+            "status": order.status,
+            "razorpay_order_id": order.razorpay_order_id,
+            "razorpay_payment_id": order.razorpay_payment_id,
+            "created_at": order.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "paid_at": order.paid_at.strftime("%Y-%m-%d %H:%M:%S") if order.paid_at else None
+        })
+    except Order.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Order not found."}, status=404)
+
+
+def order_confirmed_view(request, order_reference):
+    """
+    GET /orders/confirmed/<order_reference>/
+    Full order confirmation page with verified receipt and delivery timeline.
+    """
+    order = get_object_or_404(Order.objects.select_related("medicine", "pharmacy", "inventory"), order_reference=order_reference)
+    return render(request, "order_confirmed.html", {
+        "order": order
+    })
+
+
+
+# ==========================================================
+# Legacy AI Query Interpretation API (Preserved for compatibility)
 # ==========================================================
 
 @csrf_exempt
@@ -127,6 +568,7 @@ def ai_search_api(request):
 
     result = parse_query_with_ai(query)
     return JsonResponse(result)
+
 
 
 # ==========================================================
@@ -178,8 +620,15 @@ def search(request):
         "pharmacy"
     )
 
-    # Filtering with AI / Natural-Language Search Terms
+    did_you_mean = None
+
+    # Filtering with AI / Natural-Language Search Terms & Fuzzy Matcher
     if query:
+        # 1. Fuzzy matching & typo resolution
+        fuzzy_matches = MedicineMatcher.find_matching_medicines(query, threshold=0.50)
+        matched_med_ids = [m["medicine"].id for m in fuzzy_matches] if fuzzy_matches else []
+        did_you_mean = MedicineMatcher.get_suggested_correction(query)
+
         search_terms = [query]
         if ai_result:
             if ai_result.get("medicine_name"):
@@ -190,6 +639,9 @@ def search(request):
                 search_terms.append(ai_result["search_term"])
 
         q_objects = Q()
+        if matched_med_ids:
+            q_objects |= Q(medicine_id__in=matched_med_ids)
+
         for term in set(search_terms):
             if term:
                 q_objects |= Q(medicine__name__icontains=term)
@@ -280,30 +732,46 @@ def search(request):
             "distance_km": getattr(item, 'distance_km', None)
         })
 
+    categories = list(
+        Medicine.objects.values_list("category", flat=True)
+        .distinct()
+        .exclude(category__isnull=True)
+        .exclude(category="")
+        .order_by("category")
+    )
+
     return render(
         request,
         "search.html",
         {
             "inventory": inventory_items,
+            "categories": categories,
             "query": query,
             "category": category,
             "sort": sort,
             "radius": radius_param,
             "ai_result": ai_result,
             "ai_interpreted": ai_interpreted,
+            "did_you_mean": did_you_mean,
             "warning_msg": warning_msg,
             "marker_data": json.dumps(marker_data)
         }
     )
+
+
 def search_suggestions(request):
-
+    """
+    GET /search/suggestions/?q=dollo
+    Fault-tolerant auto-suggestions returning exact & fuzzy matched medicines.
+    """
     query = request.GET.get("q", "").strip()
-
     suggestions = []
 
     if query:
+        seen_ids = set()
 
-        medicines = (
+        # 1. Exact & Substring matches
+        exact_meds = (
             Medicine.objects.filter(
                 Q(name__icontains=query) |
                 Q(brand__icontains=query)
@@ -312,23 +780,36 @@ def search_suggestions(request):
             .distinct()[:8]
         )
 
-        for medicine in medicines:
-
+        for medicine in exact_meds:
+            seen_ids.add(medicine.id)
             suggestions.append({
-
                 "id": medicine.id,
-
                 "name": medicine.name,
-
                 "brand": medicine.brand,
-
-                "category": medicine.category,
-
+                "category": medicine.category
             })
+
+        # 2. Fuzzy matches for typos & spelling mistakes
+        if len(suggestions) < 6:
+            fuzzy_matches = MedicineMatcher.find_matching_medicines(query, threshold=0.50, limit=8)
+            for fm in fuzzy_matches:
+                med = fm["medicine"]
+                if med.id not in seen_ids:
+                    seen_ids.add(med.id)
+                    suggestions.append({
+                        "id": med.id,
+                        "name": med.name,
+                        "brand": med.brand,
+                        "category": med.category
+                    })
+                    if len(suggestions) >= 8:
+                        break
 
     return JsonResponse(suggestions, safe=False)
 
+
 # ==========================================================
+
 # Details
 # ==========================================================
 
@@ -511,17 +992,21 @@ def dashboard(request):
     )
 @login_required
 def toggle_pharmacy_status(request):
-
-    if request.user.userprofile.role != "Pharmacy":
-
+    if not hasattr(request.user, "userprofile") or request.user.userprofile.role != "Pharmacy":
         messages.error(
             request,
             "Access denied."
         )
-
         return redirect("home")
 
-    pharmacy = request.user.userprofile.pharmacy
+    pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+    if not pharmacy:
+        messages.error(
+            request,
+            "No pharmacy associated with your account."
+        )
+        return redirect("home")
+
 
     pharmacy.is_open = not pharmacy.is_open
 
@@ -549,33 +1034,55 @@ def toggle_pharmacy_status(request):
 # ==========================================================
 
 def medicines(request):
+    query = request.GET.get("q", "").strip()
+    category = request.GET.get("category", "").strip()
 
-    query = request.GET.get("q")
-
-    medicines = Medicine.objects.all().order_by("name")
+    medicines_qs = Medicine.objects.all().order_by("name")
 
     if query:
-        medicines = medicines.filter(
-            name__icontains=query
+        medicines_qs = medicines_qs.filter(
+            Q(name__icontains=query) |
+            Q(brand__icontains=query) |
+            Q(description__icontains=query) |
+            Q(uses__icontains=query)
         )
 
-    paginator = Paginator(
-        medicines,
-        8
-    )
+    if category and category != "All":
+        medicines_qs = medicines_qs.filter(category__iexact=category)
 
+    categories = [
+        "Pain Relief",
+        "Fever & Cold",
+        "Allergy",
+        "Digestive Health",
+        "Vitamins & Supplements",
+        "Diabetes Care",
+        "Blood Pressure",
+        "Skin Care",
+        "First Aid",
+        "Respiratory",
+        "Eye Care",
+        "Oral Care",
+        "Antibiotic",
+        "Heart",
+    ]
+
+    paginator = Paginator(medicines_qs, 12)
     page = request.GET.get("page")
-
-    medicines = paginator.get_page(page)
+    page_obj = paginator.get_page(page)
 
     return render(
         request,
         "medicines.html",
         {
-            "medicines": medicines,
-            "query": query
+            "medicines": page_obj,
+            "query": query,
+            "selected_category": category,
+            "categories": categories,
+            "total_count": medicines_qs.count(),
         }
     )
+
 
 
 @pharmacy_required
@@ -671,33 +1178,184 @@ def delete_medicine(request, pk):
 
 
 # ==========================================================
-# Pharmacy Management
+# Nearby Pharmacies API (Real Browser Geolocation & Inventory Discovery)
+# ==========================================================
+
+@csrf_exempt
+def nearby_pharmacies_api(request):
+    """
+    GET /api/pharmacies/nearby/?lat=...&lng=...&radius=5&sort=nearest
+    Calculates verified Haversine distance, open status, and real medicine count from DB.
+    """
+    lat_str = request.GET.get("lat", "").strip()
+    lng_str = request.GET.get("lng", "").strip()
+    radius_str = request.GET.get("radius", "5").strip()
+    sort_by = request.GET.get("sort", "nearest").strip()
+    query = request.GET.get("q", "").strip()
+
+    user_lat = None
+    user_lng = None
+    if lat_str and lng_str:
+        try:
+            user_lat = float(lat_str)
+            user_lng = float(lng_str)
+        except ValueError:
+            pass
+
+    radius_km = None
+    if radius_str.lower() != "all" and radius_str:
+        try:
+            radius_km = float(radius_str)
+        except ValueError:
+            radius_km = None
+
+    # Default to Chennai Central coordinates if no GPS provided
+    calc_lat = user_lat if user_lat is not None else 13.0827
+    calc_lng = user_lng if user_lng is not None else 80.2707
+
+    current_time = timezone.localtime().time()
+    all_pharmacies = Pharmacy.objects.filter(is_active=True)
+    if query:
+        all_pharmacies = all_pharmacies.filter(
+            Q(name__icontains=query) | Q(address__icontains=query) | Q(city__icontains=query)
+        )
+
+    results = []
+    for pharm in all_pharmacies:
+        is_open = pharm.is_open and (pharm.opening_time <= current_time <= pharm.closing_time)
+        dist_km = round(haversine_distance(calc_lat, calc_lng, float(pharm.latitude), float(pharm.longitude)), 1)
+        
+        if radius_km is not None and dist_km > radius_km:
+            continue
+
+        meds_count = Inventory.objects.filter(pharmacy=pharm, quantity__gt=0).count()
+        has_connected_inventory = (meds_count > 0)
+
+        results.append({
+            "id": pharm.id,
+            "name": pharm.name,
+            "owner_name": pharm.owner_name,
+            "phone": pharm.phone,
+            "email": pharm.email,
+            "address": pharm.address,
+            "city": pharm.city,
+            "state": pharm.state,
+            "pincode": pharm.pincode,
+            "latitude": float(pharm.latitude),
+            "longitude": float(pharm.longitude),
+            "is_open": is_open,
+            "opening_time": pharm.opening_time.strftime("%I:%M %p"),
+            "closing_time": pharm.closing_time.strftime("%I:%M %p"),
+            "distance_km": dist_km,
+            "medicines_available_count": meds_count,
+            "has_connected_inventory": has_connected_inventory,
+        })
+
+    if sort_by == "open":
+        results.sort(key=lambda x: (not x["is_open"], x["distance_km"]))
+    elif sort_by == "medicines":
+        results.sort(key=lambda x: (-x["medicines_available_count"], x["distance_km"]))
+    else:
+        results.sort(key=lambda x: x["distance_km"])
+
+    return JsonResponse({
+        "success": True,
+        "user_location": {"lat": calc_lat, "lng": calc_lng},
+        "radius_km": radius_km,
+        "count": len(results),
+        "pharmacies": results
+    })
+
+
+# ==========================================================
+# Pharmacy Management & Discovery List
 # ==========================================================
 
 def pharmacies(request):
+    user_lat_param = request.GET.get("lat", "").strip()
+    user_lng_param = request.GET.get("lng", "").strip()
+    radius_param = request.GET.get("radius", "all").strip()
+    sort = request.GET.get("sort", "nearest").strip()
+    query = request.GET.get("q", "").strip()
 
-    pharmacies = Pharmacy.objects.all().order_by("name")
+    user_lat = None
+    user_lng = None
+    if user_lat_param and user_lng_param:
+        try:
+            user_lat = float(user_lat_param)
+            user_lng = float(user_lng_param)
+        except ValueError:
+            pass
 
-    active_count = pharmacies.filter(is_active=True).count()
+    calc_lat = user_lat if user_lat is not None else 13.0827
+    calc_lng = user_lng if user_lng is not None else 80.2707
 
-    open_count = pharmacies.filter(is_open=True).count()
+    radius_km = None
+    if radius_param.lower() != "all" and radius_param:
+        try:
+            radius_km = float(radius_param)
+        except ValueError:
+            radius_km = None
+
+    current_time = timezone.localtime().time()
+    pharmacy_qs = Pharmacy.objects.filter(is_active=True)
+    if query:
+        pharmacy_qs = pharmacy_qs.filter(
+            Q(name__icontains=query) | Q(address__icontains=query) | Q(city__icontains=query)
+        )
+
+    pharmacies_list = list(pharmacy_qs)
+    marker_data = []
+
+    for pharm in pharmacies_list:
+        pharm.is_open_now = pharm.is_open and (pharm.opening_time <= current_time <= pharm.closing_time)
+        pharm.meds_count = Inventory.objects.filter(pharmacy=pharm, quantity__gt=0).count()
+        pharm.has_connected_inventory = (pharm.meds_count > 0)
+        dist = haversine_distance(calc_lat, calc_lng, float(pharm.latitude), float(pharm.longitude))
+        pharm.distance_km = round(dist, 1)
+
+    if radius_km is not None:
+        pharmacies_list = [p for p in pharmacies_list if p.distance_km <= radius_km]
+
+    if sort == "open":
+        pharmacies_list.sort(key=lambda x: (not getattr(x, 'is_open_now', False), getattr(x, 'distance_km', 9999)))
+    elif sort == "medicines":
+        pharmacies_list.sort(key=lambda x: (-getattr(x, 'meds_count', 0), getattr(x, 'distance_km', 9999)))
+    else:
+        pharmacies_list.sort(key=lambda x: getattr(x, 'distance_km', 9999))
+
+    for pharm in pharmacies_list:
+        marker_data.append({
+            "id": pharm.id,
+            "name": pharm.name,
+            "address": pharm.address,
+            "city": pharm.city,
+            "phone": pharm.phone,
+            "is_open": getattr(pharm, 'is_open_now', True),
+            "opening_time": pharm.opening_time.strftime("%I:%M %p"),
+            "closing_time": pharm.closing_time.strftime("%I:%M %p"),
+            "latitude": float(pharm.latitude),
+            "longitude": float(pharm.longitude),
+            "distance_km": getattr(pharm, 'distance_km', None),
+            "medicines_available_count": getattr(pharm, 'meds_count', 0),
+            "has_connected_inventory": getattr(pharm, 'has_connected_inventory', False),
+        })
+
 
     return render(
-
         request,
-
         "pharmacies.html",
-
         {
-
-            "pharmacies": pharmacies,
-
-            "active_count": active_count,
-
-            "open_count": open_count,
-
+            "pharmacies": pharmacies_list,
+            "active_count": Pharmacy.objects.filter(is_active=True).count(),
+            "open_count": sum(1 for p in pharmacies_list if getattr(p, 'is_open_now', False)),
+            "user_lat": user_lat,
+            "user_lng": user_lng,
+            "radius": radius_param,
+            "sort": sort,
+            "query": query,
+            "marker_data": json.dumps(marker_data)
         }
-
     )
 
 
@@ -1268,63 +1926,150 @@ def notify_reservation_update(reservation, action, actor_user):
 
 @login_required
 def reserve_medicine(request, inventory_id):
-
+    """
+    Renders reservation checkout page and processes medicine reservations
+    with choice of Pay Online (Razorpay) or Pay at Pharmacy on Pickup.
+    """
     inventory = get_object_or_404(
-        Inventory,
+        Inventory.objects.select_related("medicine", "pharmacy"),
         id=inventory_id
     )
 
-    if request.user.userprofile.role != "Customer":
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.content_type == "application/json"
 
+    if request.user.userprofile.role != "Customer":
+        if is_ajax:
+            return JsonResponse({"success": False, "message": "Only customers can reserve medicines."}, status=403)
         messages.error(
             request,
             "Only customers can reserve medicines."
         )
-
         return redirect("search")
 
     if inventory.quantity <= 0:
-
+        if is_ajax:
+            return JsonResponse({"success": False, "message": f"{inventory.medicine.name} is currently out of stock."}, status=400)
         messages.error(
             request,
-            "Medicine is currently out of stock."
+            f"{inventory.medicine.name} is currently out of stock."
         )
-
         return redirect("search")
 
+    # If GET request: render the interactive reservation and payment selection page
+    if request.method == "GET":
+        return render(request, "reserve_medicine.html", {
+            "inventory": inventory,
+            "medicine": inventory.medicine,
+            "pharmacy": inventory.pharmacy,
+            "razorpay_key_id": getattr(settings, "RAZORPAY_KEY_ID", "rzp_test_TSJYKlbEfXc5n1"),
+            "unit_price": inventory.price,
+            "max_quantity": min(inventory.quantity, 10),
+        })
+
+    # POST Handling
+    try:
+        quantity = int(request.POST.get("quantity", 1))
+    except (ValueError, TypeError):
+        quantity = 1
+    quantity = max(1, min(quantity, inventory.quantity))
+    payment_choice = request.POST.get("payment_method", "PayOnPickup")
+    notes = request.POST.get("notes", "").strip()
+
+    # Check for existing pending reservation
     existing = Reservation.objects.filter(
         customer=request.user,
         pharmacy=inventory.pharmacy,
         medicine=inventory.medicine,
         status="Pending"
-    ).exists()
+    ).first()
 
-    if existing:
+    if payment_choice == "Online":
+        if existing:
+            reservation = existing
+            reservation.quantity = quantity
+            reservation.notes = notes
+            reservation.payment_method = "Online"
+            reservation.save(update_fields=["quantity", "notes", "payment_method"])
+        else:
+            reservation = Reservation.objects.create(
+                customer=request.user,
+                pharmacy=inventory.pharmacy,
+                medicine=inventory.medicine,
+                quantity=quantity,
+                status="Pending",
+                payment_method="Online",
+                is_paid=False,
+                notes=notes
+            )
+            notify_reservation_update(reservation, "NEW_RESERVATION", request.user)
 
-        messages.warning(
-            request,
-            "You already have a pending reservation."
+        try:
+            order_data = AgenticCommerceService.create_reservation_payment_order(
+                reservation_id=reservation.id,
+                user=request.user
+            )
+            return JsonResponse(order_data)
+        except PriceMismatchError as e:
+            return JsonResponse({
+                "success": False,
+                "error_type": "PRICE_CHANGED",
+                "message": str(e),
+                "old_price": e.old_price,
+                "new_price": e.new_price
+            }, status=409)
+        except OutOfStockError as e:
+            return JsonResponse({
+                "success": False,
+                "error_type": "OUT_OF_STOCK",
+                "message": str(e)
+            }, status=409)
+        except CommerceError as e:
+            return JsonResponse({"success": False, "message": str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "message": f"Online reservation initialization failed: {str(e)}"}, status=500)
+
+    elif payment_choice == "PayOnPickup":
+        if existing:
+            if is_ajax:
+                return JsonResponse({
+                    "success": False,
+                    "message": "You already have a pending reservation for this medicine. You can view or manage it in My Reservations."
+                }, status=400)
+            messages.warning(
+                request,
+                "You already have a pending reservation for this medicine. You can pay or manage it below."
+            )
+            return redirect("my_reservations")
+
+        reservation = Reservation.objects.create(
+            customer=request.user,
+            pharmacy=inventory.pharmacy,
+            medicine=inventory.medicine,
+            quantity=quantity,
+            status="Pending",
+            payment_method="PayOnPickup",
+            is_paid=False,
+            notes=notes
         )
 
-        return redirect("search")
+        # Send notifications
+        notify_reservation_update(reservation, "NEW_RESERVATION", request.user)
 
-    reservation = Reservation.objects.create(
-        customer=request.user,
-        pharmacy=inventory.pharmacy,
-        medicine=inventory.medicine,
-        quantity=1,
-        status="Pending"
-    )
+        total_amount = inventory.price * quantity
+        if is_ajax:
+            return JsonResponse({
+                "success": True,
+                "message": f"Reservation confirmed! Your order for {inventory.medicine.name} is reserved. Please pay ₹{total_amount:.2f} at {inventory.pharmacy.name} upon collection."
+            })
 
-    # Send Bidirectional Notifications for Both Customer & Pharmacy Owner
-    notify_reservation_update(reservation, "NEW_RESERVATION", request.user)
+        messages.success(
+            request,
+            f"Reservation confirmed! Your order for {inventory.medicine.name} is reserved. Please pay ₹{total_amount:.2f} at {inventory.pharmacy.name} upon collection."
+        )
+        return redirect("my_reservations")
 
-    messages.success(
-        request,
-        "Reservation request sent successfully."
-    )
+    return redirect("my_reservations")
 
-    return redirect("search")
 @login_required
 def reservations(request):
 
@@ -1470,28 +2215,109 @@ def my_reservations(request):
         }
     )
 @login_required
+@login_required
 def search_history(request):
-
     searches = SearchHistory.objects.filter(
         user=request.user
-    ).order_by("-searched_at")
+    ).order_by("-searched_at")[:50]
+
+    audit_logs = AgentAuditLog.objects.filter(
+        user=request.user
+    ).order_by("-created_at")[:50]
+
+    activities = []
+
+    for s in searches:
+        activities.append({
+            "type": "search",
+            "title": "Medicine searched",
+            "description": f'Searched for "{s.medicine}"',
+            "timestamp": s.searched_at,
+            "badge_class": "bg-primary-subtle text-primary border border-primary-subtle",
+            "icon": "fa-magnifying-glass",
+            "raw_details": {"query": s.medicine, "user": request.user.username}
+        })
+
+    for log in audit_logs:
+        etype = log.event_type
+        payload = log.payload or {}
+        if etype in ("CANDIDATES_EVALUATED", "RECOMMENDATION_GENERATED", "AGENT_SEARCH"):
+            best = payload.get("best_match", {})
+            if best:
+                med_name = best.get("medicine_name", "Medicine")
+                pharm_name = best.get("pharmacy_name", "Nearby Pharmacy")
+                price = best.get("price", "N/A")
+                activities.append({
+                    "type": "recommendation",
+                    "title": "Best option found",
+                    "description": f'{med_name} at {pharm_name} · ₹{price}',
+                    "timestamp": log.created_at,
+                    "badge_class": "bg-info-subtle text-info-emphasis border border-info-subtle",
+                    "icon": "fa-circle-check",
+                    "raw_details": payload
+                })
+        elif etype == "PURCHASE_APPROVED":
+            med_name = payload.get("medicine_name", "Medicine")
+            qty = payload.get("quantity", 1)
+            total = payload.get("total_amount", "N/A")
+            activities.append({
+                "type": "approval",
+                "title": "Purchase approved",
+                "description": f'{med_name} ({qty} unit) · ₹{total}',
+                "timestamp": log.created_at,
+                "badge_class": "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
+                "icon": "fa-user-check",
+                "raw_details": payload
+            })
+        elif etype in ("PAYMENT_VERIFIED", "PAYMENT_SUCCESS", "ORDER_CREATED"):
+            total = payload.get("amount", payload.get("total_amount", "N/A"))
+            ref = payload.get("order_reference", payload.get("razorpay_payment_id", ""))
+            activities.append({
+                "type": "payment",
+                "title": "Payment confirmed",
+                "description": f'Razorpay verified · ₹{total} {f"(Ref: {ref})" if ref else ""}',
+                "timestamp": log.created_at,
+                "badge_class": "bg-success-subtle text-success border border-success-subtle",
+                "icon": "fa-receipt",
+                "raw_details": payload
+            })
+        elif etype == "PAYMENT_FAILED":
+            reason = payload.get("reason", "Payment incomplete or cancelled")
+            activities.append({
+                "type": "failure",
+                "title": "Payment unsuccessful",
+                "description": f'{reason}',
+                "timestamp": log.created_at,
+                "badge_class": "bg-danger-subtle text-danger border border-danger-subtle",
+                "icon": "fa-circle-xmark",
+                "raw_details": payload
+            })
+
+    activities.sort(key=lambda x: x["timestamp"], reverse=True)
 
     return render(
         request,
         "search_history.html",
         {
-            "searches": searches
+            "searches": searches,
+            "activities": activities
         }
     )
 
 @pharmacy_required
 def pharmacy_dashboard(request):
-
-    pharmacy = request.user.userprofile.pharmacy
+    pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+    if not pharmacy:
+        if request.user.is_superuser:
+            pharmacy = Pharmacy.objects.first()
+        if not pharmacy:
+            messages.info(request, "Please register a pharmacy first.")
+            return redirect("add_pharmacy")
 
     inventory = Inventory.objects.filter(
         pharmacy=pharmacy
     ).select_related("medicine")
+
 
     reservations = Reservation.objects.filter(
         pharmacy=pharmacy
@@ -1539,8 +2365,9 @@ def pharmacy_dashboard(request):
 # Notification API
 # ==========================================================
 
-@login_required
 def notifications_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse([], safe=False)
 
     notifications = Notification.objects.filter(
         recipient=request.user

@@ -6,10 +6,20 @@ class Medicine(models.Model):
 
     CATEGORY_CHOICES = [
         ('Pain Relief', 'Pain Relief'),
-        ('Antibiotic', 'Antibiotic'),
-        ('Vitamin', 'Vitamin'),
+        ('Fever & Cold', 'Fever & Cold'),
         ('Allergy', 'Allergy'),
-        ('Diabetes', 'Diabetes'),
+        ('Digestive Health', 'Digestive Health'),
+        ('Vitamins & Supplements', 'Vitamins & Supplements'),
+        ('Diabetes Care', 'Diabetes Care'),
+        ('Blood Pressure', 'Blood Pressure'),
+        ('Skin Care', 'Skin Care'),
+        ('First Aid', 'First Aid'),
+        ('Respiratory', 'Respiratory'),
+        ('Eye Care', 'Eye Care'),
+        ('Oral Care', 'Oral Care'),
+        ('Women\'s Health', 'Women\'s Health'),
+        ('General Health', 'General Health'),
+        ('Antibiotic', 'Antibiotic'),
         ('Heart', 'Heart'),
         ('Other', 'Other'),
     ]
@@ -21,7 +31,7 @@ class Medicine(models.Model):
     category = models.CharField(
         max_length=50,
         choices=CATEGORY_CHOICES,
-        default="Other"
+        default="General Health"
     )
 
     dosage = models.CharField(max_length=50)
@@ -211,6 +221,20 @@ class Reservation(models.Model):
         default="Pending"
     )
 
+    PAYMENT_METHOD_CHOICES = [
+        ("Online", "Paid Online (Razorpay)"),
+        ("PayOnPickup", "Pay at Pharmacy on Pickup"),
+    ]
+
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES,
+        default="PayOnPickup"
+    )
+
+    is_paid = models.BooleanField(default=False)
+
+
     requested_at = models.DateTimeField(auto_now_add=True)
 
     pickup_before = models.DateTimeField(
@@ -225,6 +249,7 @@ class Reservation(models.Model):
     def __str__(self):
         return f"{self.customer.username} - {self.medicine.name}"
     # ==========================================================
+
 # Notification Model
 # ==========================================================
 
@@ -330,3 +355,123 @@ class SearchHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.medicine}"
+
+
+class AgentAuditLog(models.Model):
+    """
+    Internal audit trail for AI Commerce Agent decisions and events.
+    Enables explainability, state tracking, and regulatory audit compliance.
+    """
+    session_id = models.CharField(max_length=64, db_index=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="agent_audit_logs"
+    )
+    event_type = models.CharField(max_length=60, db_index=True)
+    state = models.CharField(max_length=40, default="IDLE")
+    payload = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"[{self.session_id[:8]}] {self.event_type} ({self.state}) - {self.created_at.strftime('%H:%M:%S')}"
+
+
+class Order(models.Model):
+    """
+    Local MedFinder Order Model.
+    Tracks state machine from PENDING_APPROVAL -> APPROVED -> PAYMENT_PENDING -> PAID / PAYMENT_FAILED.
+    """
+    STATUS_CHOICES = [
+        ("PENDING_APPROVAL", "Pending Approval"),
+        ("APPROVED", "Approved"),
+        ("PAYMENT_PENDING", "Payment Pending"),
+        ("PAID", "Paid"),
+        ("PAYMENT_FAILED", "Payment Failed"),
+        ("CANCELLED", "Cancelled"),
+    ]
+
+    order_reference = models.CharField(max_length=64, unique=True, db_index=True)
+    session_id = models.CharField(max_length=64, db_index=True, blank=True, null=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders"
+    )
+    medicine = models.ForeignKey(
+        Medicine,
+        on_delete=models.CASCADE,
+        related_name="orders"
+    )
+    pharmacy = models.ForeignKey(
+        Pharmacy,
+        on_delete=models.CASCADE,
+        related_name="orders"
+    )
+    inventory = models.ForeignKey(
+        Inventory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders"
+    )
+    reservation = models.ForeignKey(
+        "Reservation",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders"
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=8, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=8, decimal_places=2)
+
+    currency = models.CharField(max_length=10, default="INR")
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default="PENDING_APPROVAL",
+        db_index=True
+    )
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
+    snapshot_data = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    failed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"[{self.order_reference}] {self.medicine.name} - ₹{self.total_amount} ({self.status})"
+
+
+class WebhookEvent(models.Model):
+    """
+    Webhook idempotency and delivery logging table.
+    Guarantees that duplicate Razorpay webhook deliveries are processed exactly once.
+    """
+    event_id = models.CharField(max_length=100, unique=True, db_index=True)
+    event_type = models.CharField(max_length=100)
+    payload = models.JSONField(default=dict)
+    status = models.CharField(max_length=30, default="RECEIVED")
+    received_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-received_at"]
+
+    def __str__(self):
+        return f"Webhook [{self.event_id}] {self.event_type} - {self.status}"
+

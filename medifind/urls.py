@@ -6,7 +6,21 @@ from django.contrib.auth.views import LoginView, LogoutView
 urlpatterns = [
     path("", views.home, name="home"),
     path("search/", views.search, name="search"),
+    path("api/pharmacies/nearby/", views.nearby_pharmacies_api, name="nearby_pharmacies_api"),
     path("api/ai/search/", views.ai_search_api, name="ai_search_api"),
+    path("api/ai/interpret/", views.ai_commerce_agent_interpret, name="ai_commerce_agent_interpret"),
+    path("api/ai/agent/search/", views.ai_commerce_agent_search, name="ai_commerce_agent_search"),
+    path("api/ai/agent/approve/", views.ai_commerce_agent_approve, name="ai_commerce_agent_approve"),
+    path("api/ai/agent/audit/<str:session_id>/", views.ai_commerce_agent_audit, name="ai_commerce_agent_audit"),
+    path("api/commerce/snapshot/", views.commerce_create_snapshot, name="commerce_create_snapshot"),
+    path("api/payments/create-order/", views.commerce_create_razorpay_order, name="commerce_create_razorpay_order"),
+    path("api/payments/pay-reservation/<int:reservation_id>/", views.commerce_pay_reservation, name="commerce_pay_reservation"),
+    path("api/payments/verify/", views.commerce_verify_payment, name="commerce_verify_payment"),
+    path("api/payments/fail/", views.commerce_fail_payment, name="commerce_fail_payment"),
+    path("api/payments/razorpay/webhook/", views.commerce_razorpay_webhook, name="commerce_razorpay_webhook"),
+    path("api/orders/<str:order_reference>/", views.commerce_order_status, name="commerce_order_status"),
+    path("orders/confirmed/<str:order_reference>/", views.order_confirmed_view, name="order_confirmed_view"),
+
 
     path(
         "medicine/<int:id>/",

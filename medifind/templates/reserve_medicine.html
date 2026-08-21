@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Reserve {{ medicine.name }} | MedFinder
+{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background: var(--surface-secondary); min-height: 90vh;">
+  <div class="container py-3">
+
+    <!-- Breadcrumb & Header -->
+    <div class="mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'search' %}" class="text-decoration-none text-muted">Search</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'medicine_detail' medicine.id %}" class="text-decoration-none text-muted">{{ medicine.name }}</a></li>
+          <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Reserve &amp; Checkout</li>
+        </ol>
+      </nav>
+      <h2 class="fw-bold text-dark mb-1">Reserve Medicine &amp; Select Payment</h2>
+      <p class="text-muted small mb-0">Choose to complete payment online via Razorpay or pay directly upon pickup at the pharmacy counter.</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Left Column: Medicine & Pharmacy Information -->
+      <div class="col-lg-7">
+        <!-- Medicine Card -->
+        <div class="card border rounded-4 p-4 shadow-sm bg-white mb-4">
+          <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 mb-2">
+                {{ medicine.category }}
+              </span>
+              <h3 class="fw-bold text-dark mb-1">{{ medicine.name }}</h3>
+              <p class="text-muted mb-0">Brand: <strong>{{ medicine.brand }}</strong> &bull; Dosage: {{ medicine.dosage }}</p>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small d-block">Unit Price</span>
+              <h3 class="fw-extrabold text-primary mb-0">₹{{ unit_price }}</h3>
+            </div>
+          </div>
+
+          <hr class="my-3 text-muted opacity-25">
+
+          <div class="row g-3 small">
+            <div class="col-sm-4">
+              <span class="text-muted d-block">Available Stock:</span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-bold">
+                <i class="fa-solid fa-boxes-stacked me-1"></i> {{ inventory.quantity }} units in stock
+              </span>
+            </div>
+            <div class="col-sm-4">
+              <span class="text-muted d-block">Prescription:</span>
+              {% if medicine.prescription_required %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2">
+                  <i class="fa-solid fa-file-prescription me-1"></i> Required at pickup
+                </span>
+              {% else %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">
+                  <i class="fa-solid fa-check me-1"></i> Over the Counter (OTC)
+                </span>
+              {% endif %}
+            </div>
+            <div class="col-sm-4">
+              <span class="text-muted d-block">Primary Uses:</span>
+              <span class="text-dark fw-medium">{{ medicine.uses|default:"As prescribed by doctor" }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pharmacy Card -->
+        <div class="card border rounded-4 p-4 shadow-sm bg-white mb-4">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3" style="width: 48px; height: 48px; font-size: 1.4rem;">
+              <i class="fa-solid fa-hospital"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold text-dark mb-0">{{ pharmacy.name }}</h5>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0 small">
+                <i class="fa-solid fa-shield-check me-1"></i> Verified Pharmacy
+              </span>
+            </div>
+          </div>
+
+          <p class="text-muted small mb-2">
+            <i class="fa-solid fa-location-dot text-danger me-1"></i> {{ pharmacy.address }}, {{ pharmacy.city }}, {{ pharmacy.state }} - {{ pharmacy.pincode }}
+          </p>
+          <p class="text-muted small mb-0">
+            <i class="fa-solid fa-phone text-primary me-1"></i> {{ pharmacy.phone }} &bull;
+            <i class="fa-solid fa-clock text-secondary ms-2 me-1"></i> {{ pharmacy.opening_time|time:"h:i A" }} - {{ pharmacy.closing_time|time:"h:i A" }}
+          </p>
+        </div>
+
+        <!-- Safety Assurance Banner -->
+        <div class="alert alert-info border-0 rounded-4 p-3 d-flex align-items-center gap-3 shadow-sm">
+          <i class="fa-solid fa-shield-halved text-primary fs-3"></i>
+          <div class="small">
+            <strong class="text-dark d-block">MedFinder Safe Pickup Guarantee</strong>
+            <span class="text-muted">Your reserved medicine will be held securely for 24 hours. No hidden charges.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Order & Payment Selection -->
+      <div class="col-lg-5">
+        <div class="card border rounded-4 p-4 shadow-sm bg-white sticky-top" style="top: 90px;">
+          {% csrf_token %}
+          <h4 class="fw-bold text-dark mb-3">Reservation Details</h4>
+
+          <!-- Quantity Selector -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <label class="form-label text-dark fw-bold small mb-0">Select Quantity</label>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.82rem;">
+                <i class="fa-solid fa-box-archive me-1"></i> <span id="badgeStockCount">{{ inventory.quantity }}</span> units in stock
+              </span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <div class="qty-stepper-box d-inline-flex align-items-center border rounded-pill p-1 bg-light shadow-sm" style="border-color: #cbd5e1 !important; min-width: 140px; justify-content: space-between;">
+                <button type="button" class="btn btn-sm shadow-sm border text-dark fw-bold d-flex align-items-center justify-content-center bg-white rounded-circle qty-btn" id="btnQtyMinus" style="width: 36px; height: 36px; font-size: 1.1rem; line-height: 1;" title="Decrease quantity">
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+                <span id="displayQuantity" class="fw-extrabold text-dark text-center px-2" style="font-size: 1.25rem; min-width: 44px; user-select: none;">1</span>
+                <input type="hidden" id="inputQuantity" name="quantity" value="1">
+                <button type="button" class="btn btn-sm shadow-sm border text-dark fw-bold d-flex align-items-center justify-content-center bg-white rounded-circle qty-btn" id="btnQtyPlus" style="width: 36px; height: 36px; font-size: 1.1rem; line-height: 1;" title="Increase quantity">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+              <div class="text-muted small">
+                <span class="d-block text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> In Stock &amp; Ready</span>
+                <span class="text-secondary opacity-75" style="font-size: 0.78rem;">Max {{ max_quantity }} per reservation</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes for Pharmacy -->
+          <div class="mb-4">
+            <label for="reservationNotes" class="form-label text-dark fw-semibold small mb-1">Notes for Pharmacy (Optional)</label>
+            <textarea id="reservationNotes" class="form-control form-control-sm rounded-3" rows="2" placeholder="e.g. Expected pickup time, special requests..."></textarea>
+          </div>
+
+          <!-- Price Summary Breakdown -->
+          <div class="bg-light rounded-3 p-3 mb-4 border">
+            <div class="d-flex justify-content-between text-muted small mb-2">
+              <span>Unit Price</span>
+              <span>₹{{ unit_price }}</span>
+            </div>
+            <div class="d-flex justify-content-between text-muted small mb-2">
+              <span>Quantity Selected</span>
+              <span class="fw-bold text-dark" id="summaryQty">1</span>
+            </div>
+            <div class="d-flex justify-content-between text-muted small mb-2">
+              <span>Stock Remaining</span>
+              <span class="text-success fw-semibold" id="summaryRemainingStock">{{ inventory.quantity }} units</span>
+            </div>
+            <div class="d-flex justify-content-between text-muted small mb-2">
+              <span>Convenience Fee</span>
+              <span class="text-success fw-bold">FREE</span>
+            </div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <strong class="text-dark">Total Amount</strong>
+              <h4 class="fw-extrabold text-primary mb-0" id="summaryTotal">₹{{ unit_price }}</h4>
+            </div>
+          </div>
+
+          <!-- Payment Method Options -->
+          <div class="mb-3">
+            <h5 class="fw-bold text-dark mb-1">Select Payment &amp; Reservation Mode</h5>
+            <p class="text-muted small mb-3">Choose whether to pay online now or pay in person when you reach the store.</p>
+          </div>
+
+          <!-- Option 1: Pay Now and Reserve -->
+          <div class="form-check payment-option-card border rounded-4 p-3 mb-3 active-payment-option" id="cardPayOnline" style="cursor: pointer; transition: var(--transition);">
+            <div class="d-flex align-items-start gap-3">
+              <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayOnline" value="Online" checked>
+              <label class="form-check-label w-100" for="optPayOnline" style="cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
+                  <strong class="text-dark"><i class="fa-solid fa-credit-card text-success me-1"></i> Pay Now &amp; Reserve Online</strong>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">● Instant Confirmation</span>
+                </div>
+                <p class="text-muted small mb-0">Pay securely via Razorpay (UPI, Google Pay, PhonePe, Cards, Net Banking). Your medicine is immediately locked and guaranteed.</p>
+              </label>
+            </div>
+          </div>
+
+          <!-- Option 2: Pay on the Pharmacy There -->
+          <div class="form-check payment-option-card border rounded-4 p-3 mb-4" id="cardPayStore" style="cursor: pointer; transition: var(--transition);">
+            <div class="d-flex align-items-start gap-3">
+              <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayStore" value="PayOnPickup">
+              <label class="form-check-label w-100" for="optPayStore" style="cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
+                  <strong class="text-dark"><i class="fa-solid fa-store text-primary me-1"></i> Pay on the Pharmacy There (Pay on Pickup)</strong>
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2">● Pay at Store Counter</span>
+                </div>
+                <p class="text-muted small mb-0">Reserve without any upfront online payment. Pay the chemist in cash or store UPI when you reach the pharmacy counter.</p>
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div id="btnAreaOnline">
+            <button type="button" id="btnPayOnlineNow" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+              <i class="fa-solid fa-lock"></i>
+              <span>Pay Now <span class="btn-amount-label">₹{{ unit_price }}</span> &amp; Reserve</span>
+            </button>
+          </div>
+
+          <div id="btnAreaStore" style="display: none;">
+            <form method="POST" action="{% url 'reserve_medicine' inventory.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="quantity" id="formQtyStore" value="1">
+              <input type="hidden" name="payment_method" value="PayOnPickup">
+              <input type="hidden" name="notes" id="formNotesStore" value="">
+              <button type="submit" class="btn btn-outline-primary w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-store"></i>
+                <span>Reserve Now &amp; Pay on the Pharmacy There</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="text-center mt-3">
+            <a href="{% url 'search' %}" class="text-muted small text-decoration-none">
+              <i class="fa-solid fa-arrow-left me-1"></i> Cancel and return to search
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Razorpay Checkout SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const unitPrice = parseFloat("{{ unit_price }}");
+  const totalStock = parseInt("{{ inventory.quantity }}") || 1;
+  const maxQty = parseInt("{{ max_quantity }}") || 1;
+  const inventoryId = "{{ inventory.id }}";
+  const razorpayKey = "{{ razorpay_key_id }}";
+
+  function getCsrfToken() {
+    const fromInput = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (fromInput) return fromInput;
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('csrftoken='))
+      ?.split('=')[1];
+    return cookieValue || '{{ csrf_token }}';
+  }
+
+  const inputQty = document.getElementById('inputQuantity');
+  const displayQty = document.getElementById('displayQuantity');
+  const btnMinus = document.getElementById('btnQtyMinus');
+  const btnPlus = document.getElementById('btnQtyPlus');
+  const summaryQty = document.getElementById('summaryQty');
+  const summaryTotal = document.getElementById('summaryTotal');
+  const summaryRemainingStock = document.getElementById('summaryRemainingStock');
+  const formQtyStore = document.getElementById('formQtyStore');
+  const formNotesStore = document.getElementById('formNotesStore');
+  const notesText = document.getElementById('reservationNotes');
+  const btnAmountLabels = document.querySelectorAll('.btn-amount-label');
+
+  const optOnline = document.getElementById('optPayOnline');
+  const optStore = document.getElementById('optPayStore');
+  const cardOnline = document.getElementById('cardPayOnline');
+  const cardStore = document.getElementById('cardPayStore');
+  const btnAreaOnline = document.getElementById('btnAreaOnline');
+  const btnAreaStore = document.getElementById('btnAreaStore');
+  const btnPayOnlineNow = document.getElementById('btnPayOnlineNow');
+
+  function updateTotals() {
+    const qty = parseInt(inputQty.value) || 1;
+    if (displayQty) {
+      displayQty.textContent = qty;
+    }
+    const total = (unitPrice * qty).toFixed(2);
+    const remaining = Math.max(0, totalStock - qty);
+
+    summaryQty.textContent = qty;
+    summaryTotal.textContent = `₹${total}`;
+    if (summaryRemainingStock) {
+      summaryRemainingStock.textContent = `${remaining} units`;
+    }
+    formQtyStore.value = qty;
+
+    btnAmountLabels.forEach(el => {
+      el.textContent = `₹${total}`;
+    });
+
+    // Update button states
+    if (btnMinus) btnMinus.disabled = (qty <= 1);
+    if (btnPlus) btnPlus.disabled = (qty >= maxQty);
+  }
+
+  if (btnMinus) {
+    btnMinus.addEventListener('click', () => {
+      let val = parseInt(inputQty.value) || 1;
+      if (val > 1) {
+        inputQty.value = val - 1;
+        updateTotals();
+      }
+    });
+  }
+
+  if (btnPlus) {
+    btnPlus.addEventListener('click', () => {
+      let val = parseInt(inputQty.value) || 1;
+      if (val < maxQty) {
+        inputQty.value = val + 1;
+        updateTotals();
+      }
+    });
+  }
+
+  // Initial totals sync
+  updateTotals();
+
+  notesText.addEventListener('input', () => {
+    formNotesStore.value = notesText.value;
+  });
+
+  // Switch Payment Mode UI
+  function syncPaymentMode() {
+    if (optOnline.checked) {
+      cardOnline.classList.add('active-payment-option');
+      cardStore.classList.remove('active-payment-option');
+      btnAreaOnline.style.display = 'block';
+      btnAreaStore.style.display = 'none';
+    } else {
+      cardStore.classList.add('active-payment-option');
+      cardOnline.classList.remove('active-payment-option');
+      btnAreaOnline.style.display = 'none';
+      btnAreaStore.style.display = 'block';
+    }
+  }
+
+  optOnline.addEventListener('change', syncPaymentMode);
+  optStore.addEventListener('change', syncPaymentMode);
+  cardOnline.addEventListener('click', () => { optOnline.checked = true; syncPaymentMode(); });
+  cardStore.addEventListener('click', () => { optStore.checked = true; syncPaymentMode(); });
+
+  // Razorpay Checkout Handler for Online Payment
+  btnPayOnlineNow.addEventListener('click', async () => {
+    const qty = parseInt(inputQty.value) || 1;
+    const notes = notesText.value.trim();
+
+    btnPayOnlineNow.disabled = true;
+    btnPayOnlineNow.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Initializing Secure Payment...';
+
+    try {
+      const csrfToken = getCsrfToken();
+      // 1. Create online reservation and get Razorpay Order ID
+      const resp = await fetch(`{% url 'reserve_medicine' inventory.id %}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+          'quantity': qty,
+          'payment_method': 'Online',
+          'notes': notes,
+          'csrfmiddlewaretoken': csrfToken
+        })
+      });
+
+      const contentType = resp.headers.get("content-type") || "";
+      let data;
+      if (contentType.includes("application/json")) {
+        data = await resp.json();
+      } else {
+        throw new Error("Unable to initialize payment. Please refresh the page and try again.");
+      }
+
+      if (!resp.ok || !data.success) {
+        throw new Error(data.message || 'Failed to initialize reservation payment.');
+      }
+
+      // 2. Open Razorpay Checkout Modal
+      const options = {
+        key: data.key_id || razorpayKey,
+        amount: data.amount,
+        currency: data.currency || 'INR',
+        name: 'MedFinder Healthcare',
+        description: `Reservation: ${data.medicine_name} (${data.quantity} units)`,
+        image: '{% static "images/logo.svg" %}',
+        order_id: data.razorpay_order_id,
+        handler: async function (response) {
+          // 3. Verify Payment Signature
+          try {
+            const verifyToken = getCsrfToken();
+            const verifyResp = await fetch('/api/payments/verify/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': verifyToken
+              },
+              body: JSON.stringify({
+                order_reference: data.order_reference,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            const verifyContentType = verifyResp.headers.get("content-type") || "";
+            let verifyData = {};
+            if (verifyContentType.includes("application/json")) {
+              verifyData = await verifyResp.json();
+            }
+
+            if (verifyData.success) {
+              window.location.href = "{% url 'my_reservations' %}";
+            } else {
+              alert('Payment signature verification: ' + (verifyData.message || 'Verification complete.'));
+              window.location.href = "{% url 'my_reservations' %}";
+            }
+          } catch (err) {
+            console.error(err);
+            window.location.href = "{% url 'my_reservations' %}";
+          }
+        },
+        theme: {
+          color: '#10b981'
+        },
+        modal: {
+          ondismiss: function () {
+            btnPayOnlineNow.disabled = false;
+            updateTotals();
+            btnPayOnlineNow.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Pay <span class="btn-amount-label">₹${(unitPrice * qty).toFixed(2)}</span> &amp; Confirm</span>`;
+          }
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+
+    } catch (err) {
+      alert(err.message || 'Could not complete online payment reservation.');
+      btnPayOnlineNow.disabled = false;
+      updateTotals();
+      btnPayOnlineNow.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Pay <span class="btn-amount-label">₹${(unitPrice * qty).toFixed(2)}</span> &amp; Confirm</span>`;
+    }
+  });
+
+});
+</script>
+
+<style>
+.qty-stepper-box {
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+}
+.qty-stepper-box .qty-btn {
+  transition: all 0.15s ease-in-out;
+}
+.qty-stepper-box .qty-btn:hover:not(:disabled) {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
+  transform: scale(1.05);
+}
+.qty-stepper-box .qty-btn:hover:not(:disabled) i {
+  color: #ffffff !important;
+}
+.qty-stepper-box .qty-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+[data-theme="dark"] .qty-stepper-box {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .qty-stepper-box .qty-btn {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .qty-stepper-box .qty-btn i {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] #displayQuantity {
+  color: #f8fafc !important;
+}
+
+.payment-option-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.payment-option-card:hover {
+  border-color: var(--primary) !important;
+  background-color: rgba(16, 185, 129, 0.04);
+}
+.active-payment-option {
+  border-color: #10b981 !important;
+  background-color: rgba(16, 185, 129, 0.06);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+[data-theme="dark"] .active-payment-option {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: #10b981 !important;
+}
+</style>
+{% endblock %}

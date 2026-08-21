@@ -1,8 +1,8 @@
 // ============================================
-// MediFind Live Notifications System
+// MediFind Live Notifications System (Pop-once guarantee)
 // ============================================
 
-let lastNotificationId = 0;
+let lastNotificationId = parseInt(localStorage.getItem("medifind_last_toasted_id") || "0", 10);
 let firstLoad = true;
 
 const badge = document.getElementById("notification-count");
@@ -26,7 +26,7 @@ function fetchNotifications() {
 // ============================================
 function updateBadge(notifications) {
     if (!badge) return;
-    const unread = notifications.filter(n => !n.is_read).length;
+    const unread = Array.isArray(notifications) ? notifications.filter(n => !n.is_read).length : 0;
     if (unread > 0) {
         badge.style.display = "flex";
         badge.innerText = unread;
@@ -48,7 +48,7 @@ function updateDropdown(notifications) {
         <li><hr class="dropdown-divider m-0"></li>
     `;
 
-    if (notifications.length === 0) {
+    if (!Array.isArray(notifications) || notifications.length === 0) {
         list.innerHTML += `
             <li class="text-center text-muted py-4">
                 <i class="fa-regular fa-bell-slash fs-4 d-block mb-2 text-secondary"></i>
@@ -80,31 +80,29 @@ function updateDropdown(notifications) {
 }
 
 // ============================================
-// Detect & Trigger New Notifications
+// Detect & Trigger New Notifications (Strict Single Pop)
 // ============================================
 function checkForNewNotification(notifications) {
-    if (!notifications || notifications.length === 0) return;
+    if (!Array.isArray(notifications) || notifications.length === 0) return;
 
     const newest = notifications[0];
     const newestId = newest.id;
 
-    // First load on page render
+    // First load on page render: calibrate highest existing notification without toasting
     if (firstLoad) {
         firstLoad = false;
-        lastNotificationId = newestId;
-
-        // If the newest notification is unread AND created recently ("Just now" or "< 1 min"), pop up bottom-right toast & play sound
-        if (!newest.is_read && (newest.time === "Just now" || newest.time.includes("min"))) {
-            animateBell();
-            playNotificationSound();
-            showToast(newest);
+        if (newestId > lastNotificationId) {
+            lastNotificationId = newestId;
+            localStorage.setItem("medifind_last_toasted_id", String(newestId));
         }
         return;
     }
 
-    // New notification arrived via live polling
-    if (newestId > lastNotificationId) {
+    // New notification arrived in real-time via live polling
+    const storedLastId = parseInt(localStorage.getItem("medifind_last_toasted_id") || "0", 10);
+    if (newestId > lastNotificationId && newestId > storedLastId) {
         lastNotificationId = newestId;
+        localStorage.setItem("medifind_last_toasted_id", String(newestId));
         animateBell();
         playNotificationSound();
         showToast(newest);
@@ -150,39 +148,31 @@ function showToast(notification) {
 }
 
 // ============================================
-// Bell Animation
+// Bell Shake Animation
 // ============================================
 function animateBell() {
-    const bell = document.querySelector(".fa-bell");
-    if (!bell) return;
-    bell.classList.add("bell-shake");
-    setTimeout(() => {
-        bell.classList.remove("bell-shake");
-    }, 800);
-}
-
-// ============================================
-// Audio Sound Effect
-// ============================================
-function playNotificationSound() {
-    try {
-        const audio = new Audio("/static/sounds/notification.mp3");
-        audio.volume = 0.5;
-        const promise = audio.play();
-        if (promise !== undefined) {
-            promise.catch(err => {
-                console.log("Audio playback waiting for user interaction:", err);
-            });
-        }
-    } catch (e) {
-        console.log("Audio error:", e);
+    const bell = document.querySelector("#notificationDropdown i");
+    if (bell) {
+        bell.classList.add("bell-shake");
+        setTimeout(() => {
+            bell.classList.remove("bell-shake");
+        }, 1000);
     }
 }
 
 // ============================================
-// Initialize Real-Time Polling Loop
+// Notification Sound
 // ============================================
+function playNotificationSound() {
+    try {
+        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+    } catch (e) {}
+}
+
+// Initial Fetch and Background Polling every 15s
 document.addEventListener("DOMContentLoaded", () => {
     fetchNotifications();
-    setInterval(fetchNotifications, 2000);
+    setInterval(fetchNotifications, 15000);
 });

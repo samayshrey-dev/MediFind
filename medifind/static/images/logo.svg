@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 38" fill="none" class="medfinder-logo-svg">
+  <style>
+    .brand-icon-bg { fill: #10b981; }
+    .brand-icon-glyph { fill: #ffffff; }
+    .brand-text-primary { fill: #0f172a; }
+    .brand-text-accent { fill: #10b981; }
+    
+    @media (prefers-color-scheme: dark) {
+      .brand-text-primary { fill: #f8fafc; }
+    }
+    :root[data-theme="dark"] .brand-text-primary,
+    [data-theme="dark"] .brand-text-primary {
+      fill: #f8fafc !important;
+    }
+  </style>
+
+  <!-- Brand Icon (Discovery 'M' in Rounded Emblem) -->
+  <g transform="translate(1, 1)">
+    <rect width="36" height="36" rx="9" class="brand-icon-bg" />
+    <!-- Stylized 'M' with Discovery Waypoint -->
+    <path d="M10 26V13C10 11.8954 10.8954 11 12 11C12.8284 11 13.5657 11.5044 13.8644 12.2736L18 22.88L22.1356 12.2736C22.4343 11.5044 23.1716 11 24 11C25.1046 11 26 11.8954 26 13V26" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="18" cy="11.5" r="2.2" fill="#ffffff" />
+  </g>
+
+  <!-- Brand Wordmark -->
+  <text x="47" y="26" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="800" letter-spacing="-0.4px">
+    <tspan class="brand-text-primary">Medi</tspan><tspan class="brand-text-accent">Find</tspan>
+  </text>
+
+</svg>

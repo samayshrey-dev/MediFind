@@ -24,19 +24,31 @@
 
 /* LOGO */
 .navbar-brand {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
     letter-spacing: -0.03em;
-    color: #0f766e !important;
     display: inline-flex;
     align-items: center;
+    text-decoration: none !important;
 }
 
-.navbar-brand i {
-    font-size: 24px;
-    margin-right: 8px;
-    color: #0f766e;
+.brand-logo-medi {
+    color: #0f172a !important;
+    transition: color 0.25s ease;
 }
+
+.brand-logo-find {
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .brand-logo-medi {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .brand-logo-find {
+    color: #10b981 !important;
+}
+
 
 /* NAV LINKS */
 .nav-link {
