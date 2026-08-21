@@ -5,19 +5,24 @@
 let lastNotificationId = parseInt(localStorage.getItem("medifind_last_toasted_id") || "0", 10);
 let firstLoad = true;
 
-const badge = document.getElementById("notification-count");
-const list = document.getElementById("notification-list");
-
 function fetchNotifications() {
+    // Only poll if user is authenticated and notification dropdown exists
+    const bellContainer = document.getElementById("notificationDropdown");
+    if (!bellContainer) return;
+
     fetch("/notifications/")
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) return null;
+        return response.json();
+    })
     .then(notifications => {
+        if (!notifications) return;
         updateBadge(notifications);
         updateDropdown(notifications);
         checkForNewNotification(notifications);
     })
     .catch(error => {
-        console.log("Notification Fetch Error:", error);
+        // Silently handle network drops during background polling
     });
 }
 
@@ -25,6 +30,7 @@ function fetchNotifications() {
 // Notification Badge Counter
 // ============================================
 function updateBadge(notifications) {
+    const badge = document.getElementById("notification-count");
     if (!badge) return;
     const unread = Array.isArray(notifications) ? notifications.filter(n => !n.is_read).length : 0;
     if (unread > 0) {
@@ -39,6 +45,7 @@ function updateBadge(notifications) {
 // Notification Dropdown Menu
 // ============================================
 function updateDropdown(notifications) {
+    const list = document.getElementById("notification-list");
     if (!list) return;
 
     list.innerHTML = `

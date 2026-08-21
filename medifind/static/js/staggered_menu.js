@@ -51,7 +51,7 @@ class StaggeredMenuController {
   open() {
     if (!this.panel) return;
     this.isOpen = true;
-    this.backdrop.classList.add('open');
+    if (this.backdrop) this.backdrop.classList.add('open');
     this.panel.classList.add('open');
     document.body.style.overflow = 'hidden';
     this.onMenuOpen();
@@ -60,7 +60,7 @@ class StaggeredMenuController {
   close() {
     if (!this.panel) return;
     this.isOpen = false;
-    this.backdrop.classList.remove('open');
+    if (this.backdrop) this.backdrop.classList.remove('open');
     this.panel.classList.remove('open');
     document.body.style.overflow = '';
     this.onMenuClose();
@@ -72,8 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
     position: 'right',
     displaySocials: true,
     displayItemNumbering: true,
-    accentColor: '#10b981',
-    onMenuOpen: () => console.log('StaggeredMenu opened'),
-    onMenuClose: () => console.log('StaggeredMenu closed')
+    accentColor: '#10b981'
   });
 });

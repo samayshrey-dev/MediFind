@@ -161,4 +161,5 @@
     locateUser: locateUser,
     map: map
   };
+  window.MediAIMap = window.MedFinderMap;
 })();
