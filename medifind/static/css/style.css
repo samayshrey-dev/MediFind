@@ -906,6 +906,11 @@ textarea:focus {
     color: #ffffff !important;
 }
 
+.footer .brand-logo-medi,
+footer .brand-logo-medi {
+    color: #ffffff !important;
+}
+
 [data-theme="dark"] .brand-logo-find {
     color: #10b981 !important;
 }

@@ -19,6 +19,16 @@
     letter-spacing: -0.02em;
 }
 
+.footer .brand-logo-medi,
+footer .brand-logo-medi {
+    color: #ffffff !important;
+}
+
+.footer .brand-logo-find,
+footer .brand-logo-find {
+    color: #10b981 !important;
+}
+
 .footer h5 {
     font-size: 17px;
     font-weight: 700;
