@@ -679,6 +679,102 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.inventory.refresh_from_db()
         self.assertEqual(self.inventory.quantity, 49)
 
+    def test_21_failure_story_1_payment_fails_clean_unpaid_state(self):
+        """Failure Story 1: Payment fails/dismissed -> Clean unpaid state -> Stock not decremented."""
+        snap_resp = self.client.post("/api/commerce/snapshot/", data=json.dumps({
+            "session_id": "fail_story_1",
+            "inventory_id": self.inventory.id,
+            "quantity": 1
+        }), content_type="application/json")
+        order_ref = snap_resp.json()["order_reference"]
+
+        # Failure recorded
+        fail_resp = self.client.post("/api/payments/fail/", data=json.dumps({
+            "order_reference": order_ref,
+            "reason": "Payment cancelled by user"
+        }), content_type="application/json")
+        self.assertEqual(fail_resp.status_code, 200)
+        self.assertEqual(fail_resp.json()["status"], "PAYMENT_FAILED")
+
+        # Database inventory preserved
+        self.inventory.refresh_from_db()
+        self.assertEqual(self.inventory.quantity, 50)
+
+    def test_22_failure_story_2_stock_disappears_blocks_payment(self):
+        """Failure Story 2: Stock disappears -> Pre-payment recheck blocks checkout with 409."""
+        snap_resp = self.client.post("/api/commerce/snapshot/", data=json.dumps({
+            "session_id": "fail_story_2",
+            "inventory_id": self.inventory.id,
+            "quantity": 5
+        }), content_type="application/json")
+        order_ref = snap_resp.json()["order_reference"]
+
+        # Stock is depleted before user clicks confirm & pay
+        self.inventory.quantity = 2
+        self.inventory.save()
+
+        resp = self.client.post("/api/payments/create-order/", data=json.dumps({
+            "order_reference": order_ref
+        }), content_type="application/json")
+        self.assertEqual(resp.status_code, 409)
+        data = resp.json()
+        self.assertEqual(data["error_type"], "OUT_OF_STOCK")
+        self.assertEqual(data["message"], "This option has changed. Please review your order.")
+
+    def test_23_failure_story_3_price_changes_blocks_payment(self):
+        """Failure Story 3: Price changes -> Pre-payment recheck blocks checkout with 409."""
+        snap_resp = self.client.post("/api/commerce/snapshot/", data=json.dumps({
+            "session_id": "fail_story_3",
+            "inventory_id": self.inventory.id,
+            "quantity": 1
+        }), content_type="application/json")
+        order_ref = snap_resp.json()["order_reference"]
+
+        # Pharmacist changed price from ₹22 to ₹30
+        self.inventory.price = Decimal("30.00")
+        self.inventory.save()
+
+        resp = self.client.post("/api/payments/create-order/", data=json.dumps({
+            "order_reference": order_ref
+        }), content_type="application/json")
+        self.assertEqual(resp.status_code, 409)
+        data = resp.json()
+        self.assertEqual(data["error_type"], "PRICE_CHANGED")
+        self.assertEqual(data["old_price"], 22.0)
+        self.assertEqual(data["new_price"], 30.0)
+        self.assertEqual(data["message"], "This option has changed. Please review your order.")
+
+    def test_24_failure_story_4_location_denied_graceful_fallback(self):
+        """Failure Story 4: User denies location -> Defaults gracefully to Chennai Central origin."""
+        # Query without latitude or longitude
+        resp = self.client.get("/api/pharmacies/nearby/?radius=5")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data["success"])
+        # Should fallback to Chennai Central (13.0827, 80.2707) and return pharmacies
+        self.assertGreaterEqual(data["count"], 1)
+
+    def test_25_failure_story_5_ai_unavailable_normal_search_works(self):
+        """Failure Story 5: AI LLM unavailable/throws error -> Deterministic DB search continues with 0 downtime."""
+        from medifind.commerce_agent import IntentParser, CommerceSearchService
+        from unittest.mock import patch
+
+        # Mock Gemini API throwing exception
+        with patch("google.generativeai.GenerativeModel") as mock_model:
+            mock_instance = MagicMock()
+            mock_instance.generate_content.side_effect = Exception("Google AI API rate limit / 503 service unavailable")
+            mock_model.return_value = mock_instance
+
+            # Intent parsing falls back to deterministic rule-based NLP
+            intent = IntentParser.parse_with_ai("Find the cheapest Dolo 650 within 5 km")
+            self.assertEqual(intent["medicine_query"], "Dolo 650")
+            self.assertEqual(intent["max_distance_km"], 5.0)
+
+            # Database candidate search executes normally
+            candidates = CommerceSearchService.search_candidates(intent, user_lat=13.0827, user_lng=80.2707)
+            self.assertGreaterEqual(len(candidates), 1)
+            self.assertEqual(candidates[0]["medicine_name"], "Dolo 650")
+
 
 
 
