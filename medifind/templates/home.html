@@ -13,32 +13,35 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
 
 {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
 <!-- ======================================= -->
-<!-- REGISTERED PHARMACY LANDING PAGE -->
+<!-- REGISTERED PHARMACY EXECUTIVE PORTAL -->
 <!-- ======================================= -->
 
 <!-- Pharmacy Hero Section -->
 <section class="py-5 position-relative" style="background: var(--surface); border-bottom: 1px solid var(--border);">
   <div class="container py-lg-4 position-relative" style="z-index: 2;">
-    <div class="row align-items-center g-5">
-      <div class="col-lg-7">
-        <div
-          class="reveal hero-entrance d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill border bg-light small fw-semibold text-muted">
-          <span class="d-inline-block rounded-circle bg-success" style="width: 8px; height: 8px;"></span>
-          <span>Verified Pharmacy Operations &bull; {{ user_pharmacy.city|default:"Chennai" }}</span>
+    <div class="row align-items-center justify-content-between g-4">
+      <div class="col-lg-8">
+        <div class="reveal hero-entrance d-inline-flex align-items-center gap-2 px-3 py-1.5 mb-3 rounded-pill border bg-light small fw-semibold text-muted">
+          <span class="d-inline-block rounded-circle {% if user_pharmacy.is_open %}bg-success{% else %}bg-danger{% endif %}" style="width: 8px; height: 8px;"></span>
+          <span>Verified Partner Pharmacy &bull; {{ user_pharmacy.city|default:"Chennai" }}</span>
         </div>
 
-        <h1 class="reveal hero-entrance display-4 fw-extrabold text-dark mb-2"
-          style="letter-spacing: -1.2px; line-height: 1.15;">
-          {{ user_pharmacy.name|default:"Your Registered Pharmacy" }}
+        <h1 class="reveal hero-entrance display-4 fw-extrabold text-dark mb-3 text-type-heading"
+          style="letter-spacing: -1.2px; line-height: 1.15; min-height: 1.25em;">
+          <span id="pharmacyTextTypeContent"
+            data-pharmacy-name="{{ user_pharmacy.name|default:'Your Registered Pharmacy' }}">{{ user_pharmacy.name|default:"Your Registered Pharmacy" }}</span><span id="pharmacyTextTypeCursor" class="text-type-cursor">_</span>
         </h1>
 
-        <p class="reveal hero-entrance lead text-muted mb-4" style="font-size: 1.15rem; max-width: 580px;">
-          <i class="fa-solid fa-location-dot text-primary me-1"></i> {{ user_pharmacy.address|default:"Store Management Portal" }}{% if user_pharmacy.city %}, {{ user_pharmacy.city }}{% endif %}
-          &bull; <i class="fa-solid fa-phone text-primary ms-1 me-1"></i> {{ user_pharmacy.phone|default:"+91 98765 43210" }}
+        <p class="reveal hero-entrance lead text-muted mb-4 d-flex align-items-center flex-wrap gap-2" style="font-size: 1.05rem;">
+          <span><i class="fa-solid fa-location-dot text-success me-1"></i> {{ user_pharmacy.address|default:"Chennai, Tamil Nadu" }}{% if user_pharmacy.city %}, {{ user_pharmacy.city }}{% endif %}</span>
+          <span class="text-muted-subtle">&bull;</span>
+          <span><i class="fa-solid fa-phone text-success me-1"></i> {{ user_pharmacy.phone|default:"+91 98765 43210" }}</span>
+          <span class="text-muted-subtle">&bull;</span>
+          <span><i class="fa-regular fa-clock text-success me-1"></i> {{ user_pharmacy.opening_time|time:"h:i A" }} - {{ user_pharmacy.closing_time|time:"h:i A" }}</span>
         </p>
 
         <!-- Pharmacy Action Buttons -->
-        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-3 mb-4">
+        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-3">
           <a href="{% url 'add_inventory' %}"
             class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2">
             <i class="fa-solid fa-plus-circle"></i>
@@ -52,82 +55,85 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           <a href="{% url 'reservations' %}"
             class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
             <i class="fa-solid fa-clock"></i>
-            <span>Incoming Orders ({{ pharmacy_pending_count }})</span>
+            <span>Customer Orders ({{ pharmacy_pending_count }})</span>
           </a>
-        </div>
-
-        <!-- Quick Status Pills -->
-        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-2 text-muted small">
-          <span class="fw-semibold">Store Status:</span>
-          <span
-            class="badge {% if user_pharmacy.is_open %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} rounded-pill px-3 py-1 fw-bold">
-            {% if user_pharmacy.is_open %}● OPEN FOR CUSTOMERS{% else %}● CURRENTLY CLOSED{% endif %}
-          </span>
-          <span class="badge bg-light border text-dark rounded-pill px-3 py-1">
-            <i class="fa-solid fa-clock me-1 text-primary"></i> {{ user_pharmacy.opening_time|time:"h:i A" }} - {{
-            user_pharmacy.closing_time|time:"h:i A" }}
-          </span>
         </div>
       </div>
 
-      <!-- Right Column: Live Pharmacy Control Card -->
-      <div class="col-lg-5">
-        <div class="reveal-scale hero-entrance card border rounded-4 shadow p-4 bg-white"
-          style="transition: var(--transition);">
-          <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
-            <div>
-              <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 small fw-semibold">Store
-                Operations</span>
-              <h5 class="fw-bold text-dark mb-0 mt-1">{{ user_pharmacy.name }}</h5>
-              <small class="text-muted">{{ user_pharmacy.city|default:"Chennai" }}</small>
-            </div>
-            <div class="text-end">
-              <a href="{% url 'toggle_pharmacy_status' %}"
-                class="btn btn-sm {% if user_pharmacy.is_open %}btn-outline-danger{% else %}btn-outline-success{% endif %} rounded-pill px-3 fw-semibold">
-                {% if user_pharmacy.is_open %}Close Store{% else %}Open Store{% endif %}
-              </a>
-            </div>
+      <!-- Right Column: Store Status Pill Card -->
+      <div class="col-lg-4 text-lg-end">
+        <div class="reveal-scale hero-entrance card border rounded-4 p-4 bg-white shadow-sm d-inline-block text-start w-100" style="max-width: 360px;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Live Store Status</span>
+            <span class="badge {% if user_pharmacy.is_open %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
+              {% if user_pharmacy.is_open %}● ACCEPTING ORDERS{% else %}● CLOSED{% endif %}
+            </span>
           </div>
-
-          <div class="row g-2 mb-3">
-            <div class="col-6">
-              <div class="p-3 rounded-3 bg-light border text-center">
-                <span class="text-muted small d-block">Stocked Medicines</span>
-                <h3 class="fw-bold text-dark mb-0">{{ pharmacy_inventory_count }}</h3>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="p-3 rounded-3 bg-light border text-center">
-                <span class="text-muted small d-block">Pending Orders</span>
-                <h3 class="fw-bold text-primary mb-0">{{ pharmacy_pending_count }}</h3>
-              </div>
-            </div>
+          <div class="mb-3">
+            <h5 class="fw-bold text-dark mb-1">{{ user_pharmacy.name|default:"Partner Store" }}</h5>
+            <div class="text-muted small">Customers can find your medicines when store is Open.</div>
           </div>
-
-          <div class="d-grid gap-2">
-            <a href="{% url 'add_inventory' %}" class="btn btn-primary btn-sm rounded-pill fw-bold py-2">
-              <i class="fa-solid fa-plus me-1"></i> Add New Inventory Item
-            </a>
-            <a href="{% url 'reservations' %}" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold py-2">
-              <i class="fa-solid fa-list-check me-1"></i> Review Customer Orders
-            </a>
-          </div>
+          <a href="{% url 'toggle_pharmacy_status' %}"
+            class="btn btn-sm w-100 rounded-pill py-2 fw-semibold {% if user_pharmacy.is_open %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+            {% if user_pharmacy.is_open %}<i class="fa-solid fa-store-slash me-1"></i> Close Store Temporarily{% else %}<i class="fa-solid fa-store me-1"></i> Open Store for Customers{% endif %}
+          </a>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Pharmacy Management Hub Modules -->
-<section class="py-5 bg-light border-top">
-  <div class="container py-lg-3">
-    <div class="mb-4">
-      <h3 class="fw-bold text-dark mb-1">Store Management Hub</h3>
-      <p class="text-muted small mb-0">Direct access to your inventory, incoming orders, and pharmacy settings.</p>
+<!-- Key Metrics Row (Clean & Spacious) -->
+<section class="py-4 bg-white border-bottom">
+  <div class="container">
+    <div class="row g-3 reveal">
+      <div class="col-md-4">
+        <div class="p-3.5 rounded-4 border bg-light d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted small d-block mb-1">Stocked Medicines</span>
+            <h3 class="fw-extrabold text-dark mb-0">{{ pharmacy_inventory_count }} <span class="fs-6 fw-normal text-muted">items</span></h3>
+          </div>
+          <a href="{% url 'inventory' %}" class="btn btn-sm btn-white border rounded-pill px-3 py-1.5 shadow-xs text-dark small fw-semibold">
+            View List &rarr;
+          </a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3.5 rounded-4 border bg-light d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted small d-block mb-1">Pending Reservations</span>
+            <h3 class="fw-extrabold text-primary mb-0">{{ pharmacy_pending_count }} <span class="fs-6 fw-normal text-muted">orders</span></h3>
+          </div>
+          <a href="{% url 'reservations' %}" class="btn btn-sm btn-white border rounded-pill px-3 py-1.5 shadow-xs text-dark small fw-semibold">
+            Process &rarr;
+          </a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3.5 rounded-4 border bg-light d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted small d-block mb-1">Store Analytics</span>
+            <h3 class="fw-extrabold text-success mb-0">Active <span class="fs-6 fw-normal text-muted">portal</span></h3>
+          </div>
+          <a href="{% url 'pharmacy_dashboard' %}" class="btn btn-sm btn-white border rounded-pill px-3 py-1.5 shadow-xs text-dark small fw-semibold">
+            Analytics &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Store Management Hub Modules -->
+<section class="py-5 bg-light">
+  <div class="container py-lg-2">
+    <div class="mb-4 reveal">
+      <h3 class="fw-bold text-dark mb-1">Store Operations Hub</h3>
+      <p class="text-muted small mb-0">Everything you need to manage stock, fulfill customer reservations, and track store performance.</p>
     </div>
 
     <div class="row g-4 reveal-stagger">
-      <!-- Card 1: Inventory -->
+      <!-- Card 1: Live Inventory -->
       <div class="col-md-6 col-lg-3">
         <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
           <div
@@ -136,14 +142,30 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             <i class="fa-solid fa-boxes-stacked"></i>
           </div>
           <h5 class="fw-bold text-dark mb-2">Live Inventory</h5>
-          <p class="text-muted small mb-3">Track medicine stocks, update pricing, batch numbers, and expiry dates.</p>
-          <a href="{% url 'inventory' %}" class="btn btn-sm btn-outline-primary rounded-pill w-100 mt-auto">
-            Manage Stock &rarr;
+          <p class="text-muted small mb-3">Track medicine stocks, update prices, manage batch numbers, and set low-stock reorder levels.</p>
+          <a href="{% url 'inventory' %}" class="btn btn-sm btn-outline-primary rounded-pill w-100 mt-auto fw-semibold py-2">
+            Manage Catalog &rarr;
           </a>
         </div>
       </div>
 
-      <!-- Card 2: Reservations -->
+      <!-- Card 2: Add Inventory -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
+          <div
+            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-success-subtle text-success"
+            style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="fa-solid fa-plus-circle"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Add Stock</h5>
+          <p class="text-muted small mb-3">Quickly add new medicine batches, tablet counts, syrup bottles, and set selling prices.</p>
+          <a href="{% url 'add_inventory' %}" class="btn btn-sm btn-outline-success rounded-pill w-100 mt-auto fw-semibold py-2">
+            + Add Medicine &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3: Incoming Orders -->
       <div class="col-md-6 col-lg-3">
         <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
           <div
@@ -151,44 +173,27 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             style="width: 48px; height: 48px; font-size: 1.3rem;">
             <i class="fa-solid fa-clock"></i>
           </div>
-          <h5 class="fw-bold text-dark mb-2">Pending Orders</h5>
-          <p class="text-muted small mb-3">Accept or reject incoming customer reservations with instant notifications.
-          </p>
+          <h5 class="fw-bold text-dark mb-2">Customer Orders</h5>
+          <p class="text-muted small mb-3">Review customer reservation requests, confirm hold requests, and verify pickup codes.</p>
           <a href="{% url 'reservations' %}"
-            class="btn btn-sm btn-outline-warning text-dark rounded-pill w-100 mt-auto">
-            Review Orders ({{ pharmacy_pending_count }}) &rarr;
+            class="btn btn-sm btn-outline-warning text-dark rounded-pill w-100 mt-auto fw-semibold py-2">
+            Orders ({{ pharmacy_pending_count }}) &rarr;
           </a>
         </div>
       </div>
 
-      <!-- Card 3: Dashboard Analytics -->
-      <div class="col-md-6 col-lg-3">
-        <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
-          <div
-            class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-success-subtle text-success"
-            style="width: 48px; height: 48px; font-size: 1.3rem;">
-            <i class="fa-solid fa-chart-pie"></i>
-          </div>
-          <h5 class="fw-bold text-dark mb-2">Store Analytics</h5>
-          <p class="text-muted small mb-3">View live revenue, fulfillment metrics, out of stock alerts, and trends.</p>
-          <a href="{% url 'pharmacy_dashboard' %}" class="btn btn-sm btn-outline-success rounded-pill w-100 mt-auto">
-            View Analytics &rarr;
-          </a>
-        </div>
-      </div>
-
-      <!-- Card 4: Store Profile -->
+      <!-- Card 4: Store Analytics & Profile -->
       <div class="col-md-6 col-lg-3">
         <div class="card border rounded-4 p-4 h-100 shadow-sm bg-white card-interactive">
           <div
             class="d-inline-flex align-items-center justify-content-center mb-3 rounded-3 bg-info-subtle text-info-emphasis"
             style="width: 48px; height: 48px; font-size: 1.3rem;">
-            <i class="fa-solid fa-store"></i>
+            <i class="fa-solid fa-chart-line"></i>
           </div>
-          <h5 class="fw-bold text-dark mb-2">Profile &amp; Hours</h5>
-          <p class="text-muted small mb-3">Update your pharmacy address, contact number, and daily opening hours.</p>
-          <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-secondary rounded-pill w-100 mt-auto">
-            Edit Store Details &rarr;
+          <h5 class="fw-bold text-dark mb-2">Store Analytics</h5>
+          <p class="text-muted small mb-3">View reservation fulfillment analytics, expiring inventory alerts, and manage operating hours.</p>
+          <a href="{% url 'pharmacy_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-pill w-100 mt-auto fw-semibold py-2">
+            Open Dashboard &rarr;
           </a>
         </div>
       </div>
