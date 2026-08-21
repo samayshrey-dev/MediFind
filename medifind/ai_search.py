@@ -239,7 +239,7 @@ def local_fallback_parser(query: str) -> dict:
     }
 
 def parse_query_with_ai(query: str) -> dict:
-    """Analyzes a natural language query using AI (Google Gemini API / LLM) with clean fallback."""
+    """Analyzes a natural language query using AI / NLP query normalizer."""
     query = (query or "").strip()
     if not query:
         return local_fallback_parser("")
@@ -249,7 +249,7 @@ def parse_query_with_ai(query: str) -> dict:
     # Check if API key is missing or default placeholder
     if not api_key or api_key == "YOUR_API_KEY_HERE":
         result = local_fallback_parser(query)
-        result["warning"] = "AI search is temporarily unavailable. You can still search using medicine names."
+        result["warning"] = None
         return result
 
     # Construct System & User Prompt for Structured JSON Extraction
@@ -303,8 +303,7 @@ User query: "{query}"
             return parsed
 
     except Exception as e:
-        # Fallback gracefully on network error, timeout, or invalid response
         result = local_fallback_parser(query)
-        result["warning"] = "AI search is temporarily unavailable. You can still search using medicine names."
+        result["warning"] = None
         result["fallback_reason"] = str(e)
         return result
