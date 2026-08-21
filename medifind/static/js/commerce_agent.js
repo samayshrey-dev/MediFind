@@ -168,84 +168,79 @@
       const nearest = data.nearest_option;
 
       html += `
-        <!-- Best Match Banner -->
-        <div class="recommended-card mb-4">
-          <div class="recommended-badge">
-            <i class="fa-solid fa-check me-1"></i> Best Match
+        <!-- BEST MATCH HERO CARD -->
+        <div class="recommended-card mb-4" style="border: 2px solid #10b981; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08);">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="badge bg-success text-white rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.5px;">
+              ★ BEST MATCH
+            </span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge ${bm.is_open ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} rounded-pill px-2.5 py-1 small fw-semibold">
+                ● ${bm.is_open ? 'Open Now' : 'Closed'}
+              </span>
+              <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">
+                ${bm.stock} available
+              </span>
+            </div>
           </div>
 
           <div class="row align-items-center g-4">
-            <div class="col-lg-8">
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="badge ${bm.is_open ? 'bg-success' : 'bg-secondary'} rounded-pill px-2 py-1">
-                  ● ${bm.is_open ? 'Open Now' : 'Closed'}
-                </span>
-                <span class="badge bg-light text-dark border rounded-pill px-2 py-1">
-                  ${bm.stock} in stock
-                </span>
+            <div class="col-lg-7">
+              <div class="d-flex align-items-baseline gap-2 mb-1">
+                <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹${parseFloat(bm.price).toFixed(0)}</span>
+                <span class="text-muted small">/ unit</span>
                 ${bm.prescription_required ? `
-                  <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1">
+                  <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0.5 ms-2" style="font-size: 0.72rem;">
                     Prescription Required
                   </span>
                 ` : ''}
               </div>
 
-              <h3 class="fw-bold text-dark mb-1">${escapeHtml(bm.medicine_name)}</h3>
-              <div class="text-muted mb-2">
-                <strong class="text-dark">${escapeHtml(bm.pharmacy_name)}</strong> &bull; ${escapeHtml(bm.pharmacy_address)}, ${escapeHtml(bm.pharmacy_city)}
-              </div>
+              <h4 class="fw-bold text-dark mb-1">${escapeHtml(bm.pharmacy_name)}</h4>
+              <p class="text-muted small mb-3">
+                <i class="fa-solid fa-location-dot text-primary me-1"></i> ${bm.distance_km !== null ? `<strong>${bm.distance_km} km away</strong> &bull; ` : ''}${escapeHtml(bm.pharmacy_address)}, ${escapeHtml(bm.pharmacy_city)}
+              </p>
 
-              ${bm.distance_km !== null ? `
-                <div class="text-secondary small mb-3">
-                  <i class="fa-solid fa-route text-muted me-1"></i> ${bm.distance_km} km away &bull; Verified Partner Store
+              <!-- "WHY?" Callout Box -->
+              <div class="p-3 rounded-3 mb-2" style="background: #f0fdf4; border-left: 4px solid #10b981;">
+                <div class="fw-extrabold text-success small mb-1 d-flex align-items-center gap-1.5" style="letter-spacing: 0.3px;">
+                  <i class="fa-solid fa-circle-check"></i> WHY?
                 </div>
-              ` : ''}
-
-              <!-- Explainable Reasoning Callout -->
-              <div class="reasoning-callout">
-                <div class="fw-bold text-dark small mb-1">Why this option?</div>
-                <div>${escapeHtml(data.explanation || 'Lowest verified price among available pharmacies within your selected area.')}</div>
+                <div class="text-dark small fw-medium" style="line-height: 1.5;">
+                  ${escapeHtml(data.explanation || 'Lowest verified price within 5 km with guaranteed live stock.')}
+                </div>
               </div>
             </div>
 
-            <div class="col-lg-5 text-lg-end border-start-lg ps-lg-4">
-              <div class="d-flex justify-content-between align-items-baseline mb-2">
-                <span class="text-muted small fw-semibold">Unit Price:</span>
-                <div class="fs-5 fw-extrabold text-dark">₹${parseFloat(bm.price).toFixed(2)}</div>
-              </div>
-
-              <!-- Quantity Selector Box -->
-              <div class="d-flex align-items-center justify-content-between my-2 p-2 bg-light rounded-3 border">
-                <span class="small fw-bold text-dark"><i class="fa-solid fa-boxes-stacked text-primary me-1"></i> Quantity:</span>
-                <div class="qty-stepper d-inline-flex align-items-center bg-white border rounded-pill p-1 shadow-sm">
-                  <button type="button" class="btn btn-sm p-0 rounded-circle border text-dark fw-bold d-flex align-items-center justify-content-center" id="bmQtyMinus" style="width: 28px; height: 28px; line-height: 1;" title="Decrease quantity">&minus;</button>
-                  <span id="bmQtyDisplay" class="fw-extrabold text-dark text-center px-2" style="min-width: 34px; font-size: 1.05rem; user-select: none;">1</span>
-                  <button type="button" class="btn btn-sm p-0 rounded-circle border text-dark fw-bold d-flex align-items-center justify-content-center" id="bmQtyPlus" style="width: 28px; height: 28px; line-height: 1;" title="Increase quantity">+</button>
+            <div class="col-lg-5 border-start-lg ps-lg-4">
+              <div class="p-3 bg-light rounded-4 border">
+                <!-- Quantity Selector Box -->
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <span class="small fw-bold text-dark">Quantity:</span>
+                  <div class="qty-stepper d-inline-flex align-items-center bg-white border rounded-pill p-1 shadow-sm">
+                    <button type="button" class="btn btn-sm p-0 rounded-circle border text-dark fw-bold d-flex align-items-center justify-content-center" id="bmQtyMinus" style="width: 28px; height: 28px; line-height: 1;" title="Decrease quantity">&minus;</button>
+                    <span id="bmQtyDisplay" class="fw-extrabold text-dark text-center px-2" style="min-width: 32px; font-size: 1rem; user-select: none;">1</span>
+                    <button type="button" class="btn btn-sm p-0 rounded-circle border text-dark fw-bold d-flex align-items-center justify-content-center" id="bmQtyPlus" style="width: 28px; height: 28px; line-height: 1;" title="Increase quantity">+</button>
+                  </div>
                 </div>
-              </div>
 
-              <!-- Live Total Calculation -->
-              <div class="d-flex justify-content-between align-items-center mb-3 px-1">
-                <span class="text-muted small fw-semibold">Total Amount:</span>
-                <span class="fs-4 fw-extrabold text-success" id="bmTotalDisplay">₹${parseFloat(bm.price).toFixed(2)}</span>
-              </div>
-
-              <!-- Two Payment & Reservation Options -->
-              <div class="order-review-box" id="approvalGateContainer">
-                <div class="d-flex flex-column gap-2">
-                  <button type="button" class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="bmBtnPayOnline" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
-                    <i class="fa-solid fa-credit-card"></i> Pay Online (Razorpay)
-                  </button>
-                  <button type="button" class="btn btn-outline-dark w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2" id="bmBtnPayCounter" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
-                    <i class="fa-solid fa-store text-success"></i> Pay on the Counter
-                  </button>
+                <!-- Live Total Calculation -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <span class="text-muted small fw-semibold">Total:</span>
+                  <span class="fs-4 fw-extrabold text-success" id="bmTotalDisplay">₹${parseFloat(bm.price).toFixed(2)}</span>
                 </div>
-              </div>
 
-              <div class="mt-3">
-                <a href="/pharmacy/${bm.pharmacy_id}/" class="btn btn-link btn-sm text-decoration-none text-muted p-0">
-                  View Pharmacy Profile &rarr;
-                </a>
+                <!-- Two Payment & Reservation Options -->
+                <div class="order-review-box" id="approvalGateContainer">
+                  <div class="d-flex flex-column gap-2">
+                    <button type="button" class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="bmBtnPayOnline" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
+                      <i class="fa-solid fa-credit-card"></i> Pay Online (Razorpay)
+                    </button>
+                    <button type="button" class="btn btn-outline-dark w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2" id="bmBtnPayCounter" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
+                      <i class="fa-solid fa-store text-success"></i> Pay on the Counter
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -253,7 +248,7 @@
 
         <!-- Quick Comparison: Cheapest vs Nearest Highlights -->
         <div class="row g-3 mb-4">
-          ${cheapest ? `
+          ${cheapest && cheapest.pharmacy_id !== bm.pharmacy_id ? `
             <div class="col-md-6">
               <div class="card border rounded-4 p-3 shadow-sm bg-white h-100" style="border-left: 4px solid #10b981 !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -276,7 +271,7 @@
             </div>
           ` : ''}
 
-          ${nearest ? `
+          ${nearest && nearest.pharmacy_id !== bm.pharmacy_id ? `
             <div class="col-md-6">
               <div class="card border rounded-4 p-3 shadow-sm bg-white h-100" style="border-left: 4px solid #0284c7 !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -310,61 +305,48 @@
       `;
     }
 
-    // 5. Complete List of All Available Matching Results
-    if (data.all_options && data.all_options.length > 0) {
+    // 5. "OTHER OPTIONS" List
+    const otherOptions = (data.all_options || []).filter(opt => !data.best_match || opt.inventory_id !== data.best_match.inventory_id);
+
+    if (otherOptions.length > 0) {
       html += `
         <div class="mt-4 mb-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold text-dark mb-0">
-              All Available Results (${data.all_options.length} Verified Stores)
+            <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
+              OTHER OPTIONS (${otherOptions.length} stores nearby)
             </h5>
-            <span class="badge bg-light text-muted border rounded-pill px-2 py-1 small">Real-time Stock</span>
+            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
           </div>
 
-          <div class="d-flex flex-column gap-3">
-            ${data.all_options.map((opt, idx) => `
-              <div class="card border rounded-4 p-3 shadow-sm bg-white hover-elevate" style="transition: all 0.2s ease;">
-                <div class="d-flex justify-content-between align-items-start mb-2">
+          <div class="d-flex flex-column gap-2.5">
+            ${otherOptions.map((opt, idx) => `
+              <div class="card border rounded-4 p-3.5 shadow-sm bg-white hover-elevate" style="transition: all 0.2s ease;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                   <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
-                      <span class="badge ${opt.is_open ? 'bg-success' : 'bg-secondary'} rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                      <h6 class="fw-bold text-dark mb-0 fs-6">${escapeHtml(opt.pharmacy_name)}</h6>
+                      <span class="badge ${opt.is_open ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
                         ● ${opt.is_open ? 'Open' : 'Closed'}
                       </span>
-                      <span class="text-muted small">${opt.stock > 0 ? `${opt.stock} available` : 'Out of stock'}</span>
-                      ${opt.distance_km !== null ? `
-                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
-                          <i class="fa-solid fa-location-dot me-1"></i> ${opt.distance_km} km
-                        </span>
-                      ` : ''}
                     </div>
-                    <h6 class="fw-bold text-dark mb-0">${escapeHtml(opt.medicine_name)}</h6>
-                    <small class="text-muted">${escapeHtml(opt.pharmacy_name)} &bull; ${escapeHtml(opt.pharmacy_address || '')} ${escapeHtml(opt.pharmacy_city || '')}</small>
+                    <div class="text-muted small">
+                      <span class="fw-bold text-dark">₹${parseFloat(opt.price).toFixed(2)}</span> &bull; 
+                      ${opt.distance_km !== null ? `<span class="text-primary fw-medium"><i class="fa-solid fa-location-dot me-0.5"></i> ${opt.distance_km} km away</span> &bull; ` : ''}
+                      <span>${opt.stock > 0 ? `${opt.stock} available` : 'Out of stock'}</span>
+                    </div>
                   </div>
-                  <div class="text-end">
-                    <div class="fs-5 fw-extrabold text-dark">₹${parseFloat(opt.price).toFixed(2)}</div>
-                  </div>
-                </div>
 
-                <div class="pt-2 border-top mt-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                  <div class="small text-muted">
-                    <i class="fa-solid fa-clock text-muted me-1"></i> Closes at ${escapeHtml(opt.closing_time || '22:00')}
-                  </div>
-                  <div class="d-flex gap-2">
-                    <a href="/pharmacy/${opt.pharmacy_id}/" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                      Store Info
+                  <div class="d-flex align-items-center gap-2">
+                    <a href="https://maps.google.com/?q=${opt.latitude},${opt.longitude}" target="_blank" class="btn btn-sm btn-light border rounded-pill px-3" style="font-size: 0.8rem;">
+                      <i class="fa-solid fa-diamond-turn-right me-1 text-primary"></i> Directions
                     </a>
-                    ${opt.stock > 0 ? `
-                      <a href="/reserve/${opt.inventory_id}/" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold text-decoration-none">
-                        Review &amp; Reserve &rarr;
-                      </a>
-                    ` : `
-                      <button class="btn btn-sm btn-light text-muted rounded-pill px-3" disabled>Out of stock</button>
-                    `}
+                    <a href="/reserve/${opt.inventory_id}/" class="btn btn-sm btn-outline-primary rounded-pill px-3.5 fw-semibold" style="font-size: 0.8rem;">
+                      Reserve &rarr;
+                    </a>
                   </div>
                 </div>
               </div>
             `).join('')}
-          </div>
         </div>
       `;
     }

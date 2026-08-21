@@ -739,12 +739,23 @@ def search(request):
         .exclude(category="")
         .order_by("category")
     )
+    best_match_item = inventory_items[0] if inventory_items else None
+    other_items = inventory_items[1:] if len(inventory_items) > 1 else []
+
+    explanation = "Lowest verified price within your selected radius with live stock."
+    if sort == "nearest" and best_match_item and getattr(best_match_item, 'distance_km', None) is not None:
+        explanation = f"Nearest verified pharmacy ({best_match_item.distance_km} km) with active stock."
+    elif best_match_item:
+        explanation = f"Lowest verified price (₹{best_match_item.price}) among nearby pharmacies."
 
     return render(
         request,
         "search.html",
         {
             "inventory": inventory_items,
+            "best_match_item": best_match_item,
+            "other_items": other_items,
+            "explanation": explanation,
             "categories": categories,
             "query": query,
             "category": category,
