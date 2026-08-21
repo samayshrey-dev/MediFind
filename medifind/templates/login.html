@@ -225,24 +225,29 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Demo Account Quick Auto-Fill
+  // Demo Account Quick 1-Click Auto-Fill & Login
   const demoButtons = document.querySelectorAll(".demo-fill-btn");
   const usernameInput = document.getElementById("id_username");
 
   demoButtons.forEach(btn => {
-    btn.addEventListener("click", function() {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
       const u = this.getAttribute("data-user");
       const p = this.getAttribute("data-pass");
       if (usernameInput) usernameInput.value = u;
       if (passwordInput) passwordInput.value = p;
       
       // Visual feedback
-      this.classList.add("btn-primary", "text-white");
+      this.classList.add("btn-success", "text-white");
       this.classList.remove("btn-white", "text-dark");
-      setTimeout(() => {
-        this.classList.remove("btn-primary", "text-white");
-        this.classList.add("btn-white", "text-dark");
-      }, 400);
+      this.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i> Logging in...`;
+      
+      const form = document.getElementById("loginForm");
+      if (form) {
+        setTimeout(() => {
+          form.submit();
+        }, 150);
+      }
     });
   });
 });

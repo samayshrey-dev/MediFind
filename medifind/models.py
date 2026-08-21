@@ -128,11 +128,12 @@ class UserProfile(models.Model):
         choices=ROLE_CHOICES,
         default="Customer"
     )
-    pharmacy = models.OneToOneField(
-    "Pharmacy",
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True
+    pharmacy = models.ForeignKey(
+        "Pharmacy",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="user_profiles"
     )
 
     def __str__(self):
