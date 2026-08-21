@@ -362,24 +362,9 @@
       `;
     }
 
-    // Write to DOM
-    if (topContainer && otherContainer) {
-      if (staticTop) staticTop.classList.add('d-none');
-      if (staticOther) staticOther.classList.add('d-none');
-
-      topContainer.innerHTML = topHtml;
-      topContainer.classList.remove('d-none');
-
-      otherContainer.innerHTML = otherHtml;
-      otherContainer.classList.remove('d-none');
-    } else if (legacyContainer) {
-      legacyContainer.innerHTML = topHtml + otherHtml;
-      legacyContainer.classList.remove('d-none');
-    }
-
     // 6. Developer / Activity Log Details (Collapsible)
     if (data.audit_trail && data.audit_trail.length > 0) {
-      html += `
+      otherHtml += `
         <div class="mt-4 text-end">
           <button class="btn btn-sm btn-link text-muted text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#auditTrailCollapse">
             <small><i class="fa-solid fa-list-check me-1"></i> Activity details (${data.audit_trail.length} events)</small>
@@ -402,7 +387,22 @@
       `;
     }
 
-    resultsContainer.innerHTML = html;
+    // Write to DOM
+    if (topContainer) {
+      if (staticTop) staticTop.classList.add('d-none');
+      topContainer.innerHTML = topHtml;
+      topContainer.classList.remove('d-none');
+    }
+    if (otherContainer) {
+      if (staticOther) staticOther.classList.add('d-none');
+      otherContainer.innerHTML = otherHtml;
+      otherContainer.classList.remove('d-none');
+    }
+    if (legacyContainer && !topContainer) {
+      legacyContainer.innerHTML = topHtml + otherHtml;
+      legacyContainer.classList.remove('d-none');
+    }
+
     if (window.MedFinderMotion && typeof window.MedFinderMotion.refreshReveals === 'function') {
       window.MedFinderMotion.refreshReveals();
     }
