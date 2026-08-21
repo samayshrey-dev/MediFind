@@ -171,20 +171,22 @@ class IntentParser:
     def get_known_medicines(cls):
         """Fetches active medicine names from database for ambiguity & normalization matching."""
         try:
-            return list(Medicine.objects.values_list('name', flat=True))
+            db_meds = list(Medicine.objects.values_list('name', flat=True))
+            if db_meds:
+                return db_meds
         except Exception:
-            return [
-                "Dolo 650", "Dolo", "Crocin", "Paracetamol 500", "Paracetamol", "Ibuprofen 400",
-                "Ibuprofen", "Combiflam", "Amoxicillin 500", "Amoxicillin", "Azithromycin 500",
-                "Azithromycin", "Augmentin 625", "Augmentin", "Ciprofloxacin 500", "Ciprofloxacin",
-                "Limcee Vitamin C", "Limcee", "Calcirol Vitamin D3", "Calcirol", "Becosules Z",
-                "Becosules", "Neurobion Forte", "Neurobion", "Cetirizine 10", "Cetirizine",
-                "Allegra 120", "Allegra", "Levocetirizine 5", "Levocetirizine", "Montair LC",
-                "Montair", "Glycomet Metformin", "Glycomet", "Metformin", "Mixtard 30/70 Insulin",
-                "Mixtard", "Insulin", "Amaryl Glimepiride", "Amaryl", "Glimepiride",
-                "Januvia Sitagliptin", "Januvia", "Sitagliptin", "Ecosprin 75", "Ecosprin",
-                "Atorva 10", "Atorva", "Stamlo Amlodipine", "Stamlo", "Amlodipine", "Telma 40", "Telma"
-            ]
+            pass
+        return [
+            "Dolo 650", "Crocin 650", "Combiflam", "Saridon", "Meftal-Spas", "Volini Pain Relief Gel",
+            "Sinarest Tablet", "Ascoril LS Syrup", "Benadryl Cough Syrup", "Otrivin Adult Nasal Spray",
+            "Cetirizine 10 mg", "Allegra 120 mg", "Montair-LC", "Pan 40", "Omez 20",
+            "Digene Gel Mint", "Gelusil MPS Liquid", "Electral ORS Powder", "Eno Fruit Salt Regular",
+            "Becosules Z", "Neurobion Forte", "Shelcal 500", "Limcee Vitamin C 500 mg", "Calcirol Vitamin D3 60K",
+            "Glycomet 500 mg", "Januvia 100 mg", "Amaryl 1 mg", "Telma 40 mg", "Amlodac 5 mg",
+            "Ecosprin 75 mg", "Atorva 10 mg", "Augmentin 625 Duo", "Azithral 500 mg", "Ciplox 500 mg",
+            "Betadine 5% Ointment", "Dettol Antiseptic Liquid", "Candid Dusting Powder",
+            "Refresh Tears Eye Drops", "Hexidine Mouthwash"
+        ]
 
     @classmethod
     def local_fallback_parser(cls, query: str) -> dict:
@@ -341,21 +343,85 @@ class IntentParser:
                 if top_fuzzy.brand and top_fuzzy.brand.lower() != top_fuzzy.name.lower():
                     generic_name = top_fuzzy.brand
             elif "dolo" in normalized_q.lower():
-                matched_medicine = "Dolo 650" if strength_mg == 650 else "Dolo"
+                matched_medicine = "Dolo 650"
             elif "paracetamol" in normalized_q.lower() or "para " in normalized_q.lower():
-                matched_medicine = "Paracetamol 500" if strength_mg == 500 else ("Paracetamol 650" if strength_mg == 650 else "Paracetamol")
+                matched_medicine = "Dolo 650"
             elif "crocin" in normalized_q.lower():
-                matched_medicine = "Crocin"
-            elif "ibuprofen" in normalized_q.lower():
-                matched_medicine = "Ibuprofen 400" if strength_mg == 400 else "Ibuprofen"
+                matched_medicine = "Crocin 650"
             elif "combiflam" in normalized_q.lower():
                 matched_medicine = "Combiflam"
-            elif "amoxicillin" in normalized_q.lower():
-                matched_medicine = "Amoxicillin 500" if strength_mg == 500 else "Amoxicillin"
+            elif "saridon" in normalized_q.lower():
+                matched_medicine = "Saridon"
+            elif "meftal" in normalized_q.lower():
+                matched_medicine = "Meftal-Spas"
+            elif "volini" in normalized_q.lower():
+                matched_medicine = "Volini Pain Relief Gel"
+            elif "sinarest" in normalized_q.lower() or "cold tablet" in normalized_q.lower():
+                matched_medicine = "Sinarest Tablet"
+            elif "ascoril" in normalized_q.lower():
+                matched_medicine = "Ascoril LS Syrup"
+            elif "benadryl" in normalized_q.lower() or "cough syrup" in normalized_q.lower():
+                matched_medicine = "Benadryl Cough Syrup"
+            elif "otrivin" in normalized_q.lower() or "nasal spray" in normalized_q.lower():
+                matched_medicine = "Otrivin Adult Nasal Spray"
             elif "cetirizine" in normalized_q.lower():
-                matched_medicine = "Cetirizine 10" if strength_mg == 10 else "Cetirizine"
-            elif "metformin" in normalized_q.lower():
-                matched_medicine = "Metformin"
+                matched_medicine = "Cetirizine 10 mg"
+            elif "allegra" in normalized_q.lower() or "fexofenadine" in normalized_q.lower():
+                matched_medicine = "Allegra 120 mg"
+            elif "montair" in normalized_q.lower() or "montelukast" in normalized_q.lower():
+                matched_medicine = "Montair-LC"
+            elif "pan 40" in normalized_q.lower() or "pantoprazole" in normalized_q.lower() or "pan40" in normalized_q.lower():
+                matched_medicine = "Pan 40"
+            elif "omez" in normalized_q.lower() or "omeprazole" in normalized_q.lower():
+                matched_medicine = "Omez 20"
+            elif "digene" in normalized_q.lower() or "antacid syrup" in normalized_q.lower():
+                matched_medicine = "Digene Gel Mint"
+            elif "gelusil" in normalized_q.lower():
+                matched_medicine = "Gelusil MPS Liquid"
+            elif "electral" in normalized_q.lower() or "ors" in normalized_q.lower():
+                matched_medicine = "Electral ORS Powder"
+            elif "eno" in normalized_q.lower() or "fruit salt" in normalized_q.lower():
+                matched_medicine = "Eno Fruit Salt Regular"
+            elif "becosules" in normalized_q.lower() or "b-complex" in normalized_q.lower():
+                matched_medicine = "Becosules Z"
+            elif "neurobion" in normalized_q.lower() or "b12" in normalized_q.lower():
+                matched_medicine = "Neurobion Forte"
+            elif "shelcal" in normalized_q.lower() or "calcium" in normalized_q.lower():
+                matched_medicine = "Shelcal 500"
+            elif "limcee" in normalized_q.lower() or "vitamin c" in normalized_q.lower():
+                matched_medicine = "Limcee Vitamin C 500 mg"
+            elif "calcirol" in normalized_q.lower() or "vitamin d" in normalized_q.lower():
+                matched_medicine = "Calcirol Vitamin D3 60K"
+            elif "glycomet" in normalized_q.lower() or "metformin" in normalized_q.lower():
+                matched_medicine = "Glycomet 500 mg"
+            elif "januvia" in normalized_q.lower() or "sitagliptin" in normalized_q.lower():
+                matched_medicine = "Januvia 100 mg"
+            elif "amaryl" in normalized_q.lower() or "glimepiride" in normalized_q.lower():
+                matched_medicine = "Amaryl 1 mg"
+            elif "telma" in normalized_q.lower() or "telmisartan" in normalized_q.lower():
+                matched_medicine = "Telma 40 mg"
+            elif "amlodac" in normalized_q.lower() or "amlodipine" in normalized_q.lower():
+                matched_medicine = "Amlodac 5 mg"
+            elif "ecosprin" in normalized_q.lower() or "aspirin" in normalized_q.lower():
+                matched_medicine = "Ecosprin 75 mg"
+            elif "atorva" in normalized_q.lower() or "atorvastatin" in normalized_q.lower() or "cholesterol" in normalized_q.lower():
+                matched_medicine = "Atorva 10 mg"
+            elif "augmentin" in normalized_q.lower() or "amoxicillin" in normalized_q.lower():
+                matched_medicine = "Augmentin 625 Duo"
+            elif "azithral" in normalized_q.lower() or "azithromycin" in normalized_q.lower():
+                matched_medicine = "Azithral 500 mg"
+            elif "ciplox" in normalized_q.lower() or "ciprofloxacin" in normalized_q.lower():
+                matched_medicine = "Ciplox 500 mg"
+            elif "betadine" in normalized_q.lower() or "povidone" in normalized_q.lower():
+                matched_medicine = "Betadine 5% Ointment"
+            elif "dettol" in normalized_q.lower() or "antiseptic" in normalized_q.lower():
+                matched_medicine = "Dettol Antiseptic Liquid"
+            elif "candid" in normalized_q.lower() or "dusting powder" in normalized_q.lower():
+                matched_medicine = "Candid Dusting Powder"
+            elif "refresh tears" in normalized_q.lower() or "eye drops" in normalized_q.lower():
+                matched_medicine = "Refresh Tears Eye Drops"
+            elif "hexidine" in normalized_q.lower() or "mouthwash" in normalized_q.lower():
+                matched_medicine = "Hexidine Mouthwash"
 
 
         # Determine generic name

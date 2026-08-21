@@ -11,22 +11,22 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
   <div class="container py-2">
 
     <!-- ===================================== -->
-    <!-- SEARCH HEADER & INPUT BOX -->
+    <!-- CENTERPIECE SEARCH STUDIO -->
     <!-- ===================================== -->
     <div class="search-studio-container mb-4 reveal">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-        <h4 class="fw-bold text-dark mb-0">Search medicines</h4>
+        <h4 class="fw-bold text-dark mb-0">Search</h4>
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-semibold">
             ● Live Inventory
           </span>
           <span class="badge bg-light text-muted border rounded-pill px-3 py-1 small">
-            Verified Pharmacies
+            15 Verified Pharmacies
           </span>
         </div>
       </div>
       <p class="text-muted small mb-3">
-        Find nearby pharmacies carrying your medicine with real-time prices, stock, and distance.
+        Find medicines, discover nearby pharmacies, compare live prices, and reserve for instant pickup.
       </p>
 
       <form id="agentSearchForm" autocomplete="off">
@@ -41,7 +41,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                 type="search"
                 name="medicine"
                 class="form-control form-control-lg border rounded-3 py-3 px-3 shadow-none bg-white"
-                placeholder="Search for a medicine (e.g. Dolo 650, Paracetamol, or Cetirizine)..."
+                placeholder="Search medicine, or e.g. 'Cheapest Dolo 650 within 5 km'..."
                 autocomplete="off"
                 value="{{ query|default:'' }}"
                 required>
@@ -53,7 +53,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
             <button
               type="submit"
               id="searchSubmitBtn"
-              class="btn btn-primary btn-lg rounded-3 fw-semibold py-3">
+              class="btn btn-primary btn-lg rounded-3 fw-semibold py-3 shadow-sm">
               <i class="fa-solid fa-magnifying-glass me-1"></i> Search
             </button>
           </div>
@@ -61,17 +61,17 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
       </form>
 
       <!-- Quick Search Chips -->
-      <div class="search-quick-tags">
-        <small class="text-muted fw-semibold me-1">Popular searches:</small>
+      <div class="search-quick-tags mt-3">
+        <small class="text-muted fw-semibold me-1">Try searching:</small>
         <button type="button" class="search-tag-chip" data-query="Dolo 650">Dolo 650</button>
-        <button type="button" class="search-tag-chip" data-query="Cheapest Dolo 650 within 5 km">Cheapest Dolo 650</button>
-        <button type="button" class="search-tag-chip" data-query="Paracetamol 500">Paracetamol 500 mg</button>
-        <button type="button" class="search-tag-chip" data-query="Closest pharmacy with Dolo 650">Closest Dolo 650</button>
-        <button type="button" class="search-tag-chip" data-query="Cetirizine 10">Cetirizine 10</button>
-        <button type="button" class="search-tag-chip" data-query="Crocin">Crocin</button>
+        <button type="button" class="search-tag-chip" data-query="Find the cheapest Dolo 650 within 5 km">Cheapest Dolo 650 within 5 km</button>
+        <button type="button" class="search-tag-chip" data-query="Find the nearest pharmacy with paracetamol">Nearest with paracetamol</button>
+        <button type="button" class="search-tag-chip" data-query="Augmentin 625 Duo">Augmentin 625 Duo</button>
+        <button type="button" class="search-tag-chip" data-query="Pan 40">Pan 40</button>
+        <button type="button" class="search-tag-chip" data-query="Cetirizine 10 mg">Cetirizine 10 mg</button>
       </div>
 
-      <!-- Dynamic Results Area (Populated by commerce_agent.js with smooth transitions) -->
+      <!-- Dynamic Results Area (Populated seamlessly by commerce_agent.js) -->
       <div id="agentResultsArea" class="d-none"></div>
     </div>
 

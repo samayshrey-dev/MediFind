@@ -227,15 +227,15 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           Search nearby pharmacies, compare availability and prices, and choose the option that works best for you.
         </p>
 
-        <!-- Search Bar -->
+        <!-- Centerpiece Search Bar -->
         <form action="{% url 'search' %}" method="GET" class="reveal hero-entrance mb-4">
           <div class="p-2 rounded-4 border bg-white shadow-sm d-flex align-items-center gap-2"
             style="max-width: 600px;">
             <i class="fa-solid fa-magnifying-glass text-muted ms-3 fs-5"></i>
             <input type="text" name="medicine" class="form-control border-0 shadow-none ps-2"
-              placeholder="Search for a medicine (e.g. Dolo 650, Paracetamol, Cetirizine)..." style="font-size: 1rem;"
+              placeholder="Search medicine, or e.g. 'Cheapest Dolo 650 within 5 km'..." style="font-size: 1rem;"
               required>
-            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold py-2">
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold py-2.5 shadow-sm">
               Search
             </button>
           </div>
@@ -244,12 +244,12 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
         <!-- Primary & Secondary CTAs -->
         <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-3 mb-4">
           <a href="{% url 'search' %}"
-            class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2">
+            class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Search medicines</span>
           </a>
           <a href="{% url 'pharmacies' %}"
-            class="btn btn-outline-dark rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
+            class="btn btn-outline-dark rounded-pill px-4 py-2.5 fw-semibold d-flex align-items-center gap-2">
             <i class="fa-solid fa-location-dot text-primary"></i>
             <span>Find pharmacies</span>
           </a>
@@ -257,16 +257,15 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
 
         <!-- Search Suggestions -->
         <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-2 text-muted small">
-          <span class="fw-semibold">Popular:</span>
+          <span class="fw-semibold">Try:</span>
           <a href="{% url 'search' %}?medicine=Dolo+650"
             class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Dolo 650</a>
-          <a href="{% url 'search' %}?medicine=Paracetamol+500"
-            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Paracetamol 500
-            mg</a>
-          <a href="{% url 'search' %}?medicine=Cetirizine+10"
-            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Cetirizine</a>
-          <a href="{% url 'search' %}?medicine=Crocin"
-            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Crocin</a>
+          <a href="{% url 'search' %}?medicine=Find+the+cheapest+Dolo+650+within+5+km"
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Cheapest Dolo 650 within 5 km</a>
+          <a href="{% url 'search' %}?medicine=Find+the+nearest+pharmacy+with+paracetamol"
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Nearest with paracetamol</a>
+          <a href="{% url 'search' %}?medicine=Augmentin+625+Duo"
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Augmentin 625</a>
         </div>
       </div>
 
