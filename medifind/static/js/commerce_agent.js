@@ -208,24 +208,42 @@
               </div>
             </div>
 
-            <div class="col-lg-4 text-lg-end border-start-lg ps-lg-4">
-              <div class="text-muted small fw-semibold">Unit Price</div>
-              <div class="recommended-price mb-3">₹${parseFloat(bm.price).toFixed(2)}</div>
+            <div class="col-lg-5 text-lg-end border-start-lg ps-lg-4">
+              <div class="d-flex justify-content-between align-items-baseline mb-2">
+                <span class="text-muted small fw-semibold">Unit Price:</span>
+                <div class="fs-5 fw-extrabold text-dark">₹${parseFloat(bm.price).toFixed(2)}</div>
+              </div>
 
-              <!-- Order Review & Checkout Button -->
-              <div class="order-review-box" id="approvalGateContainer">
-                <a href="/reserve/${bm.inventory_id}/" class="btn btn-primary w-100 py-2.5 fw-bold text-decoration-none d-flex align-items-center justify-content-center gap-2 mb-2 rounded-pill shadow-sm">
-                  <span>Review Purchase &rarr;</span>
-                </a>
-                <div class="d-flex justify-content-center align-items-center gap-2 text-muted small">
-                  <span class="badge bg-light text-dark border rounded-pill px-2 py-1"><i class="fa-solid fa-store text-primary me-1"></i> Pay on Pickup</span>
-                  <span class="text-muted">&bull;</span>
-                  <span class="badge bg-light text-dark border rounded-pill px-2 py-1"><i class="fa-solid fa-credit-card text-success me-1"></i> Razorpay Test</span>
+              <!-- Quantity Selector Box -->
+              <div class="d-flex align-items-center justify-content-between my-2 p-2 bg-light rounded-3 border">
+                <span class="small fw-bold text-dark"><i class="fa-solid fa-boxes-stacked text-primary me-1"></i> Quantity:</span>
+                <div class="qty-stepper d-inline-flex align-items-center bg-white border rounded-pill p-1 shadow-sm">
+                  <button type="button" class="btn btn-sm p-0 rounded-circle border text-dark fw-bold d-flex align-items-center justify-content-center" id="bmQtyMinus" style="width: 28px; height: 28px; line-height: 1;" title="Decrease quantity">&minus;</button>
+                  <span id="bmQtyDisplay" class="fw-extrabold text-dark text-center px-2" style="min-width: 34px; font-size: 1.05rem; user-select: none;">1</span>
+                  <button type="button" class="btn btn-sm p-0 rounded-circle border text-dark fw-bold d-flex align-items-center justify-content-center" id="bmQtyPlus" style="width: 28px; height: 28px; line-height: 1;" title="Increase quantity">+</button>
                 </div>
               </div>
 
-              <div class="mt-2">
-                <a href="/pharmacy/${bm.pharmacy_id}/" class="btn btn-link btn-sm text-decoration-none text-muted">
+              <!-- Live Total Calculation -->
+              <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                <span class="text-muted small fw-semibold">Total Amount:</span>
+                <span class="fs-4 fw-extrabold text-success" id="bmTotalDisplay">₹${parseFloat(bm.price).toFixed(2)}</span>
+              </div>
+
+              <!-- Two Payment & Reservation Options -->
+              <div class="order-review-box" id="approvalGateContainer">
+                <div class="d-flex flex-column gap-2">
+                  <button type="button" class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="bmBtnPayOnline" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
+                    <i class="fa-solid fa-credit-card"></i> Pay Online (Razorpay)
+                  </button>
+                  <button type="button" class="btn btn-outline-dark w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2" id="bmBtnPayCounter" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
+                    <i class="fa-solid fa-store text-success"></i> Pay on the Counter
+                  </button>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <a href="/pharmacy/${bm.pharmacy_id}/" class="btn btn-link btn-sm text-decoration-none text-muted p-0">
                   View Pharmacy Profile &rarr;
                 </a>
               </div>
@@ -380,7 +398,7 @@
     if (window.MedFinderMotion && typeof window.MedFinderMotion.refreshReveals === 'function') {
       window.MedFinderMotion.refreshReveals();
     }
-    attachResultEvents();
+    attachResultEvents(data.best_match);
   }
 
   // STEP 1: Review Purchase Snapshot (Server-Side Snapshot Creation)
@@ -646,7 +664,162 @@
   }
 
   // Attach Event Handlers
-  function attachResultEvents() {
+  function attachResultEvents(bestMatchData) {
+    const bm = bestMatchData;
+    let selectedQuantity = 1;
+    const maxStock = bm && bm.stock ? Math.min(bm.stock, 10) : 10;
+    const unitPrice = bm ? parseFloat(bm.price) : 0;
+
+    const minusBtn = document.getElementById('bmQtyMinus');
+    const plusBtn = document.getElementById('bmQtyPlus');
+    const qtyDisplay = document.getElementById('bmQtyDisplay');
+    const totalDisplay = document.getElementById('bmTotalDisplay');
+
+    if (minusBtn && plusBtn && qtyDisplay && totalDisplay) {
+      minusBtn.addEventListener('click', function () {
+        if (selectedQuantity > 1) {
+          selectedQuantity--;
+          qtyDisplay.textContent = selectedQuantity;
+          totalDisplay.textContent = `₹${(selectedQuantity * unitPrice).toFixed(2)}`;
+        }
+      });
+
+      plusBtn.addEventListener('click', function () {
+        if (selectedQuantity < maxStock) {
+          selectedQuantity++;
+          qtyDisplay.textContent = selectedQuantity;
+          totalDisplay.textContent = `₹${(selectedQuantity * unitPrice).toFixed(2)}`;
+        }
+      });
+    }
+
+    // Pay Online Button (Razorpay)
+    const btnOnline = document.getElementById('bmBtnPayOnline');
+    if (btnOnline) {
+      btnOnline.addEventListener('click', async function () {
+        const invId = this.getAttribute('data-inventory-id');
+        const container = document.getElementById('approvalGateContainer');
+        if (container) {
+          container.innerHTML = `
+            <div class="text-center py-2 w-100">
+              <div class="spinner-border spinner-border-sm text-success me-2"></div>
+              <span class="small fw-semibold text-dark">Locking price &amp; stock (${selectedQuantity} units)...</span>
+            </div>
+          `;
+        }
+
+        try {
+          const resp = await fetch('/api/commerce/snapshot/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+              session_id: currentSessionId,
+              inventory_id: parseInt(invId),
+              quantity: selectedQuantity
+            })
+          });
+
+          const snapData = await resp.json();
+          if (!snapData.success) {
+            if (container) {
+              container.innerHTML = `
+                <div class="alert alert-danger small rounded-4 p-2 mb-0 text-start w-100">
+                  ${escapeHtml(snapData.message || 'Could not verify stock.')}
+                </div>
+              `;
+            }
+            return;
+          }
+
+          // Launch Razorpay directly
+          initiateRazorpayPayment(snapData.order_reference);
+        } catch (err) {
+          console.error(err);
+          if (container) {
+            container.innerHTML = `
+              <div class="alert alert-danger small rounded-4 p-2 mb-0 text-start w-100">
+                Connection error. Please try again.
+              </div>
+            `;
+          }
+        }
+      });
+    }
+
+    // Pay on Counter Button
+    const btnCounter = document.getElementById('bmBtnPayCounter');
+    if (btnCounter) {
+      btnCounter.addEventListener('click', async function () {
+        const invId = this.getAttribute('data-inventory-id');
+        const container = document.getElementById('approvalGateContainer');
+        if (container) {
+          container.innerHTML = `
+            <div class="text-center py-2 w-100">
+              <div class="spinner-border spinner-border-sm text-dark me-2"></div>
+              <span class="small fw-semibold text-dark">Confirming reservation for pickup...</span>
+            </div>
+          `;
+        }
+
+        try {
+          const resp = await fetch(`/reserve/${invId}/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': getCsrfToken(),
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+              quantity: selectedQuantity,
+              payment_method: 'PayOnPickup'
+            })
+          });
+
+          if (resp.redirected || resp.status === 401 || resp.status === 403) {
+            window.location.href = `/login/?next=/reserve/${invId}/`;
+            return;
+          }
+
+          const resData = await resp.json();
+          if (resData.success) {
+            if (container) {
+              container.innerHTML = `
+                <div class="alert alert-success border-0 rounded-4 p-3 text-start shadow-sm mb-0 w-100">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fa-solid fa-circle-check fs-5 text-success"></i>
+                    <strong class="text-dark">Reserved for Pickup!</strong>
+                  </div>
+                  <p class="small mb-2 text-muted">
+                    Your order (${selectedQuantity} unit) is confirmed. Pay ₹${(selectedQuantity * unitPrice).toFixed(2)} at the counter.
+                  </p>
+                  <a href="/my-reservations/" class="btn btn-sm btn-success rounded-pill w-100 fw-semibold text-decoration-none">
+                    View in My Orders &rarr;
+                  </a>
+                </div>
+              `;
+            }
+          } else {
+            if (container) {
+              container.innerHTML = `
+                <div class="alert alert-warning small rounded-4 p-2 mb-2 text-start w-100">
+                  ${escapeHtml(resData.message || 'Could not place reservation.')}
+                </div>
+                <a href="/reserve/${invId}/" class="btn btn-outline-dark btn-sm rounded-pill w-100 fw-semibold">
+                  Open Full Order Page &rarr;
+                </a>
+              `;
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          window.location.href = `/reserve/${invId}/`;
+        }
+      });
+    }
+
     const reviewBtn = document.getElementById('btnReviewPurchase');
     if (reviewBtn) {
       reviewBtn.addEventListener('click', function () {
@@ -659,7 +832,6 @@
       btn.addEventListener('click', function () {
         const invId = this.getAttribute('data-inventory-id');
         reviewPurchaseSnapshot(invId);
-        // Smooth scroll up to review card
         const gate = document.getElementById('approvalGateContainer');
         if (gate) gate.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
