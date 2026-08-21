@@ -33,26 +33,64 @@
   async function runCommerceSearch(query) {
     if (!query || !query.trim()) return;
 
-    const resultsContainer = document.getElementById('agentResultsArea');
-    const staticResultsArea = document.getElementById('staticResultsArea');
-    if (!resultsContainer) return;
+    const topContainer = document.getElementById('agentTopMatchArea');
+    const otherContainer = document.getElementById('agentOtherOptionsArea');
+    const legacyContainer = document.getElementById('agentResultsArea');
 
-    if (staticResultsArea) {
-      staticResultsArea.style.display = 'none';
+    const staticTop = document.getElementById('staticTopMatchArea');
+    const staticOther = document.getElementById('staticOtherOptionsArea');
+    const staticResultsArea = document.getElementById('staticResultsArea');
+
+    if (staticTop) staticTop.classList.add('d-none');
+    if (staticOther) staticOther.classList.add('d-none');
+    if (staticResultsArea) staticResultsArea.style.display = 'none';
+
+    if (topContainer) {
+      topContainer.classList.remove('d-none');
+      topContainer.innerHTML = `
+        <div class="card border rounded-4 p-4 shadow-sm my-2 bg-white h-100 d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center mb-3">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            <span class="fw-semibold text-dark">Finding verified pharmacies, nearest store, and lowest price...</span>
+          </div>
+          <div class="skeleton-box mb-2" style="height: 24px; width: 60%;"></div>
+          <div class="skeleton-box mb-2" style="height: 16px; width: 40%;"></div>
+          <div class="skeleton-box" style="height: 80px; width: 100%;"></div>
+        </div>
+      `;
     }
 
-    resultsContainer.classList.remove('d-none');
-    resultsContainer.innerHTML = `
-      <div class="card border rounded-4 p-4 shadow-sm my-3 bg-white">
-        <div class="d-flex align-items-center mb-3">
-          <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-          <span class="fw-semibold text-dark">Finding verified pharmacies, nearest store, and lowest price...</span>
+    if (otherContainer) {
+      otherContainer.classList.remove('d-none');
+      otherContainer.innerHTML = `
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mt-2">
+          ${[1,2,3,4].map(() => `
+            <div class="col">
+              <div class="card border rounded-4 p-3.5 shadow-sm bg-white h-100">
+                <div class="skeleton-box mb-2" style="height: 20px; width: 70%;"></div>
+                <div class="skeleton-box mb-3" style="height: 28px; width: 40%;"></div>
+                <div class="skeleton-box" style="height: 40px; width: 100%;"></div>
+              </div>
+            </div>
+          `).join('')}
         </div>
-        <div class="skeleton-box mb-2" style="height: 24px; width: 60%;"></div>
-        <div class="skeleton-box mb-2" style="height: 16px; width: 40%;"></div>
-        <div class="skeleton-box" style="height: 80px; width: 100%;"></div>
-      </div>
-    `;
+      `;
+    }
+
+    if (legacyContainer && !topContainer) {
+      legacyContainer.classList.remove('d-none');
+      legacyContainer.innerHTML = `
+        <div class="card border rounded-4 p-4 shadow-sm my-3 bg-white">
+          <div class="d-flex align-items-center mb-3">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            <span class="fw-semibold text-dark">Finding verified pharmacies, nearest store, and lowest price...</span>
+          </div>
+          <div class="skeleton-box mb-2" style="height: 24px; width: 60%;"></div>
+          <div class="skeleton-box mb-2" style="height: 16px; width: 40%;"></div>
+          <div class="skeleton-box" style="height: 80px; width: 100%;"></div>
+        </div>
+      `;
+    }
 
     try {
       const response = await fetch('/api/ai/agent/search/', {
@@ -84,12 +122,14 @@
 
     } catch (err) {
       console.error('Search error:', err);
-      resultsContainer.innerHTML = `
+      const errHtml = `
         <div class="alert alert-danger rounded-4 p-3 border-0 my-3">
           <h6 class="fw-bold mb-1">Something went wrong</h6>
           <p class="mb-0 small text-muted">We couldn't load pharmacy availability. Please try again.</p>
         </div>
       `;
+      if (topContainer) topContainer.innerHTML = errHtml;
+      else if (legacyContainer) legacyContainer.innerHTML = errHtml;
     }
   }
 

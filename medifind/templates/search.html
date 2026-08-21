@@ -225,7 +225,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
         <div class="mt-4 mb-4 reveal">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
-              OTHER OPTIONS ({{ other_items|length }} stores nearby)
+              {% if query %}OTHER OPTIONS ({{ other_items|length }} stores nearby){% else %}All Available Pharmacy Stock ({{ other_items|length }} items){% endif %}
             </h5>
             <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
           </div>
