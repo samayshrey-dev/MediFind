@@ -481,6 +481,96 @@ class RazorpayAgenticCommerceTests(TestCase):
         login_success = self.client.login(username="reset_tester", password="NewSecretPass456!")
         self.assertTrue(login_success)
 
+    def test_14_recommendation_cheapest_mode_guarantees_lowest_price(self):
+        """Cheapest mode ranking strictly guarantees lowest price first."""
+        from medifind.commerce_agent import DeterministicRankingEngine, OptimizationGoal
+
+        pharmacy_expensive = Pharmacy.objects.create(
+            name="Expensive Chemist", owner_name="Chemist", phone="9111111111", email="exp@test.com",
+            address="Near Road", city="Chennai", state="TN", pincode="600001",
+            latitude=13.0800, longitude=80.2700, opening_time="08:00", closing_time="22:00",
+            is_active=True, is_open=True
+        )
+        inv_expensive = Inventory.objects.create(
+            medicine=self.medicine, pharmacy=pharmacy_expensive, quantity=30, price=Decimal("38.00"),
+            expiry_date=timezone.now().date() + timezone.timedelta(days=200)
+        )
+
+        candidates = [
+            {"inventory_id": inv_expensive.id, "medicine_name": "Dolo 650", "pharmacy_name": "Expensive Chemist", "price": 38.0, "distance_km": 0.5, "stock": 30, "is_open": True},
+            {"inventory_id": self.inventory.id, "medicine_name": "Dolo 650", "pharmacy_name": "Apollo Pharmacy", "price": 22.0, "distance_km": 3.2, "stock": 50, "is_open": True}
+        ]
+
+        ranked = DeterministicRankingEngine.rank_candidates(candidates, OptimizationGoal.LOWEST_PRICE)
+        self.assertEqual(ranked[0]["inventory_id"], self.inventory.id)
+        self.assertEqual(ranked[0]["price"], 22.0)
+        self.assertEqual(ranked[0]["rank"], 1)
+
+    def test_15_recommendation_nearest_mode_guarantees_shortest_distance(self):
+        """Nearest mode ranking strictly guarantees shortest distance first."""
+        from medifind.commerce_agent import DeterministicRankingEngine, OptimizationGoal
+
+        candidates = [
+            {"inventory_id": 101, "medicine_name": "Dolo 650", "pharmacy_name": "Far Pharmacy", "price": 18.0, "distance_km": 8.5, "stock": 100, "is_open": True},
+            {"inventory_id": 102, "medicine_name": "Dolo 650", "pharmacy_name": "Nearby Pharmacy", "price": 26.0, "distance_km": 0.8, "stock": 25, "is_open": True}
+        ]
+
+        ranked = DeterministicRankingEngine.rank_candidates(candidates, OptimizationGoal.CLOSEST)
+        self.assertEqual(ranked[0]["inventory_id"], 102)
+        self.assertEqual(ranked[0]["distance_km"], 0.8)
+        self.assertEqual(ranked[0]["rank"], 1)
+
+    def test_16_recommendation_best_value_mode_deterministic_composite(self):
+        """Best value ranking combines normalized price, distance, stock, and open status deterministically."""
+        from medifind.commerce_agent import DeterministicRankingEngine, OptimizationGoal
+
+        candidates = [
+            {"inventory_id": 201, "medicine_name": "Dolo 650", "pharmacy_name": "Far But Cheap", "price": 20.0, "distance_km": 15.0, "stock": 5, "is_open": False},
+            {"inventory_id": 202, "medicine_name": "Dolo 650", "pharmacy_name": "Balanced Value Option", "price": 22.0, "distance_km": 1.2, "stock": 40, "is_open": True},
+            {"inventory_id": 203, "medicine_name": "Dolo 650", "pharmacy_name": "Super Close But Overpriced", "price": 50.0, "distance_km": 0.2, "stock": 10, "is_open": True}
+        ]
+
+        ranked = DeterministicRankingEngine.rank_candidates(candidates, OptimizationGoal.BEST_VALUE, target_medicine_name="Dolo 650")
+        # Balanced option wins best value
+        self.assertEqual(ranked[0]["inventory_id"], 202)
+        self.assertEqual(ranked[0]["rank"], 1)
+        self.assertIn("composite_score", ranked[0])
+
+    def test_17_recommendation_urgent_mode_guarantees_open_stock_proximity(self):
+        """Urgent mode strictly requires reasonable stock (>=5) at currently open pharmacy closest to user."""
+        from medifind.commerce_agent import DeterministicRankingEngine, OptimizationGoal
+
+        candidates = [
+            {"inventory_id": 301, "medicine_name": "Dolo 650", "pharmacy_name": "Closed Pharmacy", "price": 15.0, "distance_km": 0.3, "stock": 50, "is_open": False},
+            {"inventory_id": 302, "medicine_name": "Dolo 650", "pharmacy_name": "Open Far Away", "price": 22.0, "distance_km": 7.0, "stock": 30, "is_open": True},
+            {"inventory_id": 303, "medicine_name": "Dolo 650", "pharmacy_name": "Open Near With Stock", "price": 25.0, "distance_km": 1.1, "stock": 15, "is_open": True}
+        ]
+
+        ranked = DeterministicRankingEngine.rank_candidates(candidates, OptimizationGoal.FASTEST)
+        # Open Near with stock wins urgent search
+        self.assertEqual(ranked[0]["inventory_id"], 303)
+        self.assertTrue(ranked[0]["is_open"])
+        self.assertGreaterEqual(ranked[0]["stock"], 5)
+        self.assertEqual(ranked[0]["rank"], 1)
+
+    def test_18_no_ai_hallucination_facts_provenance_guard(self):
+        """Zero AI hallucination: All returned medicines and pharmacies originate strictly from verified Django DB rows."""
+        from medifind.commerce_agent import CommerceSearchService, IntentParser
+
+        # Execute intent parser on natural language
+        intent = IntentParser.local_fallback_parser("Find the cheapest Dolo 650 within 10 km")
+        candidates = CommerceSearchService.search_candidates(intent, user_lat=13.0827, user_lng=80.2707)
+
+        self.assertTrue(len(candidates) >= 1)
+        for cand in candidates:
+            # Verify DB fact provenance
+            db_item = Inventory.objects.get(id=cand["inventory_id"])
+            self.assertEqual(float(db_item.price), cand["price"])
+            self.assertEqual(db_item.quantity, cand["stock"])
+            self.assertEqual(db_item.pharmacy.name, cand["pharmacy_name"])
+            self.assertEqual(db_item.medicine.name, cand["medicine_name"])
+
+
 
 
 

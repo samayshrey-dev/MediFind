@@ -784,39 +784,45 @@ class DeterministicRankingEngine:
         ranked = list(candidates)
 
         if optimization_goal == OptimizationGoal.LOWEST_PRICE:
-            # 1. Price ascending
+            # 1. Price ascending (strictly lowest price first)
             # 2. Distance ascending as secondary factor
+            # 3. Open status
             ranked.sort(
                 key=lambda x: (
                     x["price"],
-                    x["distance_km"] if x["distance_km"] is not None else 9999.0
+                    x["distance_km"] if x["distance_km"] is not None else 9999.0,
+                    0 if x["is_open"] else 1
                 )
             )
 
         elif optimization_goal == OptimizationGoal.CLOSEST:
-            # 1. Distance ascending
+            # 1. Distance ascending (strictly shortest distance first)
             # 2. Price ascending as secondary factor
+            # 3. Open status
             ranked.sort(
                 key=lambda x: (
                     x["distance_km"] if x["distance_km"] is not None else 9999.0,
-                    x["price"]
+                    x["price"],
+                    0 if x["is_open"] else 1
                 )
             )
 
         elif optimization_goal == OptimizationGoal.FASTEST:
-            # 1. Open pharmacies first (is_open == True)
-            # 2. Distance ascending
-            # 3. Price ascending
+            # Urgent Mode:
+            # 1. Open pharmacies with reasonable availability first (is_open == True and stock >= 5)
+            # 2. Open pharmacies with any stock (stock > 0)
+            # 3. Distance ascending (shortest distance / proximity)
+            # 4. Price ascending
             ranked.sort(
                 key=lambda x: (
-                    0 if x["is_open"] else 1,
+                    0 if (x["is_open"] and x["stock"] >= 5) else (1 if (x["is_open"] and x["stock"] > 0) else 2),
                     x["distance_km"] if x["distance_km"] is not None else 9999.0,
                     x["price"]
                 )
             )
 
         else:
-            # BEST_VALUE: Transparent composite multi-factor scoring
+            # BEST_VALUE: Transparent composite multi-factor scoring (deterministic combination)
             prices = [c["price"] for c in ranked]
             min_price, max_price = min(prices), max(prices)
             price_spread = (max_price - min_price) if max_price > min_price else 1.0
@@ -838,7 +844,7 @@ class DeterministicRankingEngine:
                 else:
                     dist_score = 50.0
 
-                # Stock confidence bonus
+                # Stock confidence bonus (reasonable availability)
                 stock_bonus = 15.0 if item["stock"] >= 15 else (8.0 if item["stock"] >= 5 else 3.0)
 
                 # Open status bonus
