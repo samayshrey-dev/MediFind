@@ -6,144 +6,268 @@ Sign Up | MediAI
 {% endblock %}
 
 {% block content %}
-
-<section class="py-5" style="background: var(--surface-secondary); min-height: 85vh;">
-  <div class="container py-4">
+<section class="py-4 py-md-5 d-flex align-items-center" style="background: var(--surface-secondary); min-height: calc(100vh - 80px);">
+  <div class="container py-2 py-md-4">
     <div class="row justify-content-center">
-      <div class="col-lg-7 col-md-9">
+      <div class="col-xl-11 col-lg-12">
+        
+        <div class="auth-split-card row g-0">
+          
+          <!-- LEFT SIDE: Modern Registration Form Canvas -->
+          <div class="col-lg-7 p-4 p-md-5 d-flex flex-column justify-content-between bg-white">
+            <div>
+              <!-- Logo Header -->
+              <div class="mb-4 d-flex align-items-center justify-content-between">
+                <a class="navbar-brand d-inline-flex align-items-center brand-logo-link gap-2" href="{% url 'home' %}" aria-label="MediAI Home">
+                  <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #10b981; border-radius: 10px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5 19V8C5 6.89543 5.89543 6 7 6C7.82843 6 8.5657 6.50444 8.86443 7.27364L12 15.28L15.1356 7.27364C15.4343 6.50444 16.1716 6 17 6C18.1046 6 19 6.89543 19 8V19" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="12" cy="5" r="1.8" fill="#ffffff"/>
+                    </svg>
+                  </div>
+                  <span class="brand-wordmark fw-extrabold" style="font-size: 1.4rem; letter-spacing: -0.4px; font-family: var(--font-sans); line-height: 1; user-select: none;">
+                    <span class="brand-logo-medi">Medi</span><span class="brand-logo-find">AI</span>
+                  </span>
+                </a>
 
-        <div class="card border rounded-4 p-4 p-md-5 shadow-sm bg-white">
-          <div class="text-center mb-4">
-            <div class="mb-3 d-inline-flex justify-content-center">
-              <a class="navbar-brand d-inline-flex align-items-center brand-logo-link gap-2 text-decoration-none" href="{% url 'home' %}" aria-label="MediAI Home">
-                <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: #10b981; border-radius: 10px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 19V8C5 6.89543 5.89543 6 7 6C7.82843 6 8.5657 6.50444 8.86443 7.27364L12 15.28L15.1356 7.27364C15.4343 6.50444 16.1716 6 17 6C18.1046 6 19 6.89543 19 8V19" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="12" cy="5" r="1.8" fill="#ffffff"/>
-                  </svg>
-                </div>
-                <span class="brand-wordmark fw-extrabold" style="font-size: 1.5rem; letter-spacing: -0.4px; font-family: var(--font-sans); line-height: 1; user-select: none;">
-                  <span class="brand-logo-medi">Medi</span><span class="brand-logo-find">AI</span>
+                <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">
+                  <i class="fa-solid fa-user-shield text-success me-1"></i> Quick Registration
                 </span>
-              </a>
+              </div>
+
+              <div class="mb-4">
+                <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">Create your account</h3>
+                <p class="text-muted small mb-0">Join MediAI to search real-time medicine stock or list your pharmacy store.</p>
+              </div>
+
+              {% if form.errors %}
+                <div class="alert alert-danger rounded-3 p-3 mb-4 small border-0 shadow-sm" role="alert">
+                  <strong class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fa-solid fa-circle-exclamation text-danger"></i> Please correct the errors below:
+                  </strong>
+                  <ul class="mb-0 ps-3 mt-1">
+                    {% for field in form %}
+                      {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                      {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+
+              <form method="POST" id="signupForm" novalidate>
+                {% csrf_token %}
+
+                <!-- Account Type Selector Cards -->
+                <div class="mb-4">
+                  <label class="form-label small fw-semibold text-dark d-block mb-2">I want to use MediAI as:</label>
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <input type="radio" class="btn-check" name="role" id="roleCustomer" value="Customer" {% if form.role.value == 'Customer' or not form.role.value %}checked{% endif %}>
+                      <label class="auth-role-card d-flex align-items-center gap-3 w-100 h-100" for="roleCustomer">
+                        <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; flex-shrink: 0;">
+                          <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                          <strong class="d-block text-dark small">Customer / Patient</strong>
+                          <span class="text-muted" style="font-size: 0.75rem;">Find &amp; reserve medicines</span>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div class="col-6">
+                      <input type="radio" class="btn-check" name="role" id="rolePharmacy" value="Pharmacy" {% if form.role.value == 'Pharmacy' %}checked{% endif %}>
+                      <label class="auth-role-card d-flex align-items-center gap-3 w-100 h-100" for="rolePharmacy">
+                        <div class="rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; flex-shrink: 0;">
+                          <i class="fa-solid fa-store"></i>
+                        </div>
+                        <div>
+                          <strong class="d-block text-dark small">Pharmacy Store</strong>
+                          <span class="text-muted" style="font-size: 0.75rem;">Manage store inventory</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Name and Username Row -->
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">Full Name</label>
+                    <div class="input-group auth-input-group">
+                      <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                        <i class="fa-solid fa-signature"></i>
+                      </span>
+                      {{ form.first_name }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">Username</label>
+                    <div class="input-group auth-input-group">
+                      <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                        <i class="fa-solid fa-at"></i>
+                      </span>
+                      {{ form.username }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Email Field -->
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold text-dark mb-1">Email Address</label>
+                  <div class="input-group auth-input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                      <i class="fa-solid fa-envelope"></i>
+                    </span>
+                    {{ form.email }}
+                  </div>
+                  <div class="form-text text-muted" style="font-size: 0.76rem;">
+                    Used for order receipts and OTP password recovery.
+                  </div>
+                </div>
+
+                <!-- Password and Confirm Password Row with Eye Toggles -->
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">Password</label>
+                    <div class="input-group auth-input-group">
+                      <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                        <i class="fa-solid fa-lock"></i>
+                      </span>
+                      {{ form.password }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold text-dark mb-1">Confirm Password</label>
+                    <div class="input-group auth-input-group">
+                      <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                        <i class="fa-solid fa-lock-open"></i>
+                      </span>
+                      {{ form.confirm_password }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pharmacy Specific Fields (Collapsible) -->
+                <div id="pharmacyDetailsSection" class="p-3 bg-light rounded-4 border mb-4 d-none">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="fa-solid fa-hospital text-success fs-5"></i>
+                    <h6 class="fw-bold text-dark mb-0">Pharmacy Store Details</h6>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="pharmacy_option" id="optExisting" value="existing" {% if form.pharmacy_option.value == 'existing' or not form.pharmacy_option.value %}checked{% endif %}>
+                      <label class="form-check-label small fw-medium" for="optExisting">Link to existing listed store</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="pharmacy_option" id="optNew" value="new" {% if form.pharmacy_option.value == 'new' %}checked{% endif %}>
+                      <label class="form-check-label small fw-medium" for="optNew">Register brand new store</label>
+                    </div>
+                  </div>
+
+                  <div id="existingPharmacyBox" class="mb-3">
+                    <label class="form-label small fw-semibold text-dark mb-1">Select Your Store</label>
+                    {{ form.existing_pharmacy }}
+                  </div>
+
+                  <div id="newPharmacyBox" class="d-none">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1">Pharmacy Name</label>
+                        {{ form.new_pharmacy_name }}
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1">Phone Number</label>
+                        {{ form.new_pharmacy_phone }}
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1">City</label>
+                        {{ form.new_pharmacy_city }}
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1">Full Address</label>
+                        {{ form.new_pharmacy_address }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Terms and Submit -->
+                <div class="mb-3 form-check">
+                  <input type="checkbox" class="form-check-input" id="termsCheck" required checked>
+                  <label class="form-check-label small text-muted" for="termsCheck">
+                    I agree to the <a href="{% url 'home' %}" class="text-primary text-decoration-none">Terms of Service</a> and <a href="{% url 'home' %}" class="text-primary text-decoration-none">Privacy Policy</a>.
+                  </label>
+                </div>
+
+                <button type="submit" id="btnSubmitSignup" class="btn btn-primary w-100 rounded-pill py-2.5 fw-semibold mb-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                  <span>Create Account</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </form>
             </div>
 
-            <h4 class="fw-bold text-dark mb-1">Create an account</h4>
-            <p class="text-muted small mb-0">Join MediAI to search local medicine inventory or manage your pharmacy store.</p>
+            <!-- Footer switch -->
+            <div class="pt-3 border-top text-center text-muted small">
+              Already have an account? <a href="{% url 'login' %}" class="fw-bold text-primary text-decoration-none">Log in</a>
+            </div>
           </div>
 
-          {% if form.errors %}
-            <div class="alert alert-danger rounded-3 p-3 mb-4 small" role="alert">
-              <strong>Please check the form:</strong>
-              <ul class="mb-0 mt-1 ps-3">
-                {% for field in form %}
-                  {% for error in field.errors %}
-                    <li>{{ field.label }}: {{ error }}</li>
-                  {% endfor %}
-                {% endfor %}
-                {% for error in form.non_field_errors %}
-                  <li>{{ error }}</li>
-                {% endfor %}
-              </ul>
-            </div>
-          {% endif %}
-
-          <form method="POST" id="signupForm" novalidate>
-            {% csrf_token %}
-
-            <!-- Account Type Selection -->
-            <div class="mb-4">
-              <label class="form-label small fw-semibold text-muted d-block mb-2">Account Type</label>
-              <div class="btn-group w-100" role="group">
-                <input type="radio" class="btn-check" name="role" id="roleCustomer" value="Customer" {% if form.role.value == 'Customer' or not form.role.value %}checked{% endif %}>
-                <label class="btn btn-outline-secondary py-2 fw-semibold" for="roleCustomer">
-                  <i class="fa-solid fa-user me-1"></i> Customer
-                </label>
-
-                <input type="radio" class="btn-check" name="role" id="rolePharmacy" value="Pharmacy" {% if form.role.value == 'Pharmacy' %}checked{% endif %}>
-                <label class="btn btn-outline-secondary py-2 fw-semibold" for="rolePharmacy">
-                  <i class="fa-solid fa-hospital me-1"></i> Pharmacy Owner
-                </label>
+          <!-- RIGHT SIDE: Brand Showcase & Features Canvas -->
+          <div class="col-lg-5 p-4 p-md-5 auth-hero-panel d-none d-lg-flex">
+            <div>
+              <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill mb-4" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);">
+                <span class="auth-pulse-dot"></span>
+                <span class="small fw-semibold text-white">Join the Healthcare Ecosystem</span>
               </div>
-            </div>
 
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-dark mb-1">Username</label>
-                {{ form.username }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-dark mb-1">Full Name</label>
-                {{ form.first_name }}
-              </div>
-            </div>
+              <h2 class="fw-bold text-white mb-3" style="font-size: 1.85rem; line-height: 1.3;">
+                A seamless pharmacy &amp; medicine network.
+              </h2>
+              <p class="text-white-50 small mb-4" style="line-height: 1.6;">
+                Whether you're looking for urgent prescriptions or managing a local pharmacy chain, MediAI gives you real-time visibility and instant fulfillment.
+              </p>
 
-            <div class="mb-3">
-              <label class="form-label small fw-semibold text-dark mb-1">Email Address</label>
-              {{ form.email }}
-            </div>
-
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-dark mb-1">Password</label>
-                {{ form.password }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold text-dark mb-1">Confirm Password</label>
-                {{ form.confirm_password }}
-              </div>
-            </div>
-
-            <!-- Pharmacy Specific Fields -->
-            <div id="pharmacyDetailsSection" class="p-3 bg-light rounded-3 border mb-3 d-none">
-              <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hospital text-primary me-1"></i> Pharmacy Information</h6>
-              
-              <div class="mb-3">
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="pharmacy_option" id="optExisting" value="existing" {% if form.pharmacy_option.value == 'existing' or not form.pharmacy_option.value %}checked{% endif %}>
-                  <label class="form-check-label small" for="optExisting">Claim existing store</label>
+              <!-- Benefits List -->
+              <div class="d-flex flex-column gap-3 mb-4">
+                <div class="d-flex align-items-start gap-3">
+                  <div class="d-flex align-items-center justify-content-center rounded-circle mt-1" style="width: 28px; height: 28px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; flex-shrink: 0;">
+                    <i class="fa-solid fa-check small"></i>
+                  </div>
+                  <div>
+                    <strong class="text-white small d-block">For Customers</strong>
+                    <span class="text-white-50" style="font-size: 0.8rem;">Never visit out-of-stock stores again. Reserve medicines in 1 click.</span>
+                  </div>
                 </div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="pharmacy_option" id="optNew" value="new" {% if form.pharmacy_option.value == 'new' %}checked{% endif %}>
-                  <label class="form-check-label small" for="optNew">Register new store</label>
-                </div>
-              </div>
-
-              <div id="existingPharmacyBox" class="mb-3">
-                <label class="form-label small fw-semibold text-dark mb-1">Select Pharmacy</label>
-                {{ form.existing_pharmacy }}
-              </div>
-
-              <div id="newPharmacyBox" class="d-none">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label small fw-semibold text-dark mb-1">Pharmacy Name</label>
-                    {{ form.new_pharmacy_name }}
+                <div class="d-flex align-items-start gap-3">
+                  <div class="d-flex align-items-center justify-content-center rounded-circle mt-1" style="width: 28px; height: 28px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; flex-shrink: 0;">
+                    <i class="fa-solid fa-check small"></i>
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label small fw-semibold text-dark mb-1">Phone</label>
-                    {{ form.new_pharmacy_phone }}
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label small fw-semibold text-dark mb-1">City</label>
-                    {{ form.new_pharmacy_city }}
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label small fw-semibold text-dark mb-1">Address</label>
-                    {{ form.new_pharmacy_address }}
+                  <div>
+                    <strong class="text-white small d-block">For Pharmacy Owners</strong>
+                    <span class="text-white-50" style="font-size: 0.8rem;">Digitalize inventory, receive prepaid pickup orders, and increase foot traffic.</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold mb-3">
-              Create Account
-            </button>
-          </form>
+            <!-- Security Assurance Footer Card -->
+            <div class="auth-trust-card">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="fa-solid fa-shield-check text-success fs-5"></i>
+                <span class="text-white small fw-bold">Enterprise-Grade Security</span>
+              </div>
+              <p class="text-white-50 small mb-0" style="font-size: 0.78rem;">
+                End-to-end encrypted passwords, HMAC signature verified transactions, and secure OTP verification.
+              </p>
+            </div>
 
-          <div class="text-center pt-3 border-top text-muted small">
-            Already have an account? <a href="{% url 'login' %}" class="fw-semibold text-primary text-decoration-none">Log in</a>
           </div>
+
         </div>
 
       </div>
@@ -151,6 +275,7 @@ Sign Up | MediAI
   </div>
 </section>
 
+<!-- Interactive Script for Dynamic Role & Pharmacy Toggle -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const roleInputs = document.querySelectorAll('input[name="role"]');
@@ -163,9 +288,9 @@ document.addEventListener("DOMContentLoaded", function() {
   function toggleRole() {
     const selectedRole = document.querySelector('input[name="role"]:checked')?.value;
     if (selectedRole === "Pharmacy") {
-      pharmacySection.classList.remove("d-none");
+      if (pharmacySection) pharmacySection.classList.remove("d-none");
     } else {
-      pharmacySection.classList.add("d-none");
+      if (pharmacySection) pharmacySection.classList.add("d-none");
     }
   }
 
@@ -187,5 +312,4 @@ document.addEventListener("DOMContentLoaded", function() {
   togglePharmacyOption();
 });
 </script>
-
 {% endblock %}

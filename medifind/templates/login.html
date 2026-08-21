@@ -6,75 +6,193 @@ Log In | MediAI
 {% endblock %}
 
 {% block content %}
-
-<section class="py-5 d-flex align-items-center" style="background: var(--surface-secondary); min-height: 85vh;">
-  <div class="container py-4">
+<section class="py-4 py-md-5 d-flex align-items-center" style="background: var(--surface-secondary); min-height: calc(100vh - 80px);">
+  <div class="container py-2 py-md-4">
     <div class="row justify-content-center">
-      <div class="col-lg-5 col-md-7">
+      <div class="col-xl-10 col-lg-11">
         
-        <div class="card border rounded-4 p-4 p-md-5 shadow-sm bg-white">
-          <div class="text-center mb-4">
-            <div class="mb-3 d-inline-flex justify-content-center">
-              <a class="navbar-brand d-inline-flex align-items-center brand-logo-link gap-2 text-decoration-none" href="{% url 'home' %}" aria-label="MediAI Home">
-                <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: #10b981; border-radius: 10px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 19V8C5 6.89543 5.89543 6 7 6C7.82843 6 8.5657 6.50444 8.86443 7.27364L12 15.28L15.1356 7.27364C15.4343 6.50444 16.1716 6 17 6C18.1046 6 19 6.89543 19 8V19" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="12" cy="5" r="1.8" fill="#ffffff"/>
-                  </svg>
-                </div>
-                <span class="brand-wordmark fw-extrabold" style="font-size: 1.5rem; letter-spacing: -0.4px; font-family: var(--font-sans); line-height: 1; user-select: none;">
-                  <span class="brand-logo-medi">Medi</span><span class="brand-logo-find">AI</span>
+        <div class="auth-split-card row g-0">
+          
+          <!-- LEFT SIDE: Modern Form Canvas -->
+          <div class="col-lg-6 p-4 p-md-5 d-flex flex-column justify-content-between bg-white">
+            <div>
+              <!-- Logo Header -->
+              <div class="mb-4 d-flex align-items-center justify-content-between">
+                <a class="navbar-brand d-inline-flex align-items-center brand-logo-link gap-2" href="{% url 'home' %}" aria-label="MediAI Home">
+                  <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #10b981; border-radius: 10px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5 19V8C5 6.89543 5.89543 6 7 6C7.82843 6 8.5657 6.50444 8.86443 7.27364L12 15.28L15.1356 7.27364C15.4343 6.50444 16.1716 6 17 6C18.1046 6 19 6.89543 19 8V19" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="12" cy="5" r="1.8" fill="#ffffff"/>
+                    </svg>
+                  </div>
+                  <span class="brand-wordmark fw-extrabold" style="font-size: 1.4rem; letter-spacing: -0.4px; font-family: var(--font-sans); line-height: 1; user-select: none;">
+                    <span class="brand-logo-medi">Medi</span><span class="brand-logo-find">AI</span>
+                  </span>
+                </a>
+
+                <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">
+                  <i class="fa-solid fa-lock text-success me-1"></i> Secure Login
                 </span>
-              </a>
-            </div>
-
-            <h4 class="fw-bold text-dark mb-1">Welcome back</h4>
-            <p class="text-muted small mb-0">Log in to manage reservations, check inventory, and view orders.</p>
-          </div>
-
-          {% if form.errors %}
-            <div class="alert alert-danger rounded-3 p-3 mb-4 small" role="alert">
-              <i class="fa-solid fa-circle-exclamation me-1"></i> Invalid username or password. Please check your credentials.
-            </div>
-          {% endif %}
-
-          <form method="POST" id="loginForm">
-            {% csrf_token %}
-
-            <div class="mb-3">
-              <label class="form-label small fw-semibold text-dark mb-1">Username</label>
-              <input
-                type="text"
-                id="id_username"
-                name="username"
-                class="form-control rounded-3 py-2 px-3 shadow-none border"
-                placeholder="Enter username"
-                required
-                value="{{ request.POST.username|default:'' }}">
-            </div>
-
-            <div class="mb-4">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label small fw-semibold text-dark mb-0">Password</label>
-                <a href="{% url 'password_reset' %}" class="small text-decoration-none text-primary fw-medium">Forgot password?</a>
               </div>
-              <input
-                type="password"
-                id="id_password"
-                name="password"
-                class="form-control rounded-3 py-2 px-3 shadow-none border"
-                placeholder="Enter password"
-                required>
+
+              <div class="mb-4">
+                <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">Welcome back</h3>
+                <p class="text-muted small mb-0">Log in to search medicine stock, reserve local pickup, or manage your store.</p>
+              </div>
+
+              {% if form.errors %}
+                <div class="alert alert-danger rounded-3 p-3 mb-4 small d-flex align-items-center gap-2 border-0 shadow-sm" role="alert">
+                  <i class="fa-solid fa-circle-exclamation fs-5 text-danger"></i>
+                  <div>Invalid username or password. Please verify your credentials or reset your password.</div>
+                </div>
+              {% endif %}
+
+              <!-- Login Form -->
+              <form method="POST" id="loginForm" novalidate>
+                {% csrf_token %}
+
+                <!-- Username/Email Field -->
+                <div class="mb-3">
+                  <label for="id_username" class="form-label small fw-semibold text-dark mb-1">Username or Email</label>
+                  <div class="input-group auth-input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                      <i class="fa-solid fa-user"></i>
+                    </span>
+                    <input
+                      type="text"
+                      id="id_username"
+                      name="username"
+                      class="form-control border-start-0 rounded-end-3 py-2 px-3 shadow-none border"
+                      placeholder="e.g. customer1 or name@gmail.com"
+                      required
+                      autofocus
+                      autocomplete="username"
+                      value="{{ request.POST.username|default:'' }}">
+                  </div>
+                </div>
+
+                <!-- Password Field with Show/Hide Eye Toggle -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="id_password" class="form-label small fw-semibold text-dark mb-0">Password</label>
+                    <a href="{% url 'password_reset' %}" class="small text-decoration-none text-primary fw-semibold" style="font-size: 0.82rem;">
+                      Forgot password?
+                    </a>
+                  </div>
+                  <div class="input-group auth-input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                      <i class="fa-solid fa-key"></i>
+                    </span>
+                    <input
+                      type="password"
+                      id="id_password"
+                      name="password"
+                      class="form-control border-start-0 border-end-0 py-2 px-3 shadow-none border"
+                      placeholder="Enter your password"
+                      required
+                      autocomplete="current-password">
+                    <button
+                      type="button"
+                      class="input-group-text bg-light border-start-0 text-muted rounded-end-3"
+                      id="btnTogglePassword"
+                      style="cursor: pointer;"
+                      title="Toggle password visibility"
+                      aria-label="Toggle password visibility">
+                      <i class="fa-solid fa-eye" id="togglePasswordIcon"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btnSubmitLogin" class="btn btn-primary w-100 rounded-pill py-2.5 fw-semibold mb-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                  <span>Log In to MediAI</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+                <!-- Quick Demo Fill Pills for Testing -->
+                <div class="p-3 bg-light rounded-3 border mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted fw-semibold" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Quick Demo Accounts</span>
+                    <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.7rem;">1-Click Fill</span>
+                  </div>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-white border rounded-pill px-3 py-1 text-dark small demo-fill-btn shadow-xs" data-user="customer" data-pass="customer123">
+                      <i class="fa-solid fa-user me-1 text-primary"></i> Customer Demo
+                    </button>
+                    <button type="button" class="btn btn-sm btn-white border rounded-pill px-3 py-1 text-dark small demo-fill-btn shadow-xs" data-user="apollo_owner" data-pass="pharmacy123">
+                      <i class="fa-solid fa-store me-1 text-success"></i> Pharmacy Demo
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold mb-3">
-              Log In
-            </button>
-          </form>
-
-          <div class="text-center pt-3 border-top text-muted small">
-            Don't have an account? <a href="{% url 'register' %}" class="fw-semibold text-primary text-decoration-none">Sign up</a>
+            <!-- Footer switch -->
+            <div class="pt-3 border-top text-center text-muted small">
+              Don't have an account? <a href="{% url 'register' %}" class="fw-bold text-primary text-decoration-none">Create an account</a>
+            </div>
           </div>
+
+          <!-- RIGHT SIDE: Brand Showcase & Trust Canvas -->
+          <div class="col-lg-6 p-4 p-md-5 auth-hero-panel d-none d-lg-flex">
+            <div>
+              <!-- Live Indicator Pill -->
+              <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill mb-4" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);">
+                <span class="auth-pulse-dot"></span>
+                <span class="small fw-semibold text-white">Live Medicine Locator Network</span>
+              </div>
+
+              <h2 class="fw-bold text-white mb-3" style="font-size: 1.85rem; line-height: 1.3;">
+                Find verified local medicine inventory in seconds.
+              </h2>
+              <p class="text-white-50 small mb-4" style="line-height: 1.6;">
+                Check real-time stock levels, compare nearby prices, and hold medicines at verified community pharmacies with zero hassle.
+              </p>
+
+              <!-- Feature Highlights -->
+              <div class="d-flex flex-column gap-3 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; flex-shrink: 0;">
+                    <i class="fa-solid fa-bolt-lightning small"></i>
+                  </div>
+                  <div class="small text-white">Sub-second inventory matching across 10km GPS radius</div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; flex-shrink: 0;">
+                    <i class="fa-solid fa-shield-halved small"></i>
+                  </div>
+                  <div class="small text-white">Guaranteed 24-hour stock hold with Instant digital receipts</div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; flex-shrink: 0;">
+                    <i class="fa-solid fa-credit-card small"></i>
+                  </div>
+                  <div class="small text-white">Choice of Razorpay online checkout or Pay on Counter</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Authentic Trust Card -->
+            <div class="auth-trust-card">
+              <div class="d-flex align-items-center gap-1 text-warning mb-2 small">
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <span class="text-white ms-2 small fw-semibold">4.9 / 5.0</span>
+              </div>
+              <p class="text-white small mb-2 fst-italic" style="font-size: 0.85rem;">
+                "Found emergency inhalers and cardiac medication in 3 minutes when three other local stores had run out."
+              </p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-white-50" style="font-size: 0.78rem;">Dr. Karthik R. &bull; Verified User</span>
+                <span class="badge bg-success text-white" style="font-size: 0.7rem;">Verified Review</span>
+              </div>
+            </div>
+
+          </div>
+
         </div>
 
       </div>
@@ -82,4 +200,48 @@ Log In | MediAI
   </div>
 </section>
 
+<!-- Interactive Script for Password Toggle & Demo Auto-Fill -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Password Toggle Eye
+  const btnToggle = document.getElementById("btnTogglePassword");
+  const passwordInput = document.getElementById("id_password");
+  const toggleIcon = document.getElementById("togglePasswordIcon");
+
+  if (btnToggle && passwordInput && toggleIcon) {
+    btnToggle.addEventListener("click", function() {
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.classList.remove("fa-eye");
+        toggleIcon.classList.add("fa-eye-slash");
+      } else {
+        passwordInput.type = "password";
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+      }
+    });
+  }
+
+  // Demo Account Quick Auto-Fill
+  const demoButtons = document.querySelectorAll(".demo-fill-btn");
+  const usernameInput = document.getElementById("id_username");
+
+  demoButtons.forEach(btn => {
+    btn.addEventListener("click", function() {
+      const u = this.getAttribute("data-user");
+      const p = this.getAttribute("data-pass");
+      if (usernameInput) usernameInput.value = u;
+      if (passwordInput) passwordInput.value = p;
+      
+      // Visual feedback
+      this.classList.add("btn-primary", "text-white");
+      this.classList.remove("btn-white", "text-dark");
+      setTimeout(() => {
+        this.classList.remove("btn-primary", "text-white");
+        this.classList.add("btn-white", "text-dark");
+      }, 400);
+    });
+  });
+});
+</script>
 {% endblock %}
