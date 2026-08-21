@@ -3,9 +3,9 @@
 
 {% block title %}
 {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
-{{ user_pharmacy.name|default:"Pharmacy Portal" }} | MedFinder Pharmacy
+{{ user_pharmacy.name|default:"Pharmacy Portal" }} | MediAI Pharmacy
 {% else %}
-MedFinder | Real-time Medicine Availability &amp; Pharmacy Locator
+MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
 {% endif %}
 {% endblock %}
 
@@ -375,7 +375,7 @@ MedFinder | Real-time Medicine Availability &amp; Pharmacy Locator
   <div class="container py-lg-4">
     <div class="text-center mb-5 reveal" style="max-width: 620px; margin: 0 auto;">
       <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-2 fw-semibold">Simple 3-Step Journey</span>
-      <h2 class="fw-bold text-dark mb-2">How MedFinder works</h2>
+      <h2 class="fw-bold text-dark mb-2">How MediAI works</h2>
       <p class="text-muted">A fast, reliable way to check pharmacy inventory and prices before visiting or ordering.</p>
     </div>
 
@@ -392,7 +392,7 @@ MedFinder | Real-time Medicine Availability &amp; Pharmacy Locator
           </div>
           <div>
             <h4 class="fw-bold text-dark mb-2">Search your medicine</h4>
-            <p class="text-muted mb-0">Type any brand name, active salt, or therapeutic symptom. MedFinder scans verified local pharmacy inventories within your chosen radius in under a second.</p>
+            <p class="text-muted mb-0">Type any brand name, active salt, or therapeutic symptom. MediAI scans verified local pharmacy inventories within your chosen radius in under a second.</p>
           </div>
         </div>
       </div>
@@ -478,7 +478,7 @@ MedFinder | Real-time Medicine Availability &amp; Pharmacy Locator
     <div class="d-flex justify-content-between align-items-center mb-4 reveal">
       <div>
         <h3 class="fw-bold text-dark mb-1">Partner Pharmacies</h3>
-        <p class="text-muted small mb-0">Verified local stores connected to MedFinder.</p>
+        <p class="text-muted small mb-0">Verified local stores connected to MediAI.</p>
       </div>
       <a href="{% url 'pharmacies' %}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
         All pharmacies &rarr;

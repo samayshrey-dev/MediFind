@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-Reserve {{ medicine.name }} | MedFinder
+Reserve {{ medicine.name }} | MediAI
 {% endblock %}
 
 {% block content %}
@@ -97,7 +97,7 @@ Reserve {{ medicine.name }} | MedFinder
         <div class="alert alert-info border-0 rounded-4 p-3 d-flex align-items-center gap-3 shadow-sm">
           <i class="fa-solid fa-shield-halved text-primary fs-3"></i>
           <div class="small">
-            <strong class="text-dark d-block">MedFinder Safe Pickup Guarantee</strong>
+            <strong class="text-dark d-block">MediAI Safe Pickup Guarantee</strong>
             <span class="text-muted">Your reserved medicine will be held securely for 24 hours. No hidden charges.</span>
           </div>
         </div>
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         key: data.key_id || razorpayKey,
         amount: data.amount,
         currency: data.currency || 'INR',
-        name: 'MedFinder Healthcare',
+        name: 'MediAI Healthcare',
         description: `Reservation: ${data.medicine_name} (${data.quantity} units)`,
         image: '{% static "images/logo.svg" %}',
         order_id: data.razorpay_order_id,

@@ -62,8 +62,8 @@ def send_password_reset_otp(user, target_input=None) -> tuple[bool, str, Passwor
     email_sent = False
     if user.email or "@" in target:
         dest_email = user.email or target
-        subject = f"Your MedFinder Password Reset OTP: {otp_code}"
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "MediFind Security <security@medifind.com>")
+        subject = f"Your MediAI Password Reset OTP: {otp_code}"
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "MediAI Security <security@medifind.com>")
         
         context = {
             "user": user,
@@ -79,7 +79,7 @@ def send_password_reset_otp(user, target_input=None) -> tuple[bool, str, Passwor
           <div style="max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 32px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
             <div style="text-align: center; margin-bottom: 24px;">
               <div style="display: inline-block; background: #10b981; color: #ffffff; font-weight: 800; font-size: 20px; padding: 8px 16px; border-radius: 10px;">
-                MediFind
+                MediAI
               </div>
               <h2 style="color: #0f172a; margin-top: 16px; margin-bottom: 6px; font-size: 22px;">Password Reset Verification</h2>
               <p style="color: #64748b; font-size: 14px; margin: 0;">Use the 6-digit code below to securely reset your password.</p>
@@ -95,7 +95,7 @@ def send_password_reset_otp(user, target_input=None) -> tuple[bool, str, Passwor
 
             <p style="color: #475569; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
               Hello <strong>{user.first_name or user.username}</strong>,<br>
-              We received a request to reset your password for your MedFinder account. Enter the verification code above to proceed.
+              We received a request to reset your password for your MediAI account. Enter the verification code above to proceed.
             </p>
 
             <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 6px; margin: 20px 0;">
@@ -106,7 +106,7 @@ def send_password_reset_otp(user, target_input=None) -> tuple[bool, str, Passwor
 
             <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px;">
               <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-                &copy; 2026 MediFind Healthcare Platform. All rights reserved.
+                &copy; 2026 MediAI Healthcare Platform. All rights reserved.
               </p>
             </div>
           </div>
@@ -115,7 +115,7 @@ def send_password_reset_otp(user, target_input=None) -> tuple[bool, str, Passwor
         """
 
         plain_content = f"""
-MediFind Password Reset Verification
+MediAI Password Reset Verification
 
 Your One-Time Password (OTP) code is: {otp_code}
 
@@ -124,7 +124,7 @@ This code is valid for 10 minutes.
 If you did not request this password reset, please ignore this email. Never share your OTP with anyone.
 
 Best regards,
-The MediFind Team
+The MediAI Team
         """
 
         try:

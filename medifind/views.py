@@ -1764,11 +1764,8 @@ def register(request):
             login(request, user)
 
             messages.success(
-
                 request,
-
-                f"Welcome to MediFind, {user.first_name or user.username}! Account created successfully."
-
+                f"Welcome to MediAI, {user.first_name or user.username}! Account created successfully."
             )
 
             return redirect("dashboard_redirect")

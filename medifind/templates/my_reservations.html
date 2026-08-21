@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-My Orders | MedFinder
+My Orders | MediAI
 {% endblock %}
 
 {% block content %}
@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
           key: data.key_id,
           amount: data.amount,
           currency: data.currency || "INR",
-          name: "MedFinder Pharmacy Checkout",
+          name: "MediAI Pharmacy Checkout",
           description: `${data.medicine_name} at ${data.pharmacy_name}`,
           order_id: data.razorpay_order_id,
           notes: {
