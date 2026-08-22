@@ -19,7 +19,7 @@
         </span>
         <h1 class="fw-extrabold text-dark display-5 mb-2" style="letter-spacing: -0.5px;">MediAI Terms of Service</h1>
         <p class="text-muted lead mb-0" style="font-size: 1.05rem;">
-          Terms, conditions, and medical disclaimer governing your use of the MediAI medicine discovery and reservation platform.
+          Platform agreement, merchant standards, prescription rules, and user obligations governing the MediAI healthcare ecosystem.
         </p>
       </div>
       <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
@@ -30,7 +30,7 @@
             </span>
           </div>
           <div class="fw-bold text-dark fs-6">August 22, 2026</div>
-          <small class="text-muted">Version 2.0 &bull; Platform Agreement</small>
+          <small class="text-muted">Version 2.4 &bull; Commercial Platform Terms</small>
         </div>
       </div>
     </div>
@@ -38,56 +38,262 @@
 </div>
 
 <div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
+  <div class="row g-5">
+    
+    <!-- Table of Contents Sidebar -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <div class="card border rounded-4 p-4 shadow-xs sticky-top bg-white" style="top: 100px; z-index: 10;">
+        <h6 class="fw-bold text-dark text-uppercase small mb-3" style="letter-spacing: 0.5px;">
+          <i class="fa-solid fa-list-ul text-primary me-1.5"></i> Terms Sections
+        </h6>
+        <div class="nav flex-column nav-pills gap-1" id="termsNav" style="font-size: 0.86rem;">
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#customer-accounts">1. Customer Accounts</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#pharmacy-accounts">2. Pharmacy Accounts</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#medicine-info">3. Medicine Information</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#inventory-accuracy">4. Inventory Accuracy</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#reservations">5. Reservations &amp; Hold</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#payments">6. Payment Processing</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#cancellations-refunds">7. Cancellations &amp; Refunds</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#pharmacy-responsibilities">8. Pharmacy Responsibilities</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#prohibited-use">9. Prohibited Use</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#liability">10. Intermediary Liability</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#account-termination">11. Account Termination</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Terms Content -->
+    <div class="col-lg-9">
       
-      <!-- Medical Disclaimer Alert -->
-      <div class="alert alert-warning border-0 rounded-4 p-4 mb-4 shadow-xs d-flex align-items-start gap-3 bg-warning-subtle">
+      <!-- Mandatory Medical Disclaimer Alert -->
+      <div class="alert alert-warning border-0 rounded-4 p-4 mb-5 shadow-xs d-flex align-items-start gap-3 bg-warning-subtle">
         <i class="fa-solid fa-triangle-exclamation text-warning-emphasis fs-2 mt-1 flex-shrink-0"></i>
         <div>
-          <h5 class="fw-bold text-warning-emphasis mb-1">Important Medical Disclaimer</h5>
+          <h5 class="fw-bold text-warning-emphasis mb-1">Crucial Medical Disclaimer</h5>
           <p class="mb-0 text-warning-emphasis small" style="line-height: 1.6;">
-            MediAI is an informational search and local pharmacy reservation platform. MediAI does not provide medical diagnoses, treatment advice, or replace consultation with qualified healthcare professionals. In any medical emergency, please dial 112 or visit the nearest hospital emergency room immediately. Prescription drugs strictly require a valid doctor's prescription at pharmacy pickup.
+            MediAI is an electronic discovery, live inventory aggregator, and pharmacy reservation service. MediAI is <strong>not a medical clinic, pharmacy, or licensed medical practitioner</strong>. Content displayed on this platform is for informational purposes only. Do not use this service for medical emergencies—dial <strong>112</strong> immediately. Prescription drugs strictly require verification by a registered pharmacist against a valid doctor's prescription.
           </p>
         </div>
       </div>
 
-      <div class="card border rounded-4 p-4 p-md-5 bg-white shadow-xs">
-        <div class="mb-4">
-          <h4 class="fw-bold text-dark mb-2">1. Acceptance of Terms</h4>
-          <p class="text-secondary small" style="line-height: 1.8;">
-            By accessing, browsing, or creating an account on MediAI, you acknowledge that you have read, understood, and agreed to be bound by these Terms of Service and our <a href="{% url 'privacy' %}" class="text-primary text-decoration-none fw-semibold">Privacy Policy</a>.
-          </p>
+      <!-- Section 1: Customer Accounts -->
+      <section id="customer-accounts" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">01</span>
+          <h3 class="fw-bold text-dark mb-0">Customer Accounts</h3>
         </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          To place medicine reservations, save pharmacy favorites, and track order fulfillment history, users must create an account:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Eligibility:</strong> You must be at least 18 years of age or possess legal parental/guardian consent to enter into binding commercial contracts under Indian law.</li>
+          <li><strong>Credential Security:</strong> You are solely responsible for maintaining the confidentiality of your account password, email access, and authentication tokens. Any action performed through your credentials is deemed authorized by you.</li>
+          <li><strong>Accuracy of Information:</strong> You agree to provide accurate, current, and complete details (name, valid phone number, and contact info) during registration.</li>
+        </ul>
+      </section>
 
-        <div class="mb-4">
-          <h4 class="fw-bold text-dark mb-2">2. Services Offered</h4>
-          <p class="text-secondary small" style="line-height: 1.8;">
-            MediAI aggregates real-time inventory listings from licensed local pharmacies, allowing users to compare retail prices, view store operating hours, calculate road distance, and place medicine reservations with online payment (powered by Razorpay) or payment on pharmacy pickup.
-          </p>
-        </div>
+      <hr class="my-4 text-muted opacity-20">
 
-        <div class="mb-4">
-          <h4 class="fw-bold text-dark mb-2">3. Prescription Drugs Compliance</h4>
-          <p class="text-secondary small" style="line-height: 1.8;">
-            Schedule H and Schedule X medications under the Indian Drugs and Cosmetics Act strictly require a physical or verified digital prescription upon pickup. Pharmacists reserve the legal right to inspect and verify the prescription before dispensing.
-          </p>
+      <!-- Section 2: Pharmacy Accounts -->
+      <section id="pharmacy-accounts" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">02</span>
+          <h3 class="fw-bold text-dark mb-0">Pharmacy Accounts &amp; Merchant Onboarding</h3>
         </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          Retail pharmacies, chemists, and dispensaries that list inventory on MediAI are subject to strict regulatory verification:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Licensing Prerequisites:</strong> Every registered pharmacy must hold valid Form 20/21 drug retail licenses issued by the State Drug Control Authority and an active GSTIN.</li>
+          <li><strong>Registered Pharmacist Supervision:</strong> Physical dispensing must occur under the direct supervision of a registered pharmacist registered with the State Pharmacy Council.</li>
+          <li><strong>Store Information:</strong> Merchants must keep their physical address, contact telephone, and daily operating schedules (opening/closing hours) updated and truthful.</li>
+        </ul>
+      </section>
 
-        <div class="mb-4">
-          <h4 class="fw-bold text-dark mb-2">4. Payment &amp; Cancellation Policy</h4>
-          <p class="text-secondary small" style="line-height: 1.8;">
-            Online payments processed via Razorpay are held in escrow until the partner pharmacy confirms the reservation. If a reservation is rejected by the merchant or cannot be fulfilled due to stock discrepancy, an automated full refund is initiated to the original payment source within 3–5 business days.
-          </p>
-        </div>
+      <hr class="my-4 text-muted opacity-20">
 
-        <div>
-          <h4 class="fw-bold text-dark mb-2">5. Contact Support</h4>
-          <p class="text-secondary small mb-0" style="line-height: 1.8;">
-            For billing queries, order inquiries, or terms support, email <a href="mailto:support@medifind.io" class="text-primary text-decoration-none fw-semibold">support@medifind.io</a> or call +91 98765 43210.
+      <!-- Section 3: Medicine Information & Prescription Compliance -->
+      <section id="medicine-info" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">03</span>
+          <h3 class="fw-bold text-dark mb-0">Medicine Information &amp; Prescription Compliance</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          MediAI catalogs pharmaceutical products, active chemical ingredients, dosage forms, and indications:
+        </p>
+        <div class="p-3.5 bg-white rounded-4 border shadow-2xs mb-3">
+          <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-file-prescription text-danger me-1.5"></i> Schedule H &amp; Schedule X Mandates</h6>
+          <p class="text-muted small mb-0" style="line-height: 1.6;">
+            Medicines marked as <strong>Prescription Required</strong> cannot be dispensed without a valid physical or verified digital prescription generated by a registered medical practitioner (RMP). Partner pharmacies reserve the statutory right and obligation to decline dispensing if a valid prescription is not presented at pickup.
           </p>
         </div>
-      </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 4: Inventory Accuracy & SKU Fidelity -->
+      <section id="inventory-accuracy" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">04</span>
+          <h3 class="fw-bold text-dark mb-0">Inventory Accuracy &amp; SKU Fidelity</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          To ensure reliable consumer access and prevent phantom listings:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Real-Time Stock Updates:</strong> Pharmacies are contractually obligated to maintain accurate stock numbers and genuine retail prices per packaging SKU (e.g. Strip of 15, Bottle of 100).</li>
+          <li><strong>Zero Inflated Listings:</strong> Pharmacies may not create duplicate inventory records to artificially inflate search visibility. Our deterministic search engine enforces database-level uniqueness constraints.</li>
+          <li><strong>Out-of-Stock Reconciliation:</strong> When an item reaches 0 units, the system automatically tags it as out of stock, removing it from #1 Best Match spotlight recommendations.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 5: Reservations & 24-Hour Hold Policy -->
+      <section id="reservations" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">05</span>
+          <h3 class="fw-bold text-dark mb-0">Reservations &amp; 24-Hour Hold Policy</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          Customers can reserve medicines online for in-store pickup:
+        </p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="p-3.5 bg-light rounded-4 border h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-clock text-primary me-1"></i> 24-Hour Guaranteed Hold</strong>
+              <p class="text-muted small mb-0">Confirmed reservations guarantee that the partner pharmacy sets aside the reserved medicine units for up to 24 hours from confirmation.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3.5 bg-light rounded-4 border h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-id-card-clip text-success me-1"></i> Order Identification</strong>
+              <p class="text-muted small mb-0">Customers must present their Order ID and registered mobile number at the pharmacy counter upon physical collection.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 6: Payments -->
+      <section id="payments" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">06</span>
+          <h3 class="fw-bold text-dark mb-0">Payments &amp; Financial Terms</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          MediAI supports two transparent transaction modalities:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Online Payments (Secure payments powered by Razorpay):</strong> Instant checkout via UPI, credit/debit cards, and net banking. Funds are securely captured and held against verified order IDs.</li>
+          <li><strong>Pay on Pickup (Pay on the Pharmacy There):</strong> Users can reserve without upfront payment and settle the exact retail bill directly with the chemist in cash or store UPI upon pickup.</li>
+          <li><strong>No Hidden Platform Surcharges:</strong> MediAI charges customers <strong>₹0.00</strong> in booking or convenience markups. The price you see is the verified pharmacy retail price.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 7: Cancellations & Refunds -->
+      <section id="cancellations-refunds" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">07</span>
+          <h3 class="fw-bold text-dark mb-0">Cancellations &amp; Automated Refunds</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          We maintain clear, automated consumer protection protocols for cancellations:
+        </p>
+        <div class="p-3.5 bg-white rounded-4 border shadow-2xs mb-3">
+          <h6 class="fw-bold text-dark mb-1.5"><i class="fa-solid fa-rotate-left text-success me-1.5"></i> 100% Automated Source Refund Guarantee</h6>
+          <p class="text-muted small mb-2" style="line-height: 1.6;">
+            If an online-paid reservation is rejected by the pharmacy, cancelled due to unforeseen stock depletion, or cancelled by the customer prior to pharmacy dispensing:
+          </p>
+          <ul class="text-secondary small ps-3 mb-0" style="line-height: 1.7;">
+            <li>An immediate 100% refund is initiated via our Razorpay payment gateway API.</li>
+            <li>Funds are returned to the original payment source (UPI account, bank account, or card) within <strong>3 to 5 business days</strong> according to RBI banking settlement cycles.</li>
+          </ul>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 8: Pharmacy Responsibilities -->
+      <section id="pharmacy-responsibilities" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">08</span>
+          <h3 class="fw-bold text-dark mb-0">Pharmacy Responsibilities &amp; Quality Standards</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          Partner pharmacies are legally and contractually accountable for the quality of pharmaceutical goods dispensed:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Storage &amp; Cold Chain:</strong> Medicines requiring specific temperatures (e.g. insulin, vaccines) must be maintained under strict cold-chain refrigeration protocols.</li>
+          <li><strong>Batch Verification &amp; Expiry:</strong> Pharmacists must ensure that no expired, damaged, or recalled drugs are dispensed to customers.</li>
+          <li><strong>Authentic Sourcing:</strong> All inventory must be procured exclusively from authorized pharmaceutical manufacturers and licensed distributors.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 9: Prohibited Use -->
+      <section id="prohibited-use" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">09</span>
+          <h3 class="fw-bold text-dark mb-0">Prohibited Use</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          Users and merchants are strictly prohibited from engaging in the following activities:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Automated Scraping:</strong> Using automated bots, scrapers, or crawlers to extract pharmacy inventory or pricing data without written permission.</li>
+          <li><strong>Hoarding &amp; Resale:</strong> Creating automated scripts to monopolize scarce life-saving drugs for unauthorized commercial resale.</li>
+          <li><strong>Fraudulent Submissions:</strong> Uploading falsified prescriptions, fake merchant licenses, or bogus inventory figures.</li>
+          <li><strong>Platform Interference:</strong> Attempting to reverse engineer, disrupt server integrity, or bypass rate-limiting controls.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 10: Intermediary Liability & Disclaimers -->
+      <section id="liability" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">10</span>
+          <h3 class="fw-bold text-dark mb-0">Intermediary Status &amp; Limitation of Liability</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          MediAI operates as an <strong>electronic intermediary</strong> under Section 79 of the Information Technology Act, 2000:
+        </p>
+        <div class="p-3.5 bg-light rounded-4 border mb-3">
+          <p class="text-muted small mb-0" style="line-height: 1.6;">
+            MediAI facilitates connections between consumers and licensed local retail pharmacies. The actual contract of sale for pharmaceutical goods is strictly between the consumer and the independent licensed pharmacy. MediAI shall not be liable for adverse drug reactions, pharmacy dispensing errors, store stock discrepancies, or non-availability of medicines beyond the refund of payments processed through our platform.
+          </p>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 11: Account Termination -->
+      <section id="account-termination" class="mb-4 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">11</span>
+          <h3 class="fw-bold text-dark mb-0">Account Termination &amp; Dispute Resolution</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          Terms governing suspension, termination, and legal jurisdiction:
+        </p>
+        <ul class="text-secondary small ps-3 mb-4" style="line-height: 1.8;">
+          <li><strong>Termination by User:</strong> You may close your account at any time via Profile Settings or by emailing <a href="mailto:support@medifind.io" class="text-primary text-decoration-none">support@medifind.io</a>.</li>
+          <li><strong>Termination by MediAI:</strong> We reserve the right to suspend or terminate accounts that breach these terms, repeatedly submit fake reservations, or violate drug control laws.</li>
+          <li><strong>Governing Law &amp; Jurisdiction:</strong> These Terms are governed by the laws of India. Any disputes arising hereunder shall be subject to the exclusive jurisdiction of the courts in Chennai, Tamil Nadu.</li>
+        </ul>
+
+        <div class="card border rounded-4 p-4 bg-light">
+          <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-headset text-primary me-2"></i> Questions Regarding Terms?</h6>
+          <p class="text-muted small mb-0">
+            For legal inquiries, terms clarification, or merchant partnership agreements, please reach out to our legal department at <a href="mailto:legal@medifind.io" class="text-primary text-decoration-none fw-semibold">legal@medifind.io</a> or call +91 98765 43210.
+          </p>
+        </div>
+      </section>
 
     </div>
   </div>
