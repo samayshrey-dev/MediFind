@@ -99,7 +99,11 @@ def home(request):
     pharmacy_pending_count = 0
     today_orders_count = 0
     low_stock_count = 0
+    out_of_stock_count = 0
+    in_stock_count = 0
+    inventory_health_pct = 100
     today_sales = Decimal("0.00")
+    today_activities = []
 
     if request.user.is_authenticated:
         if hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
@@ -117,23 +121,81 @@ def home(request):
             user_pharmacy = Pharmacy.objects.first()
 
         if user_pharmacy:
-            pharmacy_inventory_count = Inventory.objects.filter(pharmacy=user_pharmacy).count()
+            inv_qs = Inventory.objects.filter(pharmacy=user_pharmacy)
+            pharmacy_inventory_count = inv_qs.count()
             pharmacy_pending_count = Reservation.objects.filter(pharmacy=user_pharmacy, status="Pending").count()
-            low_stock_count = Inventory.objects.filter(pharmacy=user_pharmacy, quantity__lte=10).count()
-            
+            low_stock_count = inv_qs.filter(quantity__gt=0, quantity__lte=10).count()
+            out_of_stock_count = inv_qs.filter(quantity=0).count()
+            in_stock_count = inv_qs.filter(quantity__gt=10).count()
+
+            if pharmacy_inventory_count > 0:
+                inventory_health_pct = int((in_stock_count / pharmacy_inventory_count) * 100)
+
             today_date = timezone.now().date()
             today_orders_qs = Reservation.objects.filter(pharmacy=user_pharmacy, requested_at__date=today_date)
             today_orders_count = today_orders_qs.count()
-            
+
             # Compute real sales from completed/paid orders today
             paid_or_collected = today_orders_qs.filter(Q(is_paid=True) | Q(status__in=["Accepted", "Collected"]))
             for r in paid_or_collected:
-                inv = Inventory.objects.filter(pharmacy=user_pharmacy, medicine=r.medicine).first()
+                inv = inv_qs.filter(medicine=r.medicine).first()
                 if inv and inv.price:
                     today_sales += (inv.price * r.quantity)
 
+            # Build real recent activity list for Today's Activity section
+            recent_res = Reservation.objects.filter(pharmacy=user_pharmacy).select_related("medicine", "customer").order_by("-requested_at")[:5]
+            for r in recent_res:
+                inv = inv_qs.filter(medicine=r.medicine).first()
+                p = inv.price if inv and inv.price else Decimal("22.00")
+                tot = p * r.quantity
+                if r.status == "Collected":
+                    today_activities.append({
+                        "time": r.requested_at.strftime("%H:%M"),
+                        "title": f"Order #{r.id:04d} Completed",
+                        "desc": f"{r.medicine.name} ({r.quantity} units) · ₹{tot:.2f} collected",
+                        "badge": "Completed",
+                        "badge_class": "bg-success-subtle text-success border border-success-subtle",
+                        "icon": "fa-circle-check",
+                        "timestamp": r.requested_at,
+                    })
+                elif r.status == "Accepted":
+                    today_activities.append({
+                        "time": r.requested_at.strftime("%H:%M"),
+                        "title": f"Order #{r.id:04d} Ready for Pickup",
+                        "desc": f"{r.medicine.name} reserved for {r.customer.username}",
+                        "badge": "Ready",
+                        "badge_class": "bg-primary-subtle text-primary border border-primary-subtle",
+                        "icon": "fa-clock",
+                        "timestamp": r.requested_at,
+                    })
+                else:
+                    today_activities.append({
+                        "time": r.requested_at.strftime("%H:%M"),
+                        "title": f"Order #{r.id:04d} Received",
+                        "desc": f"{r.medicine.name} ({r.quantity} units) from {r.customer.username}",
+                        "badge": "Pending",
+                        "badge_class": "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
+                        "icon": "fa-clipboard-list",
+                        "timestamp": r.requested_at,
+                    })
+
+            recent_inv = inv_qs.select_related("medicine").order_by("-updated_at")[:3]
+            for itm in recent_inv:
+                today_activities.append({
+                    "time": itm.updated_at.strftime("%H:%M"),
+                    "title": f"Stock Synced: {itm.medicine.name}",
+                    "desc": f"{itm.quantity} units available · ₹{itm.price} retail",
+                    "badge": "Inventory",
+                    "badge_class": "bg-info-subtle text-info-emphasis border border-info-subtle",
+                    "icon": "fa-boxes-stacked",
+                    "timestamp": itm.updated_at,
+                })
+
+            today_activities.sort(key=lambda x: x["timestamp"], reverse=True)
+
     medicines = Medicine.objects.all()[:8]
     pharmacies = Pharmacy.objects.filter(is_active=True)[:4]
+    all_pharmacies = Pharmacy.objects.filter(is_active=True)[:8]
     medicine_count = Medicine.objects.count()
     pharmacy_count = Pharmacy.objects.count()
     reservation_count = Reservation.objects.count()
@@ -142,6 +204,7 @@ def home(request):
     context = {
         "popular_medicines": medicines,
         "pharmacies": pharmacies,
+        "all_pharmacies": all_pharmacies,
         "medicine_count": medicine_count,
         "pharmacy_count": pharmacy_count,
         "reservation_count": reservation_count,
@@ -151,7 +214,11 @@ def home(request):
         "pharmacy_pending_count": pharmacy_pending_count,
         "today_orders_count": today_orders_count,
         "low_stock_count": low_stock_count,
+        "out_of_stock_count": out_of_stock_count,
+        "in_stock_count": in_stock_count,
+        "inventory_health_pct": inventory_health_pct,
         "today_sales": today_sales,
+        "today_activities": today_activities,
     }
 
     return render(

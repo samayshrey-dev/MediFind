@@ -28,13 +28,6 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto ms-lg-4 align-items-lg-center">
         {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
-          <!-- Store Identifier Badge -->
-          <li class="nav-item me-lg-2">
-            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
-              <i class="fa-solid fa-store"></i>
-              <span>{{ user.userprofile.pharmacy.name|default:"Partner Store" }}</span>
-            </span>
-          </li>
           <!-- 1. Dashboard -->
           <li class="nav-item">
             <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'pharmacy_dashboard' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'pharmacy_dashboard' %}">
@@ -49,14 +42,7 @@
               <span>Inventory</span>
             </a>
           </li>
-          <!-- 3. Add Stock -->
-          <li class="nav-item">
-            <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'add_inventory' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'add_inventory' %}">
-              <i class="fa-solid fa-circle-plus {% if request.resolver_match.url_name == 'add_inventory' %}text-success{% else %}text-success{% endif %}"></i>
-              <span>Add Stock</span>
-            </a>
-          </li>
-          <!-- 4. Orders -->
+          <!-- 3. Orders -->
           <li class="nav-item">
             <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'reservations' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservations' %}">
               <i class="fa-solid fa-clipboard-list {% if request.resolver_match.url_name == 'reservations' %}text-success{% else %}text-muted{% endif %}"></i>
@@ -66,11 +52,18 @@
               {% endif %}
             </a>
           </li>
-          <!-- 5. History -->
+          <!-- 4. History -->
           <li class="nav-item">
             <a class="nav-link px-2.5 fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'reservation_history' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservation_history' %}">
               <i class="fa-solid fa-clock-rotate-left {% if request.resolver_match.url_name == 'reservation_history' %}text-success{% else %}text-muted{% endif %}"></i>
               <span>History</span>
+            </a>
+          </li>
+          <!-- Strong Action Button: + Add Stock -->
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5 shadow-xs" href="{% url 'add_inventory' %}">
+              <i class="fa-solid fa-circle-plus"></i>
+              <span>+ Add Stock</span>
             </a>
           </li>
         {% else %}
@@ -138,34 +131,60 @@
             </ul>
           </li>
 
-          <!-- User Menu -->
-          <li class="nav-item dropdown ms-lg-1">
-            <a class="nav-link dropdown-toggle d-flex align-items-center text-dark fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
-              <span class="me-1">{{ user.first_name|default:user.username }}</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow border rounded-3 py-2">
-              {% if user.is_superuser %}
-                <li><a class="dropdown-item py-2" href="{% url 'dashboard' %}"><i class="fa-solid fa-chart-pie me-2 text-muted"></i> Admin Dashboard</a></li>
-              {% elif user.userprofile.role == "Pharmacy" %}
-                <li><a class="dropdown-item py-2" href="{% url 'pharmacy_dashboard' %}"><i class="fa-solid fa-chart-line me-2 text-muted"></i> Dashboard</a></li>
-                <li><a class="dropdown-item py-2" href="{% url 'inventory' %}"><i class="fa-solid fa-boxes-stacked me-2 text-muted"></i> Inventory</a></li>
-                <li><a class="dropdown-item py-2" href="{% url 'reservations' %}"><i class="fa-solid fa-clock me-2 text-muted"></i> Orders</a></li>
-              {% else %}
-                <li><a class="dropdown-item py-2" href="{% url 'my_reservations' %}"><i class="fa-solid fa-bag-shopping me-2 text-muted"></i> Orders</a></li>
-                <li><a class="dropdown-item py-2" href="{% url 'search_history' %}"><i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i> Activity</a></li>
-              {% endif %}
-              <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i class="fa-regular fa-user me-2 text-muted"></i> Profile Settings</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <form method="POST" action="{% url 'logout' %}" class="px-2">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger w-100 text-start border-0 py-1">
-                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log out
-                  </button>
-                </form>
-              </li>
-            </ul>
-          </li>
+          <!-- Pharmacy / User Menu -->
+          {% if user.userprofile.role == "Pharmacy" %}
+            <li class="nav-item dropdown ms-lg-1">
+              <button class="btn btn-sm btn-light border rounded-pill px-3 py-1.5 fw-semibold text-dark d-flex align-items-center gap-1.5 shadow-xs dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="d-inline-block rounded-circle bg-success" style="width: 7px; height: 7px;"></span>
+                <span class="text-truncate" style="max-width: 170px;">{{ user.userprofile.pharmacy.name|default:"Apollo Pharmacy Anna Nagar" }}</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border rounded-4 py-2" style="min-width: 250px;">
+                <li class="px-3 py-2 bg-light border-bottom mb-1">
+                  <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.5px;">Current Pharmacy</small>
+                  <strong class="text-dark d-block" style="font-size: 0.92rem;">{{ user.userprofile.pharmacy.name|default:"Apollo Pharmacy Anna Nagar" }}</strong>
+                  <small class="text-muted">{{ user.userprofile.pharmacy.city|default:"Chennai" }} &bull; PH-{{ user.userprofile.pharmacy.id|default:"1" }}</small>
+                </li>
+                <li><a class="dropdown-item py-2 small" href="{% url 'pharmacy_dashboard' %}"><i class="fa-solid fa-chart-line me-2 text-muted"></i> Store Dashboard</a></li>
+                <li><a class="dropdown-item py-2 small" href="{% url 'inventory' %}"><i class="fa-solid fa-boxes-stacked me-2 text-muted"></i> Manage Inventory</a></li>
+                <li><a class="dropdown-item py-2 small" href="{% url 'reservations' %}"><i class="fa-solid fa-clipboard-list me-2 text-muted"></i> Manage Orders</a></li>
+                <li><a class="dropdown-item py-2 small" href="{% url 'pharmacies' %}"><i class="fa-solid fa-store me-2 text-muted"></i> Switch Pharmacy</a></li>
+                <li><a class="dropdown-item py-2 small" href="{% url 'profile' %}"><i class="fa-solid fa-sliders me-2 text-muted"></i> Store Settings</a></li>
+                <li><hr class="dropdown-divider my-1"></li>
+                <li>
+                  <form method="POST" action="{% url 'logout' %}" class="px-2 pt-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 text-start border-0 py-1 small fw-semibold">
+                      <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log out
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          {% else %}
+            <li class="nav-item dropdown ms-lg-1">
+              <a class="nav-link dropdown-toggle d-flex align-items-center text-dark fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
+                <span class="me-1">{{ user.first_name|default:user.username }}</span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end shadow border rounded-3 py-2">
+                {% if user.is_superuser %}
+                  <li><a class="dropdown-item py-2" href="{% url 'dashboard' %}"><i class="fa-solid fa-chart-pie me-2 text-muted"></i> Admin Dashboard</a></li>
+                {% else %}
+                  <li><a class="dropdown-item py-2" href="{% url 'my_reservations' %}"><i class="fa-solid fa-bag-shopping me-2 text-muted"></i> Orders</a></li>
+                  <li><a class="dropdown-item py-2" href="{% url 'search_history' %}"><i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i> Activity</a></li>
+                {% endif %}
+                <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i class="fa-regular fa-user me-2 text-muted"></i> Profile Settings</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="POST" action="{% url 'logout' %}" class="px-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 text-start border-0 py-1">
+                      <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log out
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          {% endif %}
         {% endif %}
 
       </ul>
