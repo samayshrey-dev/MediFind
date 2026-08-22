@@ -245,8 +245,8 @@ void main() {
     constructor(canvas, options = {}) {
       this.canvas = canvas;
       this.options = Object.assign({
-        colors: ['#ff5c7a', '#8a5cff', '#00ffd1'],
-        color: '#A855F7',
+        colors: ['#88E788', '#10B981', '#00ffd1'],
+        color: '#88E788',
         rotation: 90,
         speed: 0.2,
         scale: 1.0,
