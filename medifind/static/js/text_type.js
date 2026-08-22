@@ -100,9 +100,9 @@ function initMedFinderTextType() {
     const pharmId = pharmElem.id;
     new TextType(pharmId, "pharmacyTextTypeCursor", {
       texts: [
-        "Manage your pharmacy.",
-        "Manage your inventory.",
-        "Manage incoming orders.",
+        "Keep your inventory synced.",
+        "Track incoming orders live.",
+        "Grow local patient trust.",
         "Manage store operations."
       ],
       typingSpeed: 75,

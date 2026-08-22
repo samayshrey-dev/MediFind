@@ -31,10 +31,12 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           <span style="font-size: 0.76rem; letter-spacing: 0.5px; text-transform: uppercase;">Verified Merchant Portal &bull; {{ user_pharmacy.city|default:"Chennai" }}</span>
         </div>
 
-        <!-- 2. Hero Headline -->
-        <h1 class="hero-anim-2 display-4 fw-extrabold text-dark mb-3" style="letter-spacing: -1.2px; line-height: 1.12; color: #0F172A;">
-          Manage<br>
-          <span class="text-success" style="color: #10B981 !important;">Simply.</span>
+        <!-- 2. Hero Headline with Dynamic TextType -->
+        <h1 class="hero-anim-2 display-4 fw-extrabold text-dark mb-3" style="letter-spacing: -1.2px; line-height: 1.15; color: #0F172A; min-height: 110px;">
+          Manage your pharmacy.<br>
+          <span class="text-success" style="color: #10B981 !important;">
+            <span id="pharmacyDynamicHeadline"></span><span id="pharmacyTextTypeCursor" class="text-type-cursor">_</span>
+          </span>
         </h1>
 
         <!-- 3. Description -->
