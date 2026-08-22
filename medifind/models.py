@@ -164,6 +164,37 @@ class Inventory(models.Model):
 
     expiry_date = models.DateField()
 
+    PACKAGE_SIZE_CHOICES = [
+        ("Strip of 10", "Strip of 10"),
+        ("Strip of 15", "Strip of 15"),
+        ("Strip of 30", "Strip of 30"),
+        ("Bottle of 60", "Bottle of 60"),
+        ("Bottle of 100", "Bottle of 100"),
+        ("Bottle of 100 ml", "Bottle of 100 ml"),
+        ("Bottle of 200 ml", "Bottle of 200 ml"),
+        ("Tube of 20 g", "Tube of 20 g"),
+        ("Tube of 30 g", "Tube of 30 g"),
+        ("Sachet", "Sachet"),
+        ("Box of 1", "Box of 1"),
+        ("Vial / Ampoule", "Vial / Ampoule"),
+        ("Unit", "Unit"),
+    ]
+
+    package_size = models.CharField(
+        max_length=80,
+        default="Strip of 15",
+        blank=True,
+        choices=PACKAGE_SIZE_CHOICES,
+        help_text="Packaging SKU e.g. Strip of 15, Strip of 30, Bottle of 100"
+    )
+
+    sku_code = models.CharField(
+        max_length=60,
+        blank=True,
+        null=True,
+        help_text="Unique SKU identifier e.g. DOLO650-S15"
+    )
+
     minimum_stock = models.PositiveIntegerField(
         default=10
     )
@@ -185,9 +216,16 @@ class Inventory(models.Model):
         auto_now=True
     )
 
-    def __str__(self):
+    class Meta:
+        unique_together = ('pharmacy', 'medicine', 'package_size')
+        verbose_name_plural = "Inventories"
+        indexes = [
+            models.Index(fields=['pharmacy', 'medicine']),
+            models.Index(fields=['medicine', 'quantity']),
+        ]
 
-        return f"{self.medicine.name} - {self.pharmacy.name}"
+    def __str__(self):
+        return f"{self.medicine.name} ({self.package_size}) - {self.pharmacy.name}"
 class Reservation(models.Model):
 
     STATUS_CHOICES = [

@@ -142,7 +142,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                 <div class="col-lg-7">
                   <div class="d-flex align-items-baseline gap-2 mb-1">
                     <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹{{ best_match_item.price }}</span>
-                    <span class="text-muted small">/ unit</span>
+                    <span class="text-muted small">/ {{ best_match_item.package_size|default:"unit" }}</span>
                     {% if best_match_item.medicine.prescription_required %}
                       <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0.5 ms-2" style="font-size: 0.72rem;">
                         Prescription Required
@@ -151,11 +151,29 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                   </div>
 
                   <h4 class="fw-bold text-dark mb-1">{{ best_match_item.pharmacy.name }}</h4>
-                  <p class="text-muted small mb-3">
+                  <p class="text-muted small mb-2">
                     <i class="fa-solid fa-location-dot text-primary me-1"></i>
                     {% if best_match_item.distance_km %}<strong>{{ best_match_item.distance_km }} km away</strong> &bull; {% endif %}
                     {{ best_match_item.pharmacy.address }}, {{ best_match_item.pharmacy.city }}
                   </p>
+
+                  <!-- Available SKU Pack Sizes Breakdown -->
+                  {% if best_match_item.available_skus and best_match_item.available_skus|length > 1 %}
+                    <div class="p-2.5 rounded-3 mb-3 bg-light border">
+                      <div class="d-flex align-items-center justify-content-between mb-1.5">
+                        <span class="text-muted fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                          <i class="fa-solid fa-boxes-packing text-primary me-1"></i> Available Pack Sizes:
+                        </span>
+                      </div>
+                      <div class="d-flex flex-wrap gap-1.5">
+                        {% for sku in best_match_item.available_skus %}
+                          <a href="{% url 'reserve_medicine' sku.id %}" class="badge text-decoration-none {% if sku.id == best_match_item.id %}bg-success text-white shadow-xs{% else %}bg-white text-dark border{% endif %} rounded-pill px-3 py-1.5 small fw-semibold transition-all">
+                            {{ sku.package_size }} — ₹{{ sku.price }}
+                          </a>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endif %}
 
                   <!-- "WHY?" Callout Box -->
                   <div class="p-3 rounded-3 mb-2" style="background: #f0fdf4; border-left: 4px solid #10b981;">
@@ -171,7 +189,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                 <div class="col-lg-5 text-lg-end border-start-lg ps-lg-4">
                   <div class="p-3 bg-light rounded-4 border text-start">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="text-muted small fw-semibold">Unit Price:</span>
+                      <span class="text-muted small fw-semibold">{{ best_match_item.package_size|default:"Price" }}:</span>
                       <span class="fs-4 fw-extrabold text-success">₹{{ best_match_item.price }}</span>
                     </div>
                     <div class="d-flex flex-column gap-2">
@@ -259,7 +277,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                     <!-- Price & Stock -->
                     <div class="d-flex justify-content-between align-items-baseline mb-2">
                       <div class="med-price-display">
-                        ₹{{ item.price }}
+                        ₹{{ item.price }} <span class="text-muted" style="font-size: 0.72rem; font-weight: 500;">/ {{ item.package_size|default:"unit" }}</span>
                       </div>
                       <span class="badge bg-light text-success border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 600;">
                         {{ item.quantity }} in stock
@@ -275,10 +293,26 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                         {{ item.pharmacy.address }}, {{ item.pharmacy.city }}
                       </span>
                     </div>
+
+                    <!-- Available SKU Pack Sizes -->
+                    {% if item.available_skus and item.available_skus|length > 1 %}
+                      <div class="mt-2.5 pt-2 border-top">
+                        <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.3px;">
+                          <i class="fa-solid fa-boxes-packing text-primary me-1"></i> Pack Sizes:
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                          {% for sku in item.available_skus %}
+                            <a href="{% url 'reserve_medicine' sku.id %}" class="badge text-decoration-none {% if sku.id == item.id %}bg-success-subtle text-success border border-success-subtle{% else %}bg-light text-secondary border{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
+                              {{ sku.package_size }} — ₹{{ sku.price }}
+                            </a>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    {% endif %}
                   </div>
 
                   <!-- Actions -->
-                  <div class="med-actions-row">
+                  <div class="med-actions-row mt-3">
                     <a href="https://maps.google.com/?q={{ item.pharmacy.latitude }},{{ item.pharmacy.longitude }}" target="_blank" class="btn-med-directions">
                       <i class="fa-solid fa-diamond-turn-right me-1 text-primary"></i> Directions
                     </a>

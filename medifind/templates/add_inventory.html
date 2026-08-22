@@ -80,6 +80,31 @@
           </div>
         </div>
 
+        <!-- Package Size / SKU Packaging -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
+            Package Size / SKU <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0 text-muted">
+              <i class="fa-solid fa-box-open small"></i>
+            </span>
+            <select name="package_size" class="form-select bg-light border-start-0 py-2.5" id="id_package_size" required>
+              <option value="Strip of 15" {% if form.package_size.value == "Strip of 15" or not form.package_size.value %}selected{% endif %}>Strip of 15 (Standard Tablet Strip)</option>
+              <option value="Strip of 10" {% if form.package_size.value == "Strip of 10" %}selected{% endif %}>Strip of 10</option>
+              <option value="Strip of 30" {% if form.package_size.value == "Strip of 30" %}selected{% endif %}>Strip of 30 (Value Pack)</option>
+              <option value="Bottle of 60" {% if form.package_size.value == "Bottle of 60" %}selected{% endif %}>Bottle of 60</option>
+              <option value="Bottle of 100" {% if form.package_size.value == "Bottle of 100" %}selected{% endif %}>Bottle of 100 (Dispensary Bottle)</option>
+              <option value="Bottle of 100 ml" {% if form.package_size.value == "Bottle of 100 ml" %}selected{% endif %}>Bottle of 100 ml (Syrup)</option>
+              <option value="Bottle of 200 ml" {% if form.package_size.value == "Bottle of 200 ml" %}selected{% endif %}>Bottle of 200 ml (Syrup)</option>
+              <option value="Tube of 20 g" {% if form.package_size.value == "Tube of 20 g" %}selected{% endif %}>Tube of 20 g (Ointment/Gel)</option>
+              <option value="Tube of 30 g" {% if form.package_size.value == "Tube of 30 g" %}selected{% endif %}>Tube of 30 g (Ointment/Gel)</option>
+              <option value="Sachet" {% if form.package_size.value == "Sachet" %}selected{% endif %}>Sachet</option>
+              <option value="Unit" {% if form.package_size.value == "Unit" %}selected{% endif %}>Unit</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Quantity & Price -->
         <div class="col-md-6">
           <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
@@ -96,7 +121,7 @@
 
         <div class="col-md-6">
           <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
-            Price Per Unit (₹) <span class="text-danger">*</span>
+            Price Per Unit / Pack (₹) <span class="text-danger">*</span>
           </label>
           <div class="input-group">
             <span class="input-group-text bg-light border-end-0 text-muted fw-bold">₹</span>

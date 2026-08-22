@@ -20,6 +20,7 @@ import uuid
 import urllib.request
 import urllib.error
 from datetime import datetime
+from typing import List, Dict, Any, Optional
 from django.utils import timezone
 from django.db.models import Q
 from .models import Medicine, Pharmacy, Inventory, AgentAuditLog
@@ -752,6 +753,8 @@ class CommerceSearchService:
                 "is_open": is_open,
                 "opening_time": pharmacy.opening_time.strftime("%I:%M %p"),
                 "closing_time": pharmacy.closing_time.strftime("%I:%M %p"),
+                "package_size": getattr(item, 'package_size', 'Strip of 15'),
+                "sku_code": getattr(item, 'sku_code', ''),
                 "price": float(item.price),
                 "stock": item.quantity,
                 "batch_number": item.batch_number,
@@ -763,25 +766,74 @@ class CommerceSearchService:
 
 
 # ============================================================================
-# 5. DETERMINISTIC DECISION & RANKING ENGINE
+# 4. DETERMINISTIC MULTI-CRITERIA SCORING & RANKING ENGINE
 # ============================================================================
 
 class DeterministicRankingEngine:
     """
-    Deterministic candidate ranker implemented entirely in Python.
-    The LLM is NOT permitted to invent ranking scores or manipulate results.
+    Pure algorithmic, deterministic candidate ranking system.
+    Mathematical scoring based on:
+      1. Live Verified Stock (Guaranteed #1 Priority)
+      2. SKU Exactness
+      3. Distance & Delivery Time
+      4. Total Price
+      5. Pharmacy Operating Hours
     """
 
     @classmethod
-    def rank_candidates(cls, candidates: list[dict], optimization_goal: str, target_medicine_name: str = None) -> list[dict]:
+    def rank_candidates(
+        cls,
+        candidates: List[Dict[str, Any]],
+        optimization_goal: OptimizationGoal = OptimizationGoal.BEST_VALUE,
+        target_medicine_name: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
-        Ranks verified candidates according to the specified optimization goal.
-        Attaches deterministic scores, ranking position, and decision reasons.
+        Calculates deterministic ranking scores and sorts candidates.
+        Guarantees that in-stock items ALWAYS outrank out-of-stock items,
+        and deduplicates candidates by pharmacy while attaching available SKU packaging variants.
         """
         if not candidates:
             return []
 
-        ranked = list(candidates)
+        # Deduplicate & Group by (pharmacy_id, medicine_id) to collect SKU packaging variants
+        grouped_candidates = {}
+        for c in candidates:
+            pharm_key = c.get("pharmacy_id") or c.get("pharmacy_name") or c.get("inventory_id")
+            med_key = c.get("medicine_id") or c.get("medicine_name")
+            key = (pharm_key, med_key)
+            if key not in grouped_candidates:
+                c_copy = dict(c)
+                c_copy["sku_variants"] = [
+                    {
+                        "inventory_id": c.get("inventory_id"),
+                        "package_size": c.get("package_size", "Strip of 15"),
+                        "sku_code": c.get("sku_code", ""),
+                        "price": c.get("price"),
+                        "stock": c.get("stock", 0),
+                    }
+                ]
+                grouped_candidates[key] = c_copy
+            else:
+                primary = grouped_candidates[key]
+                if not any(v.get("package_size") == c.get("package_size") for v in primary["sku_variants"]):
+                    primary["sku_variants"].append({
+                        "inventory_id": c.get("inventory_id"),
+                        "package_size": c.get("package_size", "Strip of 15"),
+                        "sku_code": c.get("sku_code", ""),
+                        "price": c.get("price"),
+                        "stock": c.get("stock", 0),
+                    })
+                # If primary was out of stock, promote in-stock SKU
+                if primary.get("stock", 0) == 0 and c.get("stock", 0) > 0:
+                    primary["price"] = c.get("price")
+                    primary["stock"] = c.get("stock")
+                    primary["package_size"] = c.get("package_size")
+                    primary["inventory_id"] = c.get("inventory_id")
+
+        for c in grouped_candidates.values():
+            c["sku_variants"].sort(key=lambda s: float(s.get("price", 0)))
+
+        ranked = list(grouped_candidates.values())
 
         # Helper SKU exactness scorer for candidates
         def candidate_sku_score(c):

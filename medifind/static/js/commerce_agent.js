@@ -231,8 +231,8 @@
           <div class="row align-items-center g-4">
             <div class="col-lg-7">
               <div class="d-flex align-items-baseline gap-2 mb-1">
-                <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹${parseFloat(bm.price).toFixed(0)}</span>
-                <span class="text-muted small">/ unit</span>
+                <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹${parseFloat(bm.price).toFixed(2)}</span>
+                <span class="text-muted small">/ ${escapeHtml(bm.package_size || 'unit')}</span>
                 ${bm.prescription_required ? `
                   <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0.5 ms-2" style="font-size: 0.72rem;">
                     Prescription Required
@@ -241,9 +241,25 @@
               </div>
 
               <h4 class="fw-bold text-dark mb-1">${escapeHtml(bm.pharmacy_name)}</h4>
-              <p class="text-muted small mb-3">
+              <p class="text-muted small mb-2">
                 <i class="fa-solid fa-location-dot text-primary me-1"></i> ${bm.distance_km !== null ? `<strong>${bm.distance_km} km away</strong> &bull; ` : ''}${escapeHtml(bm.pharmacy_address)}, ${escapeHtml(bm.pharmacy_city)}
               </p>
+
+              <!-- Available SKU Pack Sizes Breakdown -->
+              ${bm.sku_variants && bm.sku_variants.length > 1 ? `
+                <div class="p-2.5 rounded-3 mb-3 bg-light border">
+                  <div class="text-muted fw-bold text-uppercase mb-1.5" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-boxes-packing text-primary me-1"></i> Available Pack Sizes:
+                  </div>
+                  <div class="d-flex flex-wrap gap-1.5">
+                    ${bm.sku_variants.map(v => `
+                      <span class="badge ${v.inventory_id === bm.inventory_id ? 'bg-success text-white shadow-xs' : 'bg-white text-dark border'} rounded-pill px-3 py-1.5 small fw-semibold">
+                        ${escapeHtml(v.package_size)} — ₹${parseFloat(v.price).toFixed(2)}
+                      </span>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
 
               <!-- "WHY?" Callout Box -->
               <div class="p-3 rounded-3 mb-2" style="background: #f0fdf4; border-left: 4px solid #10b981;">
@@ -343,7 +359,7 @@
                     <!-- Price & Stock -->
                     <div class="d-flex justify-content-between align-items-baseline mb-2">
                       <div class="med-price-display">
-                        ₹${parseFloat(opt.price).toFixed(2)}
+                        ₹${parseFloat(opt.price).toFixed(2)} <span class="text-muted" style="font-size: 0.72rem; font-weight: 500;">/ ${escapeHtml(opt.package_size || 'unit')}</span>
                       </div>
                       <span class="badge bg-light text-success border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 600;">
                         ${opt.stock} in stock
@@ -357,10 +373,26 @@
                         ${escapeHtml(opt.pharmacy_address || opt.pharmacy_city || '')}
                       </span>
                     </div>
+
+                    <!-- Available SKU Pack Sizes Breakdown -->
+                    ${opt.sku_variants && opt.sku_variants.length > 1 ? `
+                      <div class="mt-2.5 pt-2 border-top">
+                        <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.3px;">
+                          <i class="fa-solid fa-boxes-packing text-primary me-1"></i> Pack Sizes:
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                          ${opt.sku_variants.map(v => `
+                            <span class="badge ${v.inventory_id === opt.inventory_id ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-light text-secondary border'} rounded-pill px-2 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
+                              ${escapeHtml(v.package_size)} — ₹${parseFloat(v.price).toFixed(2)}
+                            </span>
+                          `).join('')}
+                        </div>
+                      </div>
+                    ` : ''}
                   </div>
 
                   <!-- Actions -->
-                  <div class="med-actions-row">
+                  <div class="med-actions-row mt-3">
                     <a href="https://maps.google.com/?q=${opt.latitude},${opt.longitude}" target="_blank" class="btn-med-directions">
                       <i class="fa-solid fa-diamond-turn-right me-1 text-primary"></i> Directions
                     </a>

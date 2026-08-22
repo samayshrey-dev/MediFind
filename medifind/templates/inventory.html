@@ -130,7 +130,7 @@ Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI
                       {{ item.medicine.name }}
                     </a>
                   </strong>
-                  <small class="text-muted">{{ item.medicine.brand|default:"Generic" }} &bull; {{ item.medicine.dosage|default:"Tablet" }}</small>
+                  <small class="text-muted">{{ item.medicine.brand|default:"Generic" }} &bull; <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">{{ item.package_size|default:item.medicine.dosage|default:"Strip of 15" }}</span></small>
                 </td>
 
                 <!-- Category -->

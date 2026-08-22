@@ -881,6 +881,48 @@ def search(request):
         item.dist_sort = float(item.distance_km) if getattr(item, 'distance_km', None) is not None else 9999.0
         item.price_sort = float(item.price) if item.price is not None else 999999.0
 
+    # Query-level deduplication & SKU packaging grouping per pharmacy
+    # Prevents the same pharmacy from appearing multiple times while presenting genuine SKU variants
+    pharmacy_grouped = {}
+    for item in inventory_items:
+        group_key = (item.pharmacy.id, item.medicine.id)
+        if group_key not in pharmacy_grouped:
+            item.available_skus = [
+                {
+                    "id": item.id,
+                    "package_size": item.package_size or "Standard Pack",
+                    "sku_code": item.sku_code or "",
+                    "price": item.price,
+                    "quantity": item.quantity,
+                    "in_stock": item.quantity > 0,
+                }
+            ]
+            pharmacy_grouped[group_key] = item
+        else:
+            primary = pharmacy_grouped[group_key]
+            if not any(sku["package_size"] == (item.package_size or "Standard Pack") for sku in primary.available_skus):
+                primary.available_skus.append({
+                    "id": item.id,
+                    "package_size": item.package_size or "Standard Pack",
+                    "sku_code": item.sku_code or "",
+                    "price": item.price,
+                    "quantity": item.quantity,
+                    "in_stock": item.quantity > 0,
+                })
+            # If primary was out of stock but this SKU is in stock, promote this SKU as primary
+            if primary.quantity == 0 and item.quantity > 0:
+                primary.price = item.price
+                primary.quantity = item.quantity
+                primary.package_size = item.package_size
+                primary.id = item.id
+                primary.in_stock_tier = 0
+                primary.price_sort = item.price_sort
+
+    for item in pharmacy_grouped.values():
+        item.available_skus.sort(key=lambda s: float(s["price"]))
+
+    inventory_items = list(pharmacy_grouped.values())
+
     if sort == "cheapest":
         inventory_items.sort(key=lambda x: (x.in_stock_tier, x.sku_score, x.price_sort, x.dist_sort, x.open_tier))
     elif sort == "nearest":
@@ -1829,10 +1871,16 @@ def add_inventory(request):
             price = form.cleaned_data.get("price")
             batch_number = form.cleaned_data.get("batch_number", "")
             expiry_date = form.cleaned_data.get("expiry_date")
-            minimum_stock = form.cleaned_data.get("minimum_stock", 10)
+            package_size = form.cleaned_data.get("package_size", "Strip of 15") or "Strip of 15"
+            sku_code = form.cleaned_data.get("sku_code", "")
 
-            # Smart duplicate check: update existing item instead of crashing
-            existing_item = Inventory.objects.filter(pharmacy=user_pharmacy, medicine=medicine).first()
+            # Smart duplicate check: update existing item matching (pharmacy, medicine, package_size)
+            existing_item = Inventory.objects.filter(
+                pharmacy=user_pharmacy,
+                medicine=medicine,
+                package_size=package_size
+            ).first()
+
             if existing_item:
                 existing_item.quantity += quantity
                 if price is not None:
@@ -1843,18 +1891,23 @@ def add_inventory(request):
                     existing_item.expiry_date = expiry_date
                 if minimum_stock:
                     existing_item.minimum_stock = minimum_stock
+                if sku_code:
+                    existing_item.sku_code = sku_code
                 existing_item.save()
                 messages.success(
                     request,
-                    f"Stock updated for {medicine.name}. New total inventory: {existing_item.quantity} units (₹{existing_item.price})."
+                    f"Stock updated for {medicine.name} ({package_size}). New total inventory: {existing_item.quantity} units (₹{existing_item.price})."
                 )
             else:
                 item = form.save(commit=False)
                 item.pharmacy = user_pharmacy
+                if not item.sku_code:
+                    clean_name = ''.join(c for c in medicine.name if c.isalnum())[:8].upper()
+                    item.sku_code = f"{clean_name}-{package_size[:4].replace(' ', '').upper()}"
                 item.save()
                 messages.success(
                     request,
-                    f"Successfully added {medicine.name} ({item.quantity} units at ₹{item.price}) to your store inventory."
+                    f"Successfully added {medicine.name} · {package_size} ({item.quantity} units at ₹{item.price}) to your store inventory."
                 )
             return redirect("inventory")
     else:
@@ -2281,10 +2334,17 @@ def reserve_medicine(request, inventory_id):
 
     # If GET request: render the interactive reservation and payment selection page
     if request.method == "GET":
+        available_skus = Inventory.objects.filter(
+            pharmacy=inventory.pharmacy,
+            medicine=inventory.medicine
+        ).order_by("price")
+
         return render(request, "reserve_medicine.html", {
             "inventory": inventory,
             "medicine": inventory.medicine,
             "pharmacy": inventory.pharmacy,
+            "package_size": inventory.package_size or "Strip of 15",
+            "available_skus": available_skus,
             "razorpay_key_id": getattr(settings, "RAZORPAY_KEY_ID", "rzp_test_TSJYKlbEfXc5n1"),
             "unit_price": inventory.price,
             "max_quantity": min(inventory.quantity, 10),

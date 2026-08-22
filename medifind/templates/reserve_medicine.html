@@ -34,13 +34,29 @@ Reserve {{ medicine.name }} | MediAI
                 {{ medicine.category }}
               </span>
               <h3 class="fw-bold text-dark mb-1">{{ medicine.name }}</h3>
-              <p class="text-muted mb-0">Brand: <strong>{{ medicine.brand }}</strong> &bull; Dosage: {{ medicine.dosage }}</p>
+              <p class="text-muted mb-0">Brand: <strong>{{ medicine.brand }}</strong> &bull; Pack: <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 fw-bold">{{ package_size }}</span></p>
             </div>
             <div class="text-end">
-              <span class="text-muted small d-block">Unit Price</span>
+              <span class="text-muted small d-block">Price / {{ package_size }}</span>
               <h3 class="fw-extrabold text-primary mb-0">₹{{ unit_price }}</h3>
             </div>
           </div>
+
+          <!-- Multiple Pack Sizes Switcher if available at this pharmacy -->
+          {% if available_skus and available_skus|length > 1 %}
+            <div class="p-3 rounded-3 mb-3 bg-light border">
+              <span class="text-muted small fw-bold text-uppercase d-block mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                <i class="fa-solid fa-boxes-packing text-primary me-1"></i> Switch Pack Size at this Store:
+              </span>
+              <div class="d-flex flex-wrap gap-2">
+                {% for sku in available_skus %}
+                  <a href="{% url 'reserve_medicine' sku.id %}" class="btn btn-sm {% if sku.id == inventory.id %}btn-success text-white fw-bold shadow-xs{% else %}btn-outline-secondary bg-white text-dark{% endif %} rounded-pill px-3 py-1.5 small">
+                    {{ sku.package_size }} — ₹{{ sku.price }} ({{ sku.quantity }} in stock)
+                  </a>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
 
           <hr class="my-3 text-muted opacity-25">
 
