@@ -329,9 +329,9 @@ void main() {
     constructor(canvas, options = {}) {
       this.canvas = canvas;
       this.options = Object.assign({
-        horizonColor: '#5227FF',
-        waveColor: '#FF9FFC',
-        crestColor: '#FFFFFF',
+        horizonColor: '#064E3B',
+        waveColor: '#10B981',
+        crestColor: '#88E788',
         speed: 0.4,
         amplitude: 2.5,
         waveScale: 0.6,
@@ -549,9 +549,9 @@ void main() {
         const t = (now - this.startTime) * 0.001 * this.options.speed;
 
         const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, '#5227FF');
-        grad.addColorStop(0.6, '#FF9FFC');
-        grad.addColorStop(1, '#FFFFFF');
+        grad.addColorStop(0, '#064E3B');
+        grad.addColorStop(0.6, '#10B981');
+        grad.addColorStop(1, '#88E788');
 
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
@@ -577,9 +577,9 @@ void main() {
     canvases.forEach(canvas => {
       if (canvas._gradientWavesInstance) return;
       canvas._gradientWavesInstance = new GradientWaves(canvas, {
-        horizonColor: canvas.dataset.horizonColor || '#5227FF',
-        waveColor: canvas.dataset.waveColor || '#FF9FFC',
-        crestColor: canvas.dataset.crestColor || '#FFFFFF',
+        horizonColor: canvas.dataset.horizonColor || '#064E3B',
+        waveColor: canvas.dataset.waveColor || '#10B981',
+        crestColor: canvas.dataset.crestColor || '#88E788',
         speed: parseFloat(canvas.dataset.speed) || 0.4,
         amplitude: parseFloat(canvas.dataset.amplitude) || 2.5,
         waveScale: parseFloat(canvas.dataset.waveScale) || 0.6,
