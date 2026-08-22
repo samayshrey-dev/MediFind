@@ -980,6 +980,12 @@ def search(request):
         else:
             explanation = f"Lowest verified price (₹{best_match_item.price}) with active stock."
 
+    distinct_pharmacies_count = len(set(item.pharmacy.id for item in in_stock_items))
+    other_pharmacies_count = len(set(item.pharmacy.id for item in other_items))
+    other_listings_count = sum(len(getattr(item, 'available_skus', [item])) for item in other_items)
+    total_listings_count = sum(len(getattr(item, 'available_skus', [item])) for item in in_stock_items)
+    out_of_stock_pharmacies_count = len(set(item.pharmacy.id for item in out_of_stock_items))
+
     return render(
         request,
         "search.html",
@@ -991,6 +997,11 @@ def search(request):
             "other_items": other_items,
             "has_in_stock": has_in_stock,
             "zero_stock_message": zero_stock_message,
+            "distinct_pharmacies_count": distinct_pharmacies_count,
+            "other_pharmacies_count": other_pharmacies_count,
+            "other_listings_count": other_listings_count,
+            "total_listings_count": total_listings_count,
+            "out_of_stock_pharmacies_count": out_of_stock_pharmacies_count,
             "explanation": explanation,
             "categories": categories,
             "query": query,

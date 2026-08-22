@@ -332,13 +332,23 @@
     const outOfStockOther = otherOptions.filter(opt => (opt.stock || 0) <= 0);
 
     if (inStockOther.length > 0) {
+      const inStockPharmaciesCount = new Set(inStockOther.map(opt => opt.pharmacy_id || opt.pharmacy_name)).size;
+      const inStockListingsCount = inStockOther.reduce((acc, opt) => acc + (opt.sku_variants ? opt.sku_variants.length : 1), 0);
+
       otherHtml += `
         <div class="mt-4 mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
-              OTHER AVAILABLE OPTIONS (${inStockOther.length} stores nearby)
+              OTHER AVAILABLE OPTIONS &mdash; ${inStockPharmaciesCount} ${inStockPharmaciesCount === 1 ? 'pharmacy' : 'pharmacies'} nearby
             </h5>
-            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">In Stock</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                <i class="fa-solid fa-hospital me-1"></i> ${inStockPharmaciesCount} ${inStockPharmaciesCount === 1 ? 'Pharmacy' : 'Pharmacies'}
+              </span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                <i class="fa-solid fa-pills me-1"></i> ${inStockListingsCount} Medicine ${inStockListingsCount === 1 ? 'Listing' : 'Listings'}
+              </span>
+            </div>
           </div>
 
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
@@ -410,13 +420,16 @@
 
     // OUT OF STOCK AT NEARBY STORES SECTION
     if (outOfStockOther.length > 0) {
+      const outOfStockPharmaciesCount = new Set(outOfStockOther.map(opt => opt.pharmacy_id || opt.pharmacy_name)).size;
+      const outOfStockListingsCount = outOfStockOther.reduce((acc, opt) => acc + (opt.sku_variants ? opt.sku_variants.length : 1), 0);
+
       otherHtml += `
         <div class="mt-5 mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h6 class="fw-bold text-muted text-uppercase small mb-0" style="letter-spacing: 0.5px;">
-              <i class="fa-solid fa-box-archive text-warning me-1.5"></i> Out of Stock at Nearby Stores (${outOfStockOther.length})
+              <i class="fa-solid fa-box-archive text-warning me-1.5"></i> Out of Stock at Nearby Stores &mdash; ${outOfStockPharmaciesCount} ${outOfStockPharmaciesCount === 1 ? 'Pharmacy' : 'Pharmacies'}
             </h6>
-            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small">Currently Unavailable</span>
+            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small">${outOfStockListingsCount} ${outOfStockListingsCount === 1 ? 'Listing' : 'Listings'} Unavailable</span>
           </div>
 
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
