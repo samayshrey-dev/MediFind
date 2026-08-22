@@ -97,9 +97,14 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             <!-- 1. Medicines in Stock -->
             <div class="col-6">
               <div class="p-3 rounded-3 bg-light border metric-card" style="border-color: #E2E8F0 !important;">
-                <div class="text-muted small fw-semibold mb-0.5 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.4px;">Medicines in Stock</div>
+                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                  <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.4px;">Stocked</div>
+                  <div class="kpi-icon-box" style="width: 24px; height: 24px; font-size: 0.75rem; border-radius: 6px; background: #F3E8FF; color: #7E22CE; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                  </div>
+                </div>
                 <div class="d-flex align-items-baseline gap-1">
-                  <h3 class="fw-extrabold mb-0 text-dark counter-number" data-target="{{ pharmacy_inventory_count }}" style="color: #0F172A;">0</h3>
+                  <h3 class="fw-extrabold mb-0 text-dark counter-number" data-target="{{ pharmacy_inventory_count }}" style="color: #0F172A; font-size: 1.6rem;">0</h3>
                   <span class="text-muted small">units</span>
                 </div>
               </div>
@@ -108,9 +113,14 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             <!-- 2. Today's Orders -->
             <div class="col-6">
               <div class="p-3 rounded-3 bg-light border metric-card" style="border-color: #E2E8F0 !important;">
-                <div class="text-muted small fw-semibold mb-0.5 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.4px;">Today's Orders</div>
+                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                  <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.4px;">Today's Orders</div>
+                  <div class="kpi-icon-box" style="width: 24px; height: 24px; font-size: 0.75rem; border-radius: 6px; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                  </div>
+                </div>
                 <div class="d-flex align-items-baseline gap-1">
-                  <h3 class="fw-extrabold mb-0 text-dark counter-number" data-target="{{ today_orders_count }}" style="color: #0F172A;">0</h3>
+                  <h3 class="fw-extrabold mb-0 text-dark counter-number" data-target="{{ today_orders_count }}" style="color: #0F172A; font-size: 1.6rem;">0</h3>
                   <span class="text-muted small">orders</span>
                 </div>
               </div>
@@ -119,10 +129,15 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             <!-- 3. Today's Sales -->
             <div class="col-6">
               <div class="p-3 rounded-3 bg-light border metric-card" style="border-color: #E2E8F0 !important;">
-                <div class="text-muted small fw-semibold mb-0.5 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.4px;">Today's Sales</div>
+                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                  <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.4px;">Today's Sales</div>
+                  <div class="kpi-icon-box" style="width: 24px; height: 24px; font-size: 0.75rem; border-radius: 6px; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                  </div>
+                </div>
                 <div class="d-flex align-items-baseline gap-1">
-                  <span class="fw-extrabold text-success fs-4">₹</span>
-                  <h3 class="fw-extrabold mb-0 text-success counter-number" data-target="{{ today_sales|floatformat:0 }}" style="color: #10B981 !important;">0</h3>
+                  <span class="fw-extrabold text-success fs-5">₹</span>
+                  <h3 class="fw-extrabold mb-0 text-success counter-number" data-target="{{ today_sales|floatformat:0 }}" style="color: #10B981 !important; font-size: 1.6rem;">0</h3>
                 </div>
               </div>
             </div>
@@ -130,9 +145,14 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             <!-- 4. Low Stock -->
             <div class="col-6">
               <div class="p-3 rounded-3 bg-light border metric-card" style="border-color: #E2E8F0 !important;">
-                <div class="text-muted small fw-semibold mb-0.5 text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.4px;">Low Stock</div>
+                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                  <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.4px;">Low Stock</div>
+                  <div class="kpi-icon-box" style="width: 24px; height: 24px; font-size: 0.75rem; border-radius: 6px; {% if low_stock_count > 0 %}background: #FEF3C7; color: #D97706;{% else %}background: #ECFDF5; color: #059669;{% endif %} display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid {% if low_stock_count > 0 %}fa-triangle-exclamation{% else %}fa-shield-check{% endif %}"></i>
+                  </div>
+                </div>
                 <div class="d-flex align-items-baseline gap-1">
-                  <h3 class="fw-extrabold mb-0 counter-number {% if low_stock_count > 0 %}text-danger{% else %}text-dark{% endif %}" data-target="{{ low_stock_count }}">0</h3>
+                  <h3 class="fw-extrabold mb-0 counter-number {% if low_stock_count > 0 %}text-warning-emphasis{% else %}text-dark{% endif %}" data-target="{{ low_stock_count }}" style="font-size: 1.6rem;">0</h3>
                   <span class="text-muted small">alerts</span>
                 </div>
               </div>

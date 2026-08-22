@@ -45,76 +45,132 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
   </div>
 
   <!-- ==========================================
-       2. KPI SECTION (Strong Visual Hierarchy)
+       2. KPI SECTION (Interactive & Visual)
        ========================================== -->
   <div class="row g-3.5 mb-4 dash-kpi-reveal">
     <!-- KPI 1: Today's Orders (PRIMARY) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card kpi-card-primary" style="border-color: #E2E8F0 !important;">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: #0F172A;">Today's Orders</span>
-          <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Primary</span>
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card kpi-card-primary position-relative overflow-hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="kpi-icon-box bg-emerald-light text-emerald" style="background: #ECFDF5; color: #059669;">
+              <i class="fa-solid fa-cart-shopping"></i>
+            </div>
+            <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.74rem; color: #0F172A;">Today's Orders</span>
+          </div>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 small fw-bold" style="font-size: 0.7rem;">
+            <span class="d-inline-block rounded-circle bg-success me-1" style="width: 5px; height: 5px;"></span>Live
+          </span>
         </div>
-        <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold mb-0 display-6 counter-number" data-target="{{ today_orders_count }}" style="color: #0F172A;">0</h2>
-          <span class="text-muted small" style="color: #64748B;">orders</span>
+        <div class="d-flex align-items-baseline justify-content-between">
+          <div class="d-flex align-items-baseline gap-1.5">
+            <h2 class="fw-extrabold mb-0 display-6 counter-number" data-target="{{ today_orders_count }}" style="color: #0F172A; font-size: 2.25rem;">0</h2>
+            <span class="text-muted small fw-semibold" style="color: #64748B;">reservations</span>
+          </div>
+          <div class="kpi-micro-graph text-success small fw-bold">
+            <i class="fa-solid fa-arrow-trend-up me-1"></i>Today
+          </div>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">Total reservations today</small>
+        <div class="pt-2.5 mt-2.5 border-top d-flex justify-content-between align-items-center small text-muted" style="border-color: #F1F5F9 !important; font-size: 0.78rem;">
+          <span>Volume today</span>
+          <a href="{% url 'reservations' %}" class="text-decoration-none fw-semibold text-primary">View &rarr;</a>
+        </div>
       </div>
     </div>
 
     <!-- KPI 2: Low Stock (ATTENTION METRIC) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card {% if low_stock_count > 0 %}border-warning-subtle bg-warning-subtle-50{% endif %}" style="border-color: #E2E8F0 !important;">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: {% if low_stock_count > 0 %}#B45309{% else %}#0F172A{% endif %};">Low Stock</span>
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card position-relative overflow-hidden {% if low_stock_count > 0 %}kpi-card-warning{% endif %}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="kpi-icon-box" style="{% if low_stock_count > 0 %}background: #FEF3C7; color: #D97706;{% else %}background: #ECFDF5; color: #059669;{% endif %}">
+              <i class="fa-solid {% if low_stock_count > 0 %}fa-triangle-exclamation{% else %}fa-shield-check{% endif %}"></i>
+            </div>
+            <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.74rem; color: {% if low_stock_count > 0 %}#92400E{% else %}#0F172A{% endif %};">Low Stock</span>
+          </div>
           {% if low_stock_count > 0 %}
-            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Warning</span>
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-0.5 small fw-bold" style="font-size: 0.7rem;">
+              <span class="d-inline-block rounded-circle bg-warning me-1 pulse-dot" style="width: 5px; height: 5px;"></span>Warning
+            </span>
           {% else %}
-            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Healthy</span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 small fw-bold" style="font-size: 0.7rem;">
+              <i class="fa-solid fa-check small me-0.5"></i>Optimal
+            </span>
           {% endif %}
         </div>
-        <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold mb-0 display-6 counter-number {% if low_stock_count > 0 %}text-warning-emphasis{% else %}text-success{% endif %}" data-target="{{ low_stock_count }}" style="{% if low_stock_count == 0 %}color: #10B981 !important;{% endif %}">0</h2>
-          <span class="text-muted small" style="color: #64748B;">medicines</span>
+        <div class="d-flex align-items-baseline justify-content-between">
+          <div class="d-flex align-items-baseline gap-1.5">
+            <h2 class="fw-extrabold mb-0 display-6 counter-number {% if low_stock_count > 0 %}text-warning-emphasis{% else %}text-success{% endif %}" data-target="{{ low_stock_count }}" style="font-size: 2.25rem; {% if low_stock_count == 0 %}color: #10B981 !important;{% endif %}">0</h2>
+            <span class="text-muted small fw-semibold" style="color: #64748B;">medicines</span>
+          </div>
+          <div class="kpi-micro-graph {% if low_stock_count > 0 %}text-warning-emphasis{% else %}text-success{% endif %} small fw-semibold">
+            &le;10 units
+          </div>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">
-          {% if low_stock_count > 0 %}Below &le;10 unit threshold{% else %}All medicines meet threshold{% endif %}
-        </small>
+        <div class="pt-2.5 mt-2.5 border-top d-flex justify-content-between align-items-center small text-muted" style="border-color: #F1F5F9 !important; font-size: 0.78rem;">
+          <span>{% if low_stock_count > 0 %}Needs reorder{% else %}Healthy levels{% endif %}</span>
+          <a href="{% url 'inventory' %}{% if low_stock_count > 0 %}?stock_status=low_stock{% endif %}" class="text-decoration-none fw-semibold text-primary">Manage &rarr;</a>
+        </div>
       </div>
     </div>
 
     <!-- KPI 3: Pending Orders (OPERATIONAL METRIC) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card" style="border-color: #E2E8F0 !important;">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: #0F172A;">Pending Orders</span>
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card position-relative overflow-hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="kpi-icon-box" style="background: #E0F2FE; color: #0284C7;">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.74rem; color: #0F172A;">Pending Orders</span>
+          </div>
           {% if pending_orders_count > 0 %}
-            <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Action required</span>
+            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-0.5 small fw-bold" style="font-size: 0.7rem;">Action</span>
           {% else %}
-            <span class="badge bg-light border text-muted rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Zero backlog</span>
+            <span class="badge bg-light border text-muted rounded-pill px-2.5 py-0.5 small fw-semibold" style="font-size: 0.7rem;">Clear</span>
           {% endif %}
         </div>
-        <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold mb-0 display-6 counter-number {% if pending_orders_count > 0 %}text-warning-emphasis{% else %}text-dark{% endif %}" data-target="{{ pending_orders_count }}" style="color: #0F172A;">0</h2>
-          <span class="text-muted small" style="color: #64748B;">unfulfilled</span>
+        <div class="d-flex align-items-baseline justify-content-between">
+          <div class="d-flex align-items-baseline gap-1.5">
+            <h2 class="fw-extrabold mb-0 display-6 counter-number" data-target="{{ pending_orders_count }}" style="color: #0F172A; font-size: 2.25rem;">0</h2>
+            <span class="text-muted small fw-semibold" style="color: #64748B;">unfulfilled</span>
+          </div>
+          <div class="kpi-micro-graph text-muted small fw-semibold">
+            Queue
+          </div>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">Awaiting store confirmation</small>
+        <div class="pt-2.5 mt-2.5 border-top d-flex justify-content-between align-items-center small text-muted" style="border-color: #F1F5F9 !important; font-size: 0.78rem;">
+          <span>{% if pending_orders_count > 0 %}Awaiting hold{% else %}Zero backlog{% endif %}</span>
+          <a href="{% url 'reservations' %}?tab=pending" class="text-decoration-none fw-semibold text-primary">Review &rarr;</a>
+        </div>
       </div>
     </div>
 
     <!-- KPI 4: Total Medicines (SECONDARY METRIC) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card" style="border-color: #E2E8F0 !important;">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: #0F172A;">Total Medicines</span>
-          <span class="badge bg-light border text-muted rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Catalog</span>
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card position-relative overflow-hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="kpi-icon-box" style="background: #F3E8FF; color: #7E22CE;">
+              <i class="fa-solid fa-boxes-stacked"></i>
+            </div>
+            <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.74rem; color: #0F172A;">Total Medicines</span>
+          </div>
+          <span class="badge bg-light border text-muted rounded-pill px-2.5 py-0.5 small fw-semibold" style="font-size: 0.7rem;">Catalog</span>
         </div>
-        <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold mb-0 display-6 counter-number" data-target="{{ total_medicines_count }}" style="color: #0F172A;">0</h2>
-          <span class="text-muted small" style="color: #64748B;">items</span>
+        <div class="d-flex align-items-baseline justify-content-between">
+          <div class="d-flex align-items-baseline gap-1.5">
+            <h2 class="fw-extrabold mb-0 display-6 counter-number" data-target="{{ total_medicines_count }}" style="color: #0F172A; font-size: 2.25rem;">0</h2>
+            <span class="text-muted small fw-semibold" style="color: #64748B;">active items</span>
+          </div>
+          <div class="kpi-micro-graph text-success small fw-semibold">
+            {{ in_stock_count }} in stock
+          </div>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">Active in your catalog</small>
+        <div class="pt-2.5 mt-2.5 border-top d-flex justify-content-between align-items-center small text-muted" style="border-color: #F1F5F9 !important; font-size: 0.78rem;">
+          <span>Indexed catalog</span>
+          <a href="{% url 'inventory' %}" class="text-decoration-none fw-semibold text-primary">Catalog &rarr;</a>
+        </div>
       </div>
     </div>
   </div>
@@ -391,12 +447,38 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
 }
 
 .kpi-card {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  border-color: #E2E8F0 !important;
+  background: #FFFFFF;
 }
 .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.06);
-  border-color: #cbd5e1 !important;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.08) !important;
+  border-color: #CBD5E1 !important;
+}
+.kpi-card-primary {
+  border-top: 3px solid #10B981 !important;
+}
+.kpi-card-warning {
+  border-top: 3px solid #F59E0B !important;
+  background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 35%);
+}
+.kpi-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.kpi-micro-graph {
+  font-size: 0.76rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
 }
 .table-order-row {
   transition: background-color 0.15s ease;
