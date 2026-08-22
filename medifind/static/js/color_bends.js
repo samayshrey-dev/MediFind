@@ -406,11 +406,11 @@ void main() {
       gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height);
       gl.uniform2f(this.uMouse, this.mouse.x, this.mouse.y);
 
-      const colors = this.options.colors || ['#ff5c7a', '#8a5cff', '#00ffd1'];
-      const c1 = hexToRgb(colors[0] || '#ff5c7a');
-      const c2 = hexToRgb(colors[1] || '#8a5cff');
-      const c3 = hexToRgb(colors[2] || '#00ffd1');
-      const cBase = hexToRgb(this.options.color || '#A855F7');
+      const colors = this.options.colors || ['#88E788', '#4ADE80', '#10B981'];
+      const c1 = hexToRgb(colors[0] || '#88E788');
+      const c2 = hexToRgb(colors[1] || '#4ADE80');
+      const c3 = hexToRgb(colors[2] || '#10B981');
+      const cBase = hexToRgb(this.options.color || '#88E788');
 
       gl.uniform3f(this.uColor1, c1[0], c1[1], c1[2]);
       gl.uniform3f(this.uColor2, c2[0], c2[1], c2[2]);
@@ -454,9 +454,9 @@ void main() {
         const t = (now - this.startTime) * 0.001 * this.options.speed;
 
         const grad = ctx.createLinearGradient(0, 0, w, h);
-        grad.addColorStop(0, 'rgba(255, 92, 122, 0.45)');
-        grad.addColorStop(0.5, 'rgba(138, 92, 255, 0.45)');
-        grad.addColorStop(1, 'rgba(0, 255, 209, 0.45)');
+        grad.addColorStop(0, 'rgba(136, 231, 136, 0.45)');
+        grad.addColorStop(0.5, 'rgba(74, 222, 128, 0.45)');
+        grad.addColorStop(1, 'rgba(16, 185, 129, 0.45)');
 
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
@@ -481,7 +481,7 @@ void main() {
     const canvases = document.querySelectorAll('.color-bends-canvas, [data-color-bends]');
     canvases.forEach(canvas => {
       if (canvas._colorBendsInstance) return;
-      let colors = ['#ff5c7a', '#8a5cff', '#00ffd1'];
+      let colors = ['#88E788', '#4ADE80', '#10B981'];
       if (canvas.dataset.colors) {
         try {
           colors = JSON.parse(canvas.dataset.colors);
@@ -491,7 +491,7 @@ void main() {
       }
       canvas._colorBendsInstance = new ColorBends(canvas, {
         colors: colors,
-        color: canvas.dataset.color || '#A855F7',
+        color: canvas.dataset.color || '#88E788',
         rotation: parseFloat(canvas.dataset.rotation) || 90,
         speed: parseFloat(canvas.dataset.speed) || 0.2,
         scale: parseFloat(canvas.dataset.scale) || 1.0,
