@@ -8,137 +8,185 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
 {% block content %}
 <div class="container py-5" style="margin-top: 70px; max-width: 1200px;">
 
-  <!-- Time-Aware Greeting Header -->
-  <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 pb-4 mb-4 border-bottom reveal hero-entrance">
+  <!-- ==========================================
+       1. HERO / HEADER (Editorial & Spacious)
+       ========================================== -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-4 pb-4 mb-4 border-bottom dash-hero-reveal" style="border-color: #E2E8F0 !important;">
     <div>
-      <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border text-muted small fw-semibold mb-2">
-        <span class="d-inline-block rounded-circle {% if pharmacy.is_open %}bg-success{% else %}bg-danger{% endif %}" style="width: 8px; height: 8px;"></span>
-        <span>{{ pharmacy.city|default:"Chennai" }} Store Portal</span>
+      <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white border text-muted small fw-bold mb-2.5 shadow-xs" style="border-color: #E2E8F0;">
+        <span class="d-inline-block rounded-circle {% if pharmacy.is_open %}bg-success pulse-dot{% else %}bg-danger{% endif %}" style="width: 7px; height: 7px;"></span>
+        <span style="font-size: 0.74rem; letter-spacing: 0.5px; text-transform: uppercase; color: #64748B;">{{ pharmacy.city|default:"Chennai" }} Store Portal &bull; PH-{{ pharmacy.id|default:"1" }}</span>
       </div>
-      <h1 class="fw-extrabold text-dark display-6 mb-1" style="letter-spacing: -0.8px;">
-        {{ greeting }}, <span class="text-success">{{ pharmacy.name|default:"Partner Store" }}</span>
+      <h1 class="fw-extrabold display-6 mb-1.5" style="color: #0F172A; letter-spacing: -0.9px; line-height: 1.15;">
+        {{ greeting }},<br>
+        <span class="text-success" style="color: #10B981 !important;">{{ pharmacy.name|default:"Partner Store" }}</span>
       </h1>
-      <p class="text-muted mb-0" style="font-size: 1.05rem;">
+      <p class="text-muted mb-0" style="color: #64748B; font-size: 1.05rem;">
         Here's what's happening with your pharmacy today.
       </p>
     </div>
 
-    <div class="d-flex align-items-center gap-2.5 flex-wrap">
-      <span class="badge {% if pharmacy.is_open %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} rounded-pill px-3 py-2 fw-bold small">
-        {% if pharmacy.is_open %}● STORE OPEN{% else %}● STORE CLOSED{% endif %}
-      </span>
-      <a href="{% url 'toggle_pharmacy_status' %}" class="btn btn-sm {% if pharmacy.is_open %}btn-outline-danger{% else %}btn-outline-success{% endif %} rounded-pill px-3.5 py-1.5 fw-semibold shadow-xs">
+    <!-- Right Side Store Health & Status Indicator -->
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="text-end d-none d-sm-block">
+        <div class="d-flex align-items-center justify-content-end gap-1.5 small fw-bold">
+          <span class="d-inline-block rounded-circle {% if pharmacy.is_open %}bg-success pulse-dot{% else %}bg-danger{% endif %}" style="width: 7px; height: 7px;"></span>
+          <span style="font-size: 0.8rem; color: #0F172A;">{% if pharmacy.is_open %}● STORE OPEN{% else %}● STORE CLOSED{% endif %}</span>
+        </div>
+        <small class="text-muted d-block" style="font-size: 0.76rem; color: #64748B;">
+          {% if low_stock_count == 0 %}Everything looks healthy{% else %}Requires attention ({{ low_stock_count }} low){% endif %} &bull; Last synced just now
+        </small>
+      </div>
+
+      <a href="{% url 'toggle_pharmacy_status' %}" class="btn btn-sm {% if pharmacy.is_open %}btn-outline-secondary bg-white text-dark{% else %}btn-success text-white{% endif %} rounded-pill px-3.5 py-1.5 fw-semibold shadow-xs" style="border-color: #E2E8F0;">
         {% if pharmacy.is_open %}Close Store{% else %}Open Store{% endif %}
       </a>
     </div>
   </div>
 
-  <!-- 4 Real-Time KPI Cards -->
-  <div class="row g-3.5 mb-4 reveal-stagger">
-    <!-- KPI 1: Today's Orders -->
+  <!-- ==========================================
+       2. KPI SECTION (Strong Visual Hierarchy)
+       ========================================== -->
+  <div class="row g-3.5 mb-4 dash-kpi-reveal">
+    <!-- KPI 1: Today's Orders (PRIMARY) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 card-interactive">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card kpi-card-primary" style="border-color: #E2E8F0 !important;">
         <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">Today's Orders</span>
-          <div class="p-2 rounded-3 bg-primary-subtle text-primary" style="font-size: 0.9rem;">
-            <i class="fa-solid fa-calendar-day"></i>
-          </div>
+          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: #0F172A;">Today's Orders</span>
+          <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Primary</span>
         </div>
         <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold text-dark mb-0 display-6">{{ today_orders_count }}</h2>
-          <span class="text-muted small">orders</span>
+          <h2 class="fw-extrabold mb-0 display-6 counter-number" data-target="{{ today_orders_count }}" style="color: #0F172A;">0</h2>
+          <span class="text-muted small" style="color: #64748B;">orders</span>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem;">Placed by local customers today</small>
+        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">Total reservations today</small>
       </div>
     </div>
 
-    <!-- KPI 2: Pending Orders -->
+    <!-- KPI 2: Low Stock (ATTENTION METRIC) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 card-interactive">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card {% if low_stock_count > 0 %}border-warning-subtle bg-warning-subtle-50{% endif %}" style="border-color: #E2E8F0 !important;">
         <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">Pending Orders</span>
-          <div class="p-2 rounded-3 bg-warning-subtle text-warning-emphasis" style="font-size: 0.9rem;">
-            <i class="fa-solid fa-clipboard-list"></i>
-          </div>
+          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: {% if low_stock_count > 0 %}#B45309{% else %}#0F172A{% endif %};">Low Stock</span>
+          {% if low_stock_count > 0 %}
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Warning</span>
+          {% else %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Healthy</span>
+          {% endif %}
         </div>
         <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold {% if pending_orders_count > 0 %}text-warning-emphasis{% else %}text-dark{% endif %} mb-0 display-6">{{ pending_orders_count }}</h2>
-          <span class="text-muted small">unfulfilled</span>
+          <h2 class="fw-extrabold mb-0 display-6 counter-number {% if low_stock_count > 0 %}text-warning-emphasis{% else %}text-success{% endif %}" data-target="{{ low_stock_count }}" style="{% if low_stock_count == 0 %}color: #10B981 !important;{% endif %}">0</h2>
+          <span class="text-muted small" style="color: #64748B;">medicines</span>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem;">Awaiting your approval</small>
+        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">
+          {% if low_stock_count > 0 %}Below &le;10 unit threshold{% else %}All medicines meet threshold{% endif %}
+        </small>
       </div>
     </div>
 
-    <!-- KPI 3: Low Stock -->
+    <!-- KPI 3: Pending Orders (OPERATIONAL METRIC) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 card-interactive">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card" style="border-color: #E2E8F0 !important;">
         <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">Low Stock</span>
-          <div class="p-2 rounded-3 bg-danger-subtle text-danger" style="font-size: 0.9rem;">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-          </div>
+          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: #0F172A;">Pending Orders</span>
+          {% if pending_orders_count > 0 %}
+            <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Action required</span>
+          {% else %}
+            <span class="badge bg-light border text-muted rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Zero backlog</span>
+          {% endif %}
         </div>
         <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold {% if low_stock_count > 0 %}text-danger{% else %}text-dark{% endif %} mb-0 display-6">{{ low_stock_count }}</h2>
-          <span class="text-muted small">medicines</span>
+          <h2 class="fw-extrabold mb-0 display-6 counter-number {% if pending_orders_count > 0 %}text-warning-emphasis{% else %}text-dark{% endif %}" data-target="{{ pending_orders_count }}" style="color: #0F172A;">0</h2>
+          <span class="text-muted small" style="color: #64748B;">unfulfilled</span>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem;">Below &le;10 units remaining</small>
+        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">Awaiting store confirmation</small>
       </div>
     </div>
 
-    <!-- KPI 4: Total Medicines -->
+    <!-- KPI 4: Total Medicines (SECONDARY METRIC) -->
     <div class="col-sm-6 col-lg-3">
-      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 card-interactive">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 kpi-card" style="border-color: #E2E8F0 !important;">
         <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">Total Medicines</span>
-          <div class="p-2 rounded-3 bg-success-subtle text-success" style="font-size: 0.9rem;">
-            <i class="fa-solid fa-boxes-stacked"></i>
-          </div>
+          <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: #0F172A;">Total Medicines</span>
+          <span class="badge bg-light border text-muted rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">Catalog</span>
         </div>
         <div class="d-flex align-items-baseline gap-1.5">
-          <h2 class="fw-extrabold text-success mb-0 display-6">{{ total_medicines_count }}</h2>
-          <span class="text-muted small">catalog</span>
+          <h2 class="fw-extrabold mb-0 display-6 counter-number" data-target="{{ total_medicines_count }}" style="color: #0F172A;">0</h2>
+          <span class="text-muted small" style="color: #64748B;">items</span>
         </div>
-        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem;">Active in your pharmacy</small>
+        <small class="text-muted mt-2 d-block" style="font-size: 0.78rem; color: #64748B;">Active in your catalog</small>
       </div>
     </div>
   </div>
 
-  <!-- Quick Actions Bar -->
-  <div class="card border rounded-4 p-3.5 bg-white shadow-xs mb-4 reveal">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-light border text-dark rounded-pill px-2.5 py-1 small fw-semibold">Quick Actions</span>
-        <span class="text-muted small d-none d-md-inline">Fast shortcuts for daily store operations:</span>
+  <!-- ==========================================
+       3. INVENTORY HEALTH & QUICK ACTIONS ROW
+       ========================================== -->
+  <div class="row g-3.5 mb-4 dash-health-reveal">
+    <!-- Inventory Health Visualization -->
+    <div class="col-lg-7">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100" style="border-color: #E2E8F0 !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2.5">
+          <div class="d-flex align-items-center gap-2">
+            <span class="p-1.5 rounded-3 bg-success-subtle text-success" style="font-size: 0.8rem;"><i class="fa-solid fa-heart-pulse"></i></span>
+            <strong class="text-dark small text-uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 0.76rem; color: #0F172A;">Inventory Health</strong>
+          </div>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 fw-bold small">
+            {{ inventory_health_pct }}% Healthy
+          </span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress rounded-pill bg-light border mb-2.5" style="height: 8px; border-color: #E2E8F0 !important;">
+          <div class="progress-bar bg-success rounded-pill dash-progress-bar" role="progressbar" style="width: 0%; background: #10B981 !important; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);" data-progress="{{ inventory_health_pct }}%"></div>
+        </div>
+
+        <!-- Health Stats Breakdown -->
+        <div class="d-flex justify-content-between align-items-center text-muted small pt-1" style="font-size: 0.8rem; color: #64748B;">
+          <span><strong class="text-dark">{{ in_stock_count }}</strong> In Stock</span>
+          <span class="text-muted-subtle">&bull;</span>
+          <span><strong class="{% if low_stock_count > 0 %}text-warning-emphasis{% else %}text-dark{% endif %}">{{ low_stock_count }}</strong> Low Stock</span>
+          <span class="text-muted-subtle">&bull;</span>
+          <span><strong class="{% if out_of_stock_count > 0 %}text-danger{% else %}text-dark{% endif %}">{{ out_of_stock_count }}</strong> Out of Stock</span>
+          <a href="{% url 'inventory' %}" class="fw-semibold text-primary text-decoration-none ms-auto small">Manage Catalog &rarr;</a>
+        </div>
       </div>
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="{% url 'add_inventory' %}" class="btn btn-primary btn-sm rounded-pill px-3.5 py-1.5 fw-bold shadow-xs d-flex align-items-center gap-1.5">
-          <i class="fa-solid fa-circle-plus"></i>
-          <span>Add Stock</span>
-        </a>
-        <a href="{% url 'reservations' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold d-flex align-items-center gap-1.5">
-          <i class="fa-solid fa-clipboard-list"></i>
-          <span>View Orders</span>
-        </a>
-        <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3.5 py-1.5 fw-semibold d-flex align-items-center gap-1.5">
-          <i class="fa-solid fa-boxes-stacked"></i>
-          <span>Manage Inventory</span>
-        </a>
+    </div>
+
+    <!-- Quick Actions Compact Row -->
+    <div class="col-lg-5">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 d-flex justify-content-center" style="border-color: #E2E8F0 !important;">
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+          <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-3.5 py-2 fw-bold shadow-xs d-flex align-items-center gap-1.5 flex-grow-1 justify-content-center btn-merchant-cta" style="font-size: 0.84rem;">
+            <i class="fa-solid fa-circle-plus"></i>
+            <span>+ Add Stock</span>
+          </a>
+          <a href="{% url 'reservations' %}" class="btn btn-light border rounded-pill px-3 py-2 fw-semibold text-dark shadow-xs d-flex align-items-center gap-1.5 flex-grow-1 justify-content-center" style="border-color: #E2E8F0; font-size: 0.84rem;">
+            <i class="fa-solid fa-clipboard-list text-muted"></i>
+            <span>View Orders</span>
+          </a>
+          <a href="{% url 'inventory' %}" class="btn btn-light border rounded-pill px-3 py-2 fw-semibold text-dark shadow-xs d-flex align-items-center gap-1.5 flex-grow-1 justify-content-center" style="border-color: #E2E8F0; font-size: 0.84rem;">
+            <i class="fa-solid fa-boxes-stacked text-muted"></i>
+            <span>Inventory</span>
+          </a>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Main 2-Column Grid: Recent Orders & Low Stock -->
-  <div class="row g-4 reveal">
+  <!-- ==========================================
+       4. MAIN 2-COLUMN SECTION: RECENT ORDERS & LOW STOCK
+       ========================================== -->
+  <div class="row g-4 mb-4 dash-main-reveal">
     <!-- Left Column: Recent Orders -->
     <div class="col-lg-8">
-      <div class="card border rounded-4 bg-white shadow-xs h-100">
-        <div class="p-3.5 border-bottom d-flex justify-content-between align-items-center">
+      <div class="card border rounded-4 bg-white shadow-xs h-100" style="border-color: #E2E8F0 !important;">
+        <div class="p-3.5 border-bottom d-flex justify-content-between align-items-center" style="border-color: #F1F5F9 !important;">
           <div>
-            <h5 class="fw-bold text-dark mb-0">Recent Orders</h5>
-            <small class="text-muted">Latest customer reservations &amp; purchases</small>
+            <h5 class="fw-bold mb-0" style="color: #0F172A; font-size: 1.05rem;">Recent Orders</h5>
+            <small class="text-muted" style="color: #64748B;">Latest customer purchases and hold requests</small>
           </div>
-          <a href="{% url 'reservations' %}" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none small">
+          <a href="{% url 'reservations' %}" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none small p-0">
             View all orders &rarr;
           </a>
         </div>
@@ -148,29 +196,29 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
             <div class="table-responsive">
               <table class="table align-middle mb-0 table-hover">
                 <thead class="bg-light">
-                  <tr style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;" class="text-muted">
-                    <th class="ps-3 py-2.5">Order</th>
+                  <tr style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B;">
+                    <th class="ps-3.5 py-2.5">Order</th>
                     <th class="py-2.5">Medicine</th>
                     <th class="py-2.5">Total</th>
                     <th class="py-2.5">Status</th>
-                    <th class="text-end pe-3 py-2.5">Action</th>
+                    <th class="text-end pe-3.5 py-2.5">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for r in recent_orders %}
-                    <tr>
-                      <td class="ps-3 py-3">
-                        <strong class="text-dark d-block">#{{ r.order_code }}</strong>
-                        <small class="text-muted">{{ r.customer.username }} &bull; {{ r.requested_at|date:"d M, H:i" }}</small>
+                    <tr class="table-order-row">
+                      <td class="ps-3.5 py-3">
+                        <strong class="d-block" style="color: #0F172A; font-size: 0.9rem;">#{{ r.order_code }}</strong>
+                        <small class="text-muted" style="color: #64748B; font-size: 0.78rem;">{{ r.customer.username }} &bull; {{ r.requested_at|date:"d M, H:i" }}</small>
                       </td>
                       <td class="py-3">
-                        <span class="fw-semibold text-dark">{{ r.medicine.name }}</span>
-                        <small class="text-muted d-block">{{ r.quantity }} unit(s)</small>
+                        <span class="fw-semibold d-block" style="color: #0F172A; font-size: 0.88rem;">{{ r.medicine.name }}</span>
+                        <small class="text-muted" style="color: #64748B; font-size: 0.78rem;">{{ r.quantity }} unit(s)</small>
                       </td>
-                      <td class="py-3 fw-bold text-dark">
+                      <td class="py-3 fw-bold" style="color: #0F172A; font-size: 0.9rem;">
                         ₹{{ r.calculated_total|floatformat:2 }}
-                        <small class="d-block text-muted fw-normal" style="font-size: 0.72rem;">
-                          {% if r.is_paid %}<span class="text-success"><i class="fa-solid fa-circle-check"></i> Paid</span>{% else %}Pay on pickup{% endif %}
+                        <small class="d-block fw-normal" style="font-size: 0.72rem; color: #64748B;">
+                          {% if r.is_paid %}<span class="text-success"><i class="fa-solid fa-circle-check"></i> Paid Online</span>{% else %}Pay on pickup{% endif %}
                         </small>
                       </td>
                       <td class="py-3">
@@ -192,17 +240,17 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
                           </span>
                         {% endif %}
                       </td>
-                      <td class="text-end pe-3 py-3">
+                      <td class="text-end pe-3.5 py-3">
                         {% if r.status == "Pending" %}
                           <a href="{% url 'accept_reservation' r.id %}" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold shadow-xs">
                             Accept
                           </a>
                         {% elif r.status == "Accepted" %}
-                          <a href="{% url 'complete_reservation' r.id %}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold">
+                          <a href="{% url 'complete_reservation' r.id %}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold shadow-xs">
                             Mark Ready
                           </a>
                         {% else %}
-                          <a href="{% url 'reservations' %}" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-muted">
+                          <a href="{% url 'reservations' %}" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-dark small" style="border-color: #E2E8F0;">
                             Details
                           </a>
                         {% endif %}
@@ -213,62 +261,69 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
               </table>
             </div>
           {% else %}
-            <!-- Empty State for Orders -->
+            <!-- Clean Empty State for Orders -->
             <div class="text-center py-5 px-3">
-              <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-muted mb-3" style="width: 48px; height: 48px;">
+              <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-muted mb-2.5 mx-auto" style="width: 44px; height: 44px;">
                 <i class="fa-solid fa-clipboard-list fs-5"></i>
               </div>
-              <h6 class="fw-bold text-dark mb-1">No orders yet.</h6>
-              <p class="text-muted small mb-0">Customer orders will appear here when they reserve medicines.</p>
+              <h6 class="fw-bold mb-1" style="color: #0F172A;">No orders yet</h6>
+              <p class="text-muted small mb-0" style="color: #64748B;">Customer orders will appear here when they reserve medicines.</p>
             </div>
           {% endif %}
         </div>
       </div>
     </div>
 
-    <!-- Right Column: Low Stock Alerts -->
+    <!-- Right Column: Low Stock Panel -->
     <div class="col-lg-4">
-      <div class="card border rounded-4 bg-white shadow-xs h-100">
-        <div class="p-3.5 border-bottom d-flex justify-content-between align-items-center">
+      <div class="card border rounded-4 bg-white shadow-xs h-100 d-flex flex-column" style="border-color: #E2E8F0 !important;">
+        <div class="p-3.5 border-bottom d-flex justify-content-between align-items-center" style="border-color: #F1F5F9 !important;">
           <div>
-            <h5 class="fw-bold text-dark mb-0">Low Stock</h5>
-            <small class="text-muted">Items needing reorder</small>
+            <h5 class="fw-bold mb-0" style="color: #0F172A; font-size: 1.05rem;">Low Stock</h5>
+            <small class="text-muted" style="color: #64748B;">Threshold alerts (&le;10 units)</small>
           </div>
-          <a href="{% url 'inventory' %}?stock_status=low_stock" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none small">
-            Manage &rarr;
-          </a>
+          {% if low_stock_count > 0 %}
+            <a href="{% url 'inventory' %}?stock_status=low_stock" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none small p-0">
+              Manage &rarr;
+            </a>
+          {% endif %}
         </div>
 
-        <div class="p-3.5">
+        <div class="p-3.5 flex-grow-1 d-flex flex-column justify-content-center">
           {% if low_stock_items %}
             <div class="d-flex flex-column gap-2.5">
               {% for item in low_stock_items %}
-                <div class="p-2.5 rounded-3 border bg-light d-flex align-items-center justify-content-between">
+                <div class="p-2.5 rounded-3 border bg-light d-flex align-items-center justify-content-between" style="border-color: #E2E8F0 !important;">
                   <div>
-                    <strong class="text-dark d-block" style="font-size: 0.88rem;">{{ item.medicine.name }}</strong>
-                    <small class="text-muted">{{ item.medicine.brand|default:item.medicine.category }} &bull; ₹{{ item.price }}</small>
+                    <strong class="d-block" style="font-size: 0.88rem; color: #0F172A;">{{ item.medicine.name }}</strong>
+                    <small class="text-muted" style="color: #64748B; font-size: 0.76rem;">{{ item.medicine.brand|default:item.medicine.category }} &bull; ₹{{ item.price }}</small>
                   </div>
                   <div class="text-end">
-                    <span class="badge {% if item.quantity == 0 %}bg-danger text-white{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
+                    <span class="badge {% if item.quantity == 0 %}bg-danger text-white{% else %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
                       {{ item.quantity }} left
                     </span>
                   </div>
                 </div>
               {% endfor %}
             </div>
-            <div class="mt-3">
-              <a href="{% url 'inventory' %}" class="btn btn-outline-primary btn-sm rounded-pill w-100 py-1.5 fw-semibold">
+            <div class="mt-3 pt-1">
+              <a href="{% url 'inventory' %}" class="btn btn-outline-primary btn-sm rounded-pill w-100 py-1.5 fw-semibold small">
                 Manage Inventory &rarr;
               </a>
             </div>
           {% else %}
-            <!-- Clean All Good State -->
-            <div class="text-center py-4">
-              <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success mb-2" style="width: 44px; height: 44px;">
-                <i class="fa-solid fa-circle-check fs-5"></i>
+            <!-- Compact, Elegant Healthy State -->
+            <div class="text-center py-4 px-2">
+              <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success mb-2.5 mx-auto" style="width: 44px; height: 44px;">
+                <i class="fa-solid fa-check fs-5"></i>
               </div>
-              <h6 class="fw-bold text-dark mb-1">Stock levels healthy</h6>
-              <p class="text-muted small mb-0">All items currently meet or exceed the minimum threshold.</p>
+              <h6 class="fw-bold mb-1" style="color: #0F172A;">Stock levels healthy</h6>
+              <p class="text-muted small mb-3" style="color: #64748B; max-width: 250px; margin: 0 auto; font-size: 0.82rem;">
+                All medicines currently meet or exceed the minimum stock threshold.
+              </p>
+              <a href="{% url 'inventory' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3.5 py-1 fw-semibold small" style="border-color: #E2E8F0; color: #0F172A;">
+                View Inventory &rarr;
+              </a>
             </div>
           {% endif %}
         </div>
@@ -276,5 +331,138 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
     </div>
   </div>
 
+  <!-- ==========================================
+       5. RECENT ACTIVITY TIMELINE
+       ========================================== -->
+  <div class="card border rounded-4 p-4 bg-white shadow-xs dash-activity-reveal" style="border-color: #E2E8F0 !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom" style="border-color: #F1F5F9 !important;">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fa-solid fa-clock-rotate-left text-success"></i>
+        <h5 class="fw-bold mb-0" style="color: #0F172A; font-size: 1.05rem;">Recent Activity</h5>
+      </div>
+      <a href="{% url 'reservation_history' %}" class="small text-muted text-decoration-none fw-semibold" style="font-size: 0.8rem; color: #64748B;">
+        Full History &rarr;
+      </a>
+    </div>
+
+    {% if recent_activities %}
+      <div class="d-flex flex-column gap-2.5">
+        {% for act in recent_activities %}
+          <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 bg-light activity-timeline-row">
+            <div class="d-flex align-items-center gap-3">
+              <span class="badge bg-white border text-muted rounded-pill px-2.5 py-1 small fw-bold" style="font-size: 0.74rem; min-width: 55px; text-align: center;">
+                {{ act.time }}
+              </span>
+              <div>
+                <strong class="d-block" style="font-size: 0.88rem; color: #0F172A;">{{ act.title }}</strong>
+                <small class="text-muted" style="color: #64748B; font-size: 0.78rem;">{{ act.desc }}</small>
+              </div>
+            </div>
+            <span class="badge bg-white border {{ act.badge_class }} rounded-pill px-2.5 py-1 small fw-semibold" style="font-size: 0.72rem;">
+              {{ act.badge }}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-4">
+        <p class="text-muted small mb-0" style="color: #64748B;">No recent activity logged yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
 </div>
+
+<!-- Micro-Interactions, Count-Up Animation & Styles -->
+<style>
+.dash-hero-reveal { animation: dashFadeIn 0.5s ease-out 0.05s both; }
+.dash-kpi-reveal { animation: dashSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+.dash-health-reveal { animation: dashSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+.dash-main-reveal { animation: dashSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both; }
+.dash-activity-reveal { animation: dashSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both; }
+
+@keyframes dashFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dashSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.kpi-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.06);
+  border-color: #cbd5e1 !important;
+}
+.table-order-row {
+  transition: background-color 0.15s ease;
+}
+.activity-timeline-row {
+  transition: transform 0.15s ease;
+}
+.activity-timeline-row:hover {
+  transform: translateX(3px);
+}
+
+.pulse-dot {
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseGreen 2s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+@keyframes pulseGreen {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-hero-reveal, .dash-kpi-reveal, .dash-health-reveal, .dash-main-reveal, .dash-activity-reveal, .pulse-dot {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .dash-progress-bar {
+    transition: none !important;
+  }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Animated Number Counters
+  const counters = document.querySelectorAll(".counter-number");
+  counters.forEach(counter => {
+    const target = parseFloat(counter.getAttribute("data-target")) || 0;
+    const duration = 1000;
+    const startTime = performance.now();
+
+    const updateCounter = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      const currentVal = Math.floor(easedProgress * target);
+      counter.textContent = currentVal;
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCounter);
+      } else {
+        counter.textContent = target;
+      }
+    };
+    requestAnimationFrame(updateCounter);
+  });
+
+  // Progress Bar Fill Animation
+  const progressBars = document.querySelectorAll(".dash-progress-bar");
+  progressBars.forEach(bar => {
+    const prog = bar.getAttribute("data-progress");
+    setTimeout(() => {
+      bar.style.width = prog;
+    }, 200);
+  });
+});
+</script>
 {% endblock %}

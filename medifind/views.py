@@ -2586,17 +2586,75 @@ def pharmacy_dashboard(request):
     today_orders_count = today_orders_qs.count()
     pending_orders_count = reservations_qs.filter(status="Pending").count()
     total_medicines_count = inventory_qs.count()
-    low_stock_items = inventory_qs.filter(quantity__lte=10).order_by("quantity")[:8]
-    low_stock_count = inventory_qs.filter(quantity__lte=10).count()
+    
+    in_stock_count = inventory_qs.filter(quantity__gt=10).count()
+    low_stock_count = inventory_qs.filter(quantity__gt=0, quantity__lte=10).count()
+    out_of_stock_count = inventory_qs.filter(quantity=0).count()
+    
+    inventory_health_pct = 100
+    if total_medicines_count > 0:
+        inventory_health_pct = int((in_stock_count / total_medicines_count) * 100)
+
+    low_stock_items = inventory_qs.filter(quantity__lte=10).order_by("quantity")[:6]
 
     recent_orders = []
-    for r in reservations_qs[:6]:
-        inv = Inventory.objects.filter(pharmacy=pharmacy, medicine=r.medicine).first()
+    for r in reservations_qs[:5]:
+        inv = inventory_qs.filter(medicine=r.medicine).first()
         price = inv.price if inv and inv.price else Decimal("22.00")
         r.unit_price = price
         r.calculated_total = price * r.quantity
         r.order_code = f"MF-{r.id:04d}"
         recent_orders.append(r)
+
+    # Real Activity Timeline items
+    recent_activities = []
+    for r in reservations_qs[:5]:
+        inv = inventory_qs.filter(medicine=r.medicine).first()
+        p = inv.price if inv and inv.price else Decimal("22.00")
+        tot = p * r.quantity
+        if r.status == "Collected":
+            recent_activities.append({
+                "time": r.requested_at.strftime("%H:%M"),
+                "title": f"Order #MF-{r.id:04d} completed",
+                "desc": f"{r.medicine.name} · ₹{tot:.2f}",
+                "badge": "Completed",
+                "badge_class": "text-success",
+                "icon": "fa-circle-check",
+                "timestamp": r.requested_at,
+            })
+        elif r.status == "Accepted":
+            recent_activities.append({
+                "time": r.requested_at.strftime("%H:%M"),
+                "title": f"Order #MF-{r.id:04d} ready",
+                "desc": f"{r.medicine.name} reserved for {r.customer.username}",
+                "badge": "Ready",
+                "badge_class": "text-primary",
+                "icon": "fa-clock",
+                "timestamp": r.requested_at,
+            })
+        else:
+            recent_activities.append({
+                "time": r.requested_at.strftime("%H:%M"),
+                "title": f"Order #MF-{r.id:04d} received",
+                "desc": f"{r.medicine.name} ({r.quantity} units)",
+                "badge": "Received",
+                "badge_class": "text-warning-emphasis",
+                "icon": "fa-clipboard-list",
+                "timestamp": r.requested_at,
+            })
+
+    for itm in inventory_qs.order_by("-updated_at")[:3]:
+        recent_activities.append({
+            "time": itm.updated_at.strftime("%H:%M"),
+            "title": f"{itm.medicine.name} stock updated",
+            "desc": f"{itm.quantity} units available · ₹{itm.price}",
+            "badge": "Stock",
+            "badge_class": "text-info-emphasis",
+            "icon": "fa-boxes-stacked",
+            "timestamp": itm.updated_at,
+        })
+
+    recent_activities.sort(key=lambda x: x["timestamp"], reverse=True)
 
     context = {
         "pharmacy": pharmacy,
@@ -2605,9 +2663,12 @@ def pharmacy_dashboard(request):
         "pending_orders_count": pending_orders_count,
         "total_medicines_count": total_medicines_count,
         "low_stock_count": low_stock_count,
+        "out_of_stock_count": out_of_stock_count,
+        "in_stock_count": in_stock_count,
+        "inventory_health_pct": inventory_health_pct,
         "low_stock_items": low_stock_items,
         "recent_orders": recent_orders,
-        "available_stock_count": inventory_qs.filter(quantity__gt=10).count(),
+        "recent_activities": recent_activities[:6],
     }
     return render(
         request,
