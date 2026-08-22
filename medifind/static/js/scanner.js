@@ -131,7 +131,7 @@ void main() {
   finalColor = ((finalColor - 0.5) * uContrast + 0.5) * uBrightness;
   finalColor = clamp(finalColor, 0.0, 1.0);
 
-  float alpha = clamp((band * 0.85 + sweepBeam * 0.9 + glowFactor * 1.2 + mouseInfl * 0.5) * uOpacity, 0.18, 1.0);
+  float alpha = clamp((band * 0.75 + sweepBeam * 0.85 + glowFactor * 1.0 + mouseInfl * 0.5), 0.0, 1.0) * uOpacity;
   fragColor = vec4(finalColor, alpha);
 }
 `;
@@ -233,7 +233,7 @@ void main() {
   finalColor = ((finalColor - 0.5) * uContrast + 0.5) * uBrightness;
   finalColor = clamp(finalColor, 0.0, 1.0);
 
-  float alpha = clamp((band * 0.85 + sweepBeam * 0.9 + glowFactor * 1.2 + mouseInfl * 0.5) * uOpacity, 0.18, 1.0);
+  float alpha = clamp((band * 0.75 + sweepBeam * 0.85 + glowFactor * 1.0 + mouseInfl * 0.5), 0.0, 1.0) * uOpacity;
   gl_FragColor = vec4(finalColor, alpha);
 }
 `;
@@ -242,29 +242,29 @@ void main() {
     constructor(canvas, options = {}) {
       this.canvas = canvas;
       this.options = Object.assign({
-        color1: '#5227FF',
-        color2: '#FF9FFC',
-        color3: '#FFFFFF',
-        speed: 0.5,
-        sweepSpeed: 0.25,
-        sweepWidth: 1.6,
-        sweepFalloff: 6.0,
+        color1: '#10B981',
+        color2: '#06B6D4',
+        color3: '#34D399',
+        speed: 0.45,
+        sweepSpeed: 0.22,
+        sweepWidth: 1.8,
+        sweepFalloff: 5.5,
         scale: 1.5,
         frequency: 2.0,
-        ripple: 0.22,
-        bandDensity: 11.0,
-        lineSharpness: 5.5,
-        glow: 0.22,
+        ripple: 0.20,
+        bandDensity: 10.0,
+        lineSharpness: 5.0,
+        glow: 0.25,
         scanDirection: 'vertical',
         colorSpread: 0.7,
         brightness: 1.0,
         contrast: 1.15,
-        softness: 1.4,
-        vignette: 0.45,
+        softness: 1.5,
+        vignette: 0.35,
         scanline: true,
         grain: true,
-        grainIntensity: 0.05,
-        opacity: 1.0,
+        grainIntensity: 0.04,
+        opacity: 0.35,
         mouseInteraction: true,
         mouseRadius: 0.5,
         mouseStrength: 0.5
