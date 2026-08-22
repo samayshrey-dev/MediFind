@@ -2,18 +2,33 @@
  * MediAI Scanner WebGL Component (React Bits Scanner Port)
  * Oscilloscope-style interference bands with vertical/horizontal sweep,
  * 3-color ramp, mouse interaction, scanlines, grain, and glow.
+ * Compatible with WebGL2, WebGL1, and Canvas2D fallback.
  */
 (function () {
   'use strict';
 
-  const VERT = `#version 300 es
+  function hexToRgb(hex) {
+    hex = (hex || '#5227FF').replace(/^#/, '');
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    const num = parseInt(hex, 16);
+    return [
+      ((num >> 16) & 255) / 255,
+      ((num >> 8) & 255) / 255,
+      (num & 255) / 255
+    ];
+  }
+
+  // WebGL 2.0 Shaders
+  const VERT_GL2 = `#version 300 es
 in vec2 position;
 void main() {
   gl_Position = vec4(position, 0.0, 1.0);
 }
 `;
 
-  const FRAG = `#version 300 es
+  const FRAG_GL2 = `#version 300 es
 precision highp float;
 
 uniform float uTime;
@@ -86,7 +101,7 @@ void main() {
   float band = pow(clamp(0.5 + 0.5 * wave, 0.0, 1.0), uLineSharpness);
 
   // Glow factor
-  float glowFactor = (band * 0.6 + sweepBeam * 0.8 + mouseInfl * 0.5) * uGlow;
+  float glowFactor = (band * 0.7 + sweepBeam * 0.85 + mouseInfl * 0.6) * uGlow;
 
   // Softness blend
   float softBand = mix(band, 0.5 + 0.5 * wave, uSoftness * 0.25);
@@ -94,7 +109,7 @@ void main() {
   // 3-Color Ramp Distribution
   float rampFactor = clamp(softBand * uColorSpread + sweepBeam * 0.55, 0.0, 1.0);
   vec3 baseColor = mix(uColor1, uColor2, rampFactor);
-  vec3 finalColor = mix(baseColor, uColor3, clamp(pow(band, 2.2) * (sweepBeam + 0.35) + glowFactor, 0.0, 1.0));
+  vec3 finalColor = mix(baseColor, uColor3, clamp(pow(band, 2.0) * (sweepBeam + 0.4) + glowFactor, 0.0, 1.0));
 
   // Fine Scanline overlay
   if (uScanline) {
@@ -116,22 +131,112 @@ void main() {
   finalColor = ((finalColor - 0.5) * uContrast + 0.5) * uBrightness;
   finalColor = clamp(finalColor, 0.0, 1.0);
 
-  fragColor = vec4(finalColor, uOpacity);
+  float alpha = clamp((band * 0.85 + sweepBeam * 0.9 + glowFactor * 1.2 + mouseInfl * 0.5) * uOpacity, 0.18, 1.0);
+  fragColor = vec4(finalColor, alpha);
 }
 `;
 
-  function hexToRgb(hex) {
-    hex = hex.replace(/^#/, '');
-    if (hex.length === 3) {
-      hex = hex.split('').map(c => c + c).join('');
-    }
-    const num = parseInt(hex, 16);
-    return [
-      ((num >> 16) & 255) / 255,
-      ((num >> 8) & 255) / 255,
-      (num & 255) / 255
-    ];
+  // WebGL 1.0 (GLSL 1.00 ES) Shaders for 100% universal browser compatibility
+  const VERT_GL1 = `
+attribute vec2 position;
+void main() {
+  gl_Position = vec4(position, 0.0, 1.0);
+}
+`;
+
+  const FRAG_GL1 = `
+precision highp float;
+
+uniform float uTime;
+uniform vec2 uResolution;
+uniform vec2 uMouse;
+uniform vec3 uColor1;
+uniform vec3 uColor2;
+uniform vec3 uColor3;
+uniform float uSpeed;
+uniform float uSweepSpeed;
+uniform float uSweepWidth;
+uniform float uSweepFalloff;
+uniform float uScale;
+uniform float uFrequency;
+uniform float uRipple;
+uniform float uBandDensity;
+uniform float uLineSharpness;
+uniform float uGlow;
+uniform int uScanDirection;
+uniform float uColorSpread;
+uniform float uBrightness;
+uniform float uContrast;
+uniform float uSoftness;
+uniform float uVignette;
+uniform int uScanline;
+uniform int uGrain;
+uniform float uGrainIntensity;
+uniform float uOpacity;
+uniform int uMouseInteraction;
+uniform float uMouseRadius;
+uniform float uMouseStrength;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453123);
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / uResolution.xy;
+  vec2 aspect = vec2(uResolution.x / uResolution.y, 1.0);
+  vec2 p = (uv - 0.5) * aspect * uScale;
+
+  float t = uTime * uSpeed;
+  float sweepT = uTime * uSweepSpeed;
+
+  float mouseDist = length((uv - uMouse) * aspect);
+  float mouseInfl = 0.0;
+  if (uMouseInteraction == 1) {
+    mouseInfl = smoothstep(uMouseRadius, 0.0, mouseDist) * uMouseStrength;
   }
+
+  float coord = (uScanDirection == 0) ? uv.y : uv.x;
+  float crossCoord = (uScanDirection == 0) ? p.x : p.y;
+
+  float sweepPos = mod(sweepT, 1.0);
+  float dSweep = abs(coord - sweepPos);
+  dSweep = min(dSweep, 1.0 - dSweep);
+  float sweepBeam = exp(-pow(dSweep * uSweepFalloff / uSweepWidth, 2.0));
+
+  float wavePhase = coord * uBandDensity * 3.14159265 + t;
+  float rippleOffset = sin(crossCoord * uFrequency + t * 0.7) * uRipple * 8.0;
+  rippleOffset += mouseInfl * 3.0 * sin(mouseDist * 25.0 - t * 3.0);
+
+  float wave = sin(wavePhase + rippleOffset);
+  float band = pow(clamp(0.5 + 0.5 * wave, 0.0, 1.0), uLineSharpness);
+
+  float glowFactor = (band * 0.7 + sweepBeam * 0.85 + mouseInfl * 0.6) * uGlow;
+  float softBand = mix(band, 0.5 + 0.5 * wave, uSoftness * 0.25);
+
+  float rampFactor = clamp(softBand * uColorSpread + sweepBeam * 0.55, 0.0, 1.0);
+  vec3 baseColor = mix(uColor1, uColor2, rampFactor);
+  vec3 finalColor = mix(baseColor, uColor3, clamp(pow(band, 2.0) * (sweepBeam + 0.4) + glowFactor, 0.0, 1.0));
+
+  if (uScanline == 1) {
+    float sl = sin(gl_FragCoord.y * 1.5) * 0.5 + 0.5;
+    finalColor *= mix(1.0, 0.88 + 0.12 * sl, 0.65);
+  }
+
+  float vig = length(uv - 0.5);
+  finalColor *= (1.0 - smoothstep(0.25, 0.9, vig) * uVignette);
+
+  if (uGrain == 1) {
+    float grainVal = (hash(uv * (uTime * 0.15 + 1.0)) - 0.5) * uGrainIntensity;
+    finalColor += grainVal;
+  }
+
+  finalColor = ((finalColor - 0.5) * uContrast + 0.5) * uBrightness;
+  finalColor = clamp(finalColor, 0.0, 1.0);
+
+  float alpha = clamp((band * 0.85 + sweepBeam * 0.9 + glowFactor * 1.2 + mouseInfl * 0.5) * uOpacity, 0.18, 1.0);
+  gl_FragColor = vec4(finalColor, alpha);
+}
+`;
 
   class Scanner {
     constructor(canvas, options = {}) {
@@ -186,10 +291,15 @@ void main() {
 
     initWebGL() {
       const gl = this.gl;
+      const vertSource = this.isWebGL2 ? VERT_GL2 : VERT_GL1;
+      const fragSource = this.isWebGL2 ? FRAG_GL2 : FRAG_GL1;
 
-      const vertShader = this.createShader(gl.VERTEX_SHADER, VERT);
-      const fragShader = this.createShader(gl.FRAGMENT_SHADER, FRAG);
-      if (!vertShader || !fragShader) return;
+      const vertShader = this.createShader(gl.VERTEX_SHADER, vertSource);
+      const fragShader = this.createShader(gl.FRAGMENT_SHADER, fragSource);
+      if (!vertShader || !fragShader) {
+        this.initFallback2D();
+        return;
+      }
 
       this.program = gl.createProgram();
       gl.attachShader(this.program, vertShader);
@@ -197,11 +307,11 @@ void main() {
       gl.linkProgram(this.program);
 
       if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-        console.warn('Scanner shader link failed:', gl.getProgramInfoLog(this.program));
+        console.warn('Scanner shader link failed, falling back to 2D canvas:', gl.getProgramInfoLog(this.program));
+        this.initFallback2D();
         return;
       }
 
-      // Full screen quad
       const quad = new Float32Array([
         -1, -1,
          1, -1,
@@ -284,7 +394,7 @@ void main() {
 
     onResize() {
       const rect = this.canvas.parentElement ? this.canvas.parentElement.getBoundingClientRect() : { width: window.innerWidth, height: 600 };
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
       const w = Math.floor((rect.width || window.innerWidth) * dpr);
       const h = Math.floor((rect.height || 600) * dpr);
 
@@ -303,7 +413,7 @@ void main() {
 
       const elapsed = (now - this.startTime) * 0.001;
 
-      // Smooth mouse lerp
+      // Smooth mouse tracking
       this.mouse.x += (this.mouse.targetX - this.mouse.x) * 0.1;
       this.mouse.y += (this.mouse.targetY - this.mouse.y) * 0.1;
 
@@ -337,11 +447,19 @@ void main() {
       gl.uniform1f(this.uContrast, this.options.contrast);
       gl.uniform1f(this.uSoftness, this.options.softness);
       gl.uniform1f(this.uVignette, this.options.vignette);
-      gl.uniform1i(this.uScanline, this.options.scanline ? 1 : 0);
-      gl.uniform1i(this.uGrain, this.options.grain ? 1 : 0);
+
+      if (this.isWebGL2) {
+        gl.uniform1i(this.uScanline, this.options.scanline ? 1 : 0);
+        gl.uniform1i(this.uGrain, this.options.grain ? 1 : 0);
+        gl.uniform1i(this.uMouseInteraction, this.options.mouseInteraction ? 1 : 0);
+      } else {
+        gl.uniform1i(this.uScanline, this.options.scanline ? 1 : 0);
+        gl.uniform1i(this.uGrain, this.options.grain ? 1 : 0);
+        gl.uniform1i(this.uMouseInteraction, this.options.mouseInteraction ? 1 : 0);
+      }
+
       gl.uniform1f(this.uGrainIntensity, this.options.grainIntensity);
       gl.uniform1f(this.uOpacity, this.options.opacity);
-      gl.uniform1i(this.uMouseInteraction, this.options.mouseInteraction ? 1 : 0);
       gl.uniform1f(this.uMouseRadius, this.options.mouseRadius);
       gl.uniform1f(this.uMouseStrength, this.options.mouseStrength);
 
@@ -363,9 +481,11 @@ void main() {
         const t = (now - this.startTime) * 0.001 * this.options.sweepSpeed;
         const sweepY = (t % 1.0) * h;
 
-        const grad = ctx.createLinearGradient(0, sweepY - 100, 0, sweepY + 100);
+        const grad = ctx.createLinearGradient(0, sweepY - 120, 0, sweepY + 120);
         grad.addColorStop(0, 'rgba(82, 39, 255, 0)');
-        grad.addColorStop(0.5, 'rgba(255, 159, 252, 0.4)');
+        grad.addColorStop(0.3, 'rgba(82, 39, 255, 0.4)');
+        grad.addColorStop(0.5, 'rgba(255, 159, 252, 0.85)');
+        grad.addColorStop(0.7, 'rgba(255, 255, 255, 0.9)');
         grad.addColorStop(1, 'rgba(82, 39, 255, 0)');
 
         ctx.fillStyle = grad;
@@ -386,7 +506,7 @@ void main() {
 
   window.Scanner = Scanner;
 
-  // Auto-initialize on DOM ready for all canvases with .scanner-canvas or [data-scanner]
+  // Auto-initialize all .scanner-canvas elements
   function initAllScanners() {
     const canvases = document.querySelectorAll('.scanner-canvas, [data-scanner]');
     canvases.forEach(canvas => {
