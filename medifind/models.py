@@ -98,8 +98,23 @@ class Pharmacy(models.Model):
 
     is_active = models.BooleanField(default=True)
     is_open = models.BooleanField(
-    default=True
-)
+        default=True
+    )
+    verification_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("Approved", "Approved"),
+            ("Pending", "Verification Pending"),
+            ("Rejected", "Rejected"),
+        ],
+        default="Approved"
+    )
+    license_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Form 20/21 Drug License Number"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -109,13 +124,17 @@ class Pharmacy(models.Model):
         return self.name
 
 
-    
-
 class UserProfile(models.Model):
 
     ROLE_CHOICES = [
         ("Customer", "Customer"),
         ("Pharmacy", "Pharmacy"),
+    ]
+
+    VERIFICATION_CHOICES = [
+        ("Approved", "Approved"),
+        ("Pending", "Verification Pending"),
+        ("Rejected", "Rejected"),
     ]
 
     user = models.OneToOneField(
@@ -135,9 +154,86 @@ class UserProfile(models.Model):
         blank=True,
         related_name="user_profiles"
     )
+    claimed_pharmacy = models.ForeignKey(
+        "Pharmacy",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="claimants",
+        help_text="Pharmacy being claimed while verification is pending"
+    )
+    verification_status = models.CharField(
+        max_length=20,
+        choices=VERIFICATION_CHOICES,
+        default="Approved"
+    )
 
     def __str__(self):
-        return f"{self.user.username} - {self.role}"
+        return f"{self.user.username} - {self.role} ({self.verification_status})"
+
+
+class PharmacyClaim(models.Model):
+    """
+    Tracks merchant ownership claims for pharmacies requiring admin review and verification.
+    """
+    STATUS_CHOICES = [
+        ("Pending", "Verification Pending"),
+        ("Approved", "Approved"),
+        ("Rejected", "Rejected"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="pharmacy_claims"
+    )
+    pharmacy = models.ForeignKey(
+        Pharmacy,
+        on_delete=models.CASCADE,
+        related_name="ownership_claims"
+    )
+    drug_license_number = models.CharField(
+        max_length=100,
+        default="PENDING-DOCS",
+        help_text="Form 20/21 Drug Retail License Number"
+    )
+    gstin = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="GST Identification Number"
+    )
+    owner_proof = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text="Owner contact proof or license name"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Pending"
+    )
+    admin_notes = models.TextField(
+        blank=True,
+        default=""
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_pharmacy_claims"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Claim #{self.id} for {self.pharmacy.name} by {self.user.username} ({self.status})"
+
     
 class Inventory(models.Model):
 

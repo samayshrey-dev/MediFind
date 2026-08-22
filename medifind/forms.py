@@ -106,10 +106,10 @@ class RegisterForm(BootstrapFormMixin, forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-select"})
     )
 
-    # Optional fields for Pharmacy account registration
+    # Optional fields for Pharmacy account registration & ownership claim
     pharmacy_option = forms.ChoiceField(
         choices=[
-            ("existing", "Link to an Existing Pharmacy"),
+            ("existing", "Claim an Existing Pharmacy"),
             ("new", "Register a New Pharmacy"),
         ],
         required=False,
@@ -120,8 +120,26 @@ class RegisterForm(BootstrapFormMixin, forms.ModelForm):
     existing_pharmacy = forms.ModelChoiceField(
         queryset=Pharmacy.objects.all(),
         required=False,
-        empty_label="-- Select Existing Pharmacy --",
+        empty_label="-- Select Existing Pharmacy to Claim --",
         widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    drug_license_number = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. Form 20/21 License No. (DL-TN-2026-X)"})
+    )
+
+    gstin = forms.CharField(
+        required=False,
+        max_length=30,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. 33AAAAA0000A1Z5 (Optional)"})
+    )
+
+    owner_proof = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={"placeholder": "Registered Pharmacist / Owner Proof Details"})
     )
 
     new_pharmacy_name = forms.CharField(
@@ -144,7 +162,7 @@ class RegisterForm(BootstrapFormMixin, forms.ModelForm):
 
     new_pharmacy_address = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Pharmacy address..."})
+        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Pharmacy full address..."})
     )
 
     class Meta:
@@ -177,12 +195,19 @@ class RegisterForm(BootstrapFormMixin, forms.ModelForm):
         role = cleaned_data.get("role")
         if role == "Pharmacy":
             option = cleaned_data.get("pharmacy_option")
-            if option == "existing" and not cleaned_data.get("existing_pharmacy"):
-                # If existing selected but none picked, check if any pharmacies exist
-                if Pharmacy.objects.exists():
-                    raise forms.ValidationError("Please select a pharmacy to link to your account.")
+            if option == "existing":
+                if not cleaned_data.get("existing_pharmacy") and Pharmacy.objects.exists():
+                    raise forms.ValidationError("Please select an existing pharmacy store to claim.")
+                if not cleaned_data.get("drug_license_number"):
+                    raise forms.ValidationError("Drug retail license number is required to claim pharmacy ownership.")
             elif option == "new":
                 if not cleaned_data.get("new_pharmacy_name"):
-                    raise forms.ValidationError("Please provide a name for your new pharmacy.")
+                    raise forms.ValidationError("Please provide your new pharmacy name.")
+                if not cleaned_data.get("new_pharmacy_phone"):
+                    raise forms.ValidationError("Please provide your pharmacy phone number.")
+                if not cleaned_data.get("new_pharmacy_address"):
+                    raise forms.ValidationError("Please provide your pharmacy physical address.")
+                if not cleaned_data.get("drug_license_number"):
+                    raise forms.ValidationError("Drug retail license number is required for new pharmacy registration.")
 
-        return cleaned_data
+        return cleaned_data

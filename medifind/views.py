@@ -41,6 +41,7 @@ from .models import (
     AgentAuditLog as AgentAuditLogModel,
     Order,
     WebhookEvent,
+    PharmacyClaim,
 )
 
 from .commerce_service import (
@@ -74,16 +75,44 @@ def pharmacy_required(view_func):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         if profile.role != "Pharmacy":
             profile.role = "Pharmacy"
+            profile.save(update_fields=["role"])
 
-        if not profile.pharmacy:
-            profile.pharmacy = (
-                Pharmacy.objects.filter(email__iexact=request.user.email).first()
-                or Pharmacy.objects.filter(owner_name__icontains=request.user.username).first()
-                or Pharmacy.objects.first()
+        # Link fallback only if user has no assigned pharmacy AND no pending claimed pharmacy
+        if not profile.pharmacy and not profile.claimed_pharmacy:
+            email_match = Pharmacy.objects.filter(email__iexact=request.user.email).first()
+            if email_match:
+                profile.pharmacy = email_match
+                profile.verification_status = "Approved"
+                profile.save()
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def verified_pharmacy_required(view_func):
+    """
+    Guarantees that a pharmacy merchant has an Approved verification status before
+    granting inventory publishing/modification access (adding, editing, deleting stock).
+    """
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(f"/login/?next={request.path}")
+
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+
+        profile = getattr(request.user, "userprofile", None)
+        if not profile or profile.role != "Pharmacy":
+            messages.error(request, "Access denied. Pharmacy merchant account required.")
+            return redirect("home")
+
+        if profile.verification_status != "Approved" or not profile.pharmacy:
+            messages.warning(
+                request,
+                "VERIFICATION PENDING: Your pharmacy is being reviewed. You cannot publish inventory until verification is complete."
             )
-            profile.save()
-        elif profile.role != "Pharmacy":
-            profile.save()
+            return redirect("pharmacy_dashboard")
 
         return view_func(request, *args, **kwargs)
 
@@ -108,16 +137,15 @@ def home(request):
 
     if request.user.is_authenticated:
         if hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy":
-            user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
-            if not user_pharmacy:
-                user_pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first()
-                if not user_pharmacy:
-                    user_pharmacy = Pharmacy.objects.filter(owner_name__icontains=request.user.username).first()
-                if not user_pharmacy:
-                    user_pharmacy = Pharmacy.objects.first()
-                if user_pharmacy:
-                    request.user.userprofile.pharmacy = user_pharmacy
-                    request.user.userprofile.save(update_fields=["pharmacy"])
+            prof = request.user.userprofile
+            user_pharmacy = prof.pharmacy or prof.claimed_pharmacy
+            if not user_pharmacy and not prof.claimed_pharmacy:
+                email_match = Pharmacy.objects.filter(email__iexact=request.user.email).first()
+                if email_match:
+                    user_pharmacy = email_match
+                    prof.pharmacy = email_match
+                    prof.verification_status = "Approved"
+                    prof.save()
         elif request.user.is_superuser:
             user_pharmacy = Pharmacy.objects.first()
 
@@ -1782,12 +1810,23 @@ def inventory(request):
     stock_status = request.GET.get("stock_status", "all").strip().lower()
     sort = request.GET.get("sort", "name").strip()
 
-    pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
-    if not pharmacy:
-        pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
-        if hasattr(request.user, "userprofile") and pharmacy:
-            request.user.userprofile.pharmacy = pharmacy
-            request.user.userprofile.save(update_fields=["pharmacy"])
+    profile = getattr(request.user, "userprofile", None) if hasattr(request.user, "userprofile") else None
+    verification_status = profile.verification_status if profile else "Approved"
+    claimed_pharmacy = profile.claimed_pharmacy if profile else None
+    pharmacy = profile.pharmacy if (profile and profile.pharmacy) else claimed_pharmacy
+
+    active_claim = None
+    if request.user.is_authenticated:
+        active_claim = PharmacyClaim.objects.filter(user=request.user).order_by("-created_at").first()
+
+    if not pharmacy and not claimed_pharmacy:
+        email_match = Pharmacy.objects.filter(email__iexact=request.user.email).first()
+        if email_match:
+            pharmacy = email_match
+            if hasattr(request.user, "userprofile"):
+                request.user.userprofile.pharmacy = email_match
+                request.user.userprofile.verification_status = "Approved"
+                request.user.userprofile.save(update_fields=["pharmacy", "verification_status"])
 
     if request.user.is_superuser and not pharmacy:
         base_qs = Inventory.objects.select_related("medicine", "pharmacy")
@@ -1861,11 +1900,15 @@ def inventory(request):
             "low_stock_count": low_stock_count,
             "out_of_stock_count": out_of_stock_count,
             "categories": categories,
+            "verification_status": verification_status,
+            "is_verified": (verification_status == "Approved"),
+            "claimed_pharmacy": claimed_pharmacy,
+            "active_claim": active_claim,
         }
     )
 
 
-@pharmacy_required
+@verified_pharmacy_required
 def add_inventory(request):
     user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
     if not user_pharmacy:
@@ -1875,7 +1918,12 @@ def add_inventory(request):
             request.user.userprofile.save(update_fields=["pharmacy"])
 
     if request.method == "POST":
-        form = InventoryForm(request.POST)
+        post_data = request.POST.copy()
+        if user_pharmacy and "pharmacy" not in post_data:
+            post_data["pharmacy"] = user_pharmacy.id
+        if "minimum_stock" not in post_data or not str(post_data.get("minimum_stock", "")).strip():
+            post_data["minimum_stock"] = 10
+        form = InventoryForm(post_data)
         if form.is_valid():
             medicine = form.cleaned_data.get("medicine")
             quantity = form.cleaned_data.get("quantity", 0)
@@ -1900,8 +1948,6 @@ def add_inventory(request):
                     existing_item.batch_number = batch_number
                 if expiry_date:
                     existing_item.expiry_date = expiry_date
-                if minimum_stock:
-                    existing_item.minimum_stock = minimum_stock
                 if sku_code:
                     existing_item.sku_code = sku_code
                 existing_item.save()
@@ -1942,7 +1988,7 @@ def add_inventory(request):
 # Inventory Management
 # ==========================================================
 
-@pharmacy_required
+@verified_pharmacy_required
 def edit_inventory(request, pk):
     item = get_object_or_404(
         Inventory,
@@ -1991,7 +2037,7 @@ def edit_inventory(request, pk):
     )
 
 
-@pharmacy_required
+@verified_pharmacy_required
 def delete_inventory(request, pk):
 
     item = get_object_or_404(
@@ -2071,69 +2117,84 @@ def register(request):
 
             role = form.cleaned_data["role"]
 
-            pharmacy_instance = None
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.role = role
 
             if role == "Pharmacy":
-
                 option = form.cleaned_data.get("pharmacy_option")
+                drug_license = form.cleaned_data.get("drug_license_number") or "PENDING-DOCS"
+                gstin = form.cleaned_data.get("gstin", "")
+                owner_proof = form.cleaned_data.get("owner_proof", "")
 
                 if option == "existing" and form.cleaned_data.get("existing_pharmacy"):
+                    claimed = form.cleaned_data.get("existing_pharmacy")
+                    profile.claimed_pharmacy = claimed
+                    profile.pharmacy = None  # No immediate publishing access until admin approval
+                    profile.verification_status = "Pending"
 
-                    pharmacy_instance = form.cleaned_data.get("existing_pharmacy")
+                    PharmacyClaim.objects.create(
+                        user=user,
+                        pharmacy=claimed,
+                        drug_license_number=drug_license,
+                        gstin=gstin,
+                        owner_proof=owner_proof,
+                        status="Pending"
+                    )
+
+                    messages.warning(
+                        request,
+                        f"VERIFICATION PENDING: Your ownership claim for {claimed.name} is currently under admin review. You cannot publish inventory until verification is complete."
+                    )
 
                 elif option == "new" and form.cleaned_data.get("new_pharmacy_name"):
-
                     from datetime import time
 
                     pharmacy_instance = Pharmacy.objects.create(
-
                         name=form.cleaned_data.get("new_pharmacy_name"),
-
                         owner_name=form.cleaned_data["first_name"] or username,
-
                         phone=form.cleaned_data.get("new_pharmacy_phone") or "9876543210",
-
                         email=form.cleaned_data["email"],
-
                         address=form.cleaned_data.get("new_pharmacy_address") or "City Center, Main Road",
-
                         city=form.cleaned_data.get("new_pharmacy_city") or "Chennai",
-
                         state="Tamil Nadu",
-
                         pincode="600001",
-
                         latitude=13.0827,
-
                         longitude=80.2707,
-
                         opening_time=time(8, 0),
-
                         closing_time=time(22, 0),
-
-                        is_active=True,
-
+                        license_number=drug_license,
+                        verification_status="Pending",
+                        is_active=False,  # Hidden from public search until verified
                         is_open=True,
-
                     )
 
-            profile, _ = UserProfile.objects.get_or_create(user=user)
+                    profile.claimed_pharmacy = pharmacy_instance
+                    profile.pharmacy = pharmacy_instance
+                    profile.verification_status = "Pending"
 
-            profile.role = role
+                    PharmacyClaim.objects.create(
+                        user=user,
+                        pharmacy=pharmacy_instance,
+                        drug_license_number=drug_license,
+                        gstin=gstin,
+                        owner_proof=owner_proof,
+                        status="Pending"
+                    )
 
-            profile.pharmacy = pharmacy_instance
+                    messages.warning(
+                        request,
+                        f"VERIFICATION PENDING: Your new pharmacy registration for {pharmacy_instance.name} has been submitted for review. You cannot publish inventory until verification is complete."
+                    )
+            else:
+                profile.verification_status = "Approved"
+                messages.success(
+                    request,
+                    f"Welcome to MediAI, {user.first_name or user.username}! Account created successfully."
+                )
 
             profile.save()
-
             user.refresh_from_db()
-
             login(request, user)
-
-            messages.success(
-                request,
-                f"Welcome to MediAI, {user.first_name or user.username}! Account created successfully."
-            )
-
             return redirect("dashboard_redirect")
 
     else:
@@ -2792,12 +2853,23 @@ def search_history(request):
 
 @pharmacy_required
 def pharmacy_dashboard(request):
-    pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
-    if not pharmacy:
-        pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
-        if hasattr(request.user, "userprofile") and pharmacy:
-            request.user.userprofile.pharmacy = pharmacy
-            request.user.userprofile.save(update_fields=["pharmacy"])
+    profile = getattr(request.user, "userprofile", None) if hasattr(request.user, "userprofile") else None
+    verification_status = profile.verification_status if profile else "Approved"
+    claimed_pharmacy = profile.claimed_pharmacy if profile else None
+    pharmacy = profile.pharmacy if (profile and profile.pharmacy) else claimed_pharmacy
+
+    active_claim = None
+    if request.user.is_authenticated:
+        active_claim = PharmacyClaim.objects.filter(user=request.user).order_by("-created_at").first()
+
+    if not pharmacy and not claimed_pharmacy:
+        email_match = Pharmacy.objects.filter(email__iexact=request.user.email).first()
+        if email_match:
+            pharmacy = email_match
+            if hasattr(request.user, "userprofile"):
+                request.user.userprofile.pharmacy = email_match
+                request.user.userprofile.verification_status = "Approved"
+                request.user.userprofile.save(update_fields=["pharmacy", "verification_status"])
 
     current_hour = timezone.localtime().hour
     if current_hour < 12:
@@ -2898,6 +2970,10 @@ def pharmacy_dashboard(request):
         "low_stock_items": low_stock_items,
         "recent_orders": recent_orders,
         "recent_activities": recent_activities[:6],
+        "verification_status": verification_status,
+        "is_verified": (verification_status == "Approved"),
+        "claimed_pharmacy": claimed_pharmacy,
+        "active_claim": active_claim,
     }
     return render(
         request,

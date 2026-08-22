@@ -44,6 +44,34 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
     </div>
   </div>
 
+  {% if verification_status == "Pending" %}
+  <!-- VERIFICATION PENDING NOTICE -->
+  <div class="alert alert-warning border rounded-4 p-4 mb-4 shadow-xs d-flex align-items-start gap-3 bg-warning-subtle dash-hero-reveal" style="border-color: #FDE68A !important;">
+    <div class="d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle p-2.5 fs-4 flex-shrink-0" style="width: 44px; height: 44px;">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+    </div>
+    <div class="flex-grow-1">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+        <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">VERIFICATION PENDING</h5>
+        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold small">
+          <i class="fa-solid fa-hourglass-half me-1"></i> Admin Review In Progress
+        </span>
+      </div>
+      <p class="text-secondary mb-2 fw-semibold" style="font-size: 0.95rem;">
+        Your pharmacy is being reviewed.
+      </p>
+      <div class="p-3 bg-white rounded-3 border small text-muted">
+        <div class="fw-bold text-danger-emphasis mb-1">
+          <i class="fa-solid fa-lock text-warning me-1.5"></i> You cannot publish inventory until verification is complete.
+        </div>
+        <div class="text-secondary">
+          Store Claim: <strong>{{ claimed_pharmacy.name|default:pharmacy.name }}</strong> &bull; License Submitted: <code>{{ active_claim.drug_license_number|default:"Form 20/21 In Review" }}</code> &bull; Status: <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-2 py-0.5">Under Review</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ==========================================
        2. KPI SECTION (Interactive & Visual)
        ========================================== -->

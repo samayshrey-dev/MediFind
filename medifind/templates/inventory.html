@@ -24,12 +24,47 @@ Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI
     </div>
 
     <div>
+      {% if verification_status == "Pending" %}
+      <button class="btn btn-secondary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2 opacity-75" disabled title="Verification Pending: You cannot publish inventory until verification is complete.">
+        <i class="fa-solid fa-lock"></i>
+        <span>Add Stock (Locked)</span>
+      </button>
+      {% else %}
       <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2">
         <i class="fa-solid fa-circle-plus"></i>
         <span>Add Stock</span>
       </a>
+      {% endif %}
     </div>
   </div>
+
+  {% if verification_status == "Pending" %}
+  <!-- VERIFICATION PENDING ALERT -->
+  <div class="alert alert-warning border rounded-4 p-4 mb-4 shadow-xs d-flex align-items-start gap-3 bg-warning-subtle reveal" style="border-color: #FDE68A !important;">
+    <div class="d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle p-2.5 fs-4 flex-shrink-0" style="width: 44px; height: 44px;">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+    </div>
+    <div class="flex-grow-1">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+        <h5 class="fw-bold text-dark mb-0">VERIFICATION PENDING</h5>
+        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold small">
+          <i class="fa-solid fa-shield-halved me-1"></i> Admin Review In Progress
+        </span>
+      </div>
+      <p class="text-secondary mb-2 fw-semibold" style="font-size: 0.95rem;">
+        Your pharmacy is being reviewed.
+      </p>
+      <div class="p-3 bg-white rounded-3 border small text-muted">
+        <div class="fw-bold text-danger-emphasis mb-1">
+          <i class="fa-solid fa-lock text-warning me-1.5"></i> You cannot publish inventory until verification is complete.
+        </div>
+        <div class="text-secondary">
+          Store: <strong>{{ claimed_pharmacy.name|default:pharmacy.name }}</strong> &bull; License Submitted: <code>{{ active_claim.drug_license_number|default:"Form 20/21 In Review" }}</code> &bull; Verification Status: <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5">Pending Approval</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Filter & Search Control Panel -->
   <div class="card border rounded-4 p-3.5 bg-white shadow-xs mb-4 reveal">

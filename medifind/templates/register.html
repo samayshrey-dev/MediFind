@@ -153,28 +153,35 @@ Sign Up | MediAI
 
                 <!-- Pharmacy Specific Fields (Collapsible) -->
                 <div id="pharmacyDetailsSection" class="p-3 bg-light rounded-4 border mb-4 d-none">
-                  <div class="d-flex align-items-center gap-2 mb-3">
-                    <i class="fa-solid fa-hospital text-success fs-5"></i>
-                    <h6 class="fw-bold text-dark mb-0">Pharmacy Store Details</h6>
+                  <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="fa-solid fa-hospital text-success fs-5"></i>
+                      <h6 class="fw-bold text-dark mb-0">Pharmacy Merchant Onboarding</h6>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                      <i class="fa-solid fa-shield-halved me-1"></i> Verification Required
+                    </span>
                   </div>
                   
                   <div class="mb-3">
                     <div class="form-check form-check-inline">
                       <input class="form-check-input" type="radio" name="pharmacy_option" id="optExisting" value="existing" {% if form.pharmacy_option.value == 'existing' or not form.pharmacy_option.value %}checked{% endif %}>
-                      <label class="form-check-label small fw-medium" for="optExisting">Link to existing listed store</label>
+                      <label class="form-check-label small fw-medium" for="optExisting">Claim an Existing Listed Store</label>
                     </div>
                     <div class="form-check form-check-inline">
                       <input class="form-check-input" type="radio" name="pharmacy_option" id="optNew" value="new" {% if form.pharmacy_option.value == 'new' %}checked{% endif %}>
-                      <label class="form-check-label small fw-medium" for="optNew">Register brand new store</label>
+                      <label class="form-check-label small fw-medium" for="optNew">Register Brand New Store</label>
                     </div>
                   </div>
 
+                  <!-- Existing Pharmacy Box -->
                   <div id="existingPharmacyBox" class="mb-3">
-                    <label class="form-label small fw-semibold text-dark mb-1">Select Your Store</label>
+                    <label class="form-label small fw-semibold text-dark mb-1">Select Store to Claim</label>
                     {{ form.existing_pharmacy }}
                   </div>
 
-                  <div id="newPharmacyBox" class="d-none">
+                  <!-- New Pharmacy Box -->
+                  <div id="newPharmacyBox" class="d-none mb-3">
                     <div class="row g-3">
                       <div class="col-md-6">
                         <label class="form-label small fw-semibold text-dark mb-1">Pharmacy Name</label>
@@ -189,9 +196,36 @@ Sign Up | MediAI
                         {{ form.new_pharmacy_city }}
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-dark mb-1">Full Address</label>
+                        <label class="form-label small fw-semibold text-dark mb-1">Full Physical Address</label>
                         {{ form.new_pharmacy_address }}
                       </div>
+                    </div>
+                  </div>
+
+                  <!-- Verification Documents & Credentials (Common) -->
+                  <div class="p-3 bg-white rounded-3 border mb-2">
+                    <h6 class="fw-bold text-dark small mb-2"><i class="fa-solid fa-file-contract text-primary me-1.5"></i> Regulatory &amp; Ownership Verification</h6>
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1">Form 20/21 Drug License No. <span class="text-danger">*</span></label>
+                        {{ form.drug_license_number }}
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-dark mb-1">GSTIN <span class="text-muted small fw-normal">(Optional)</span></label>
+                        {{ form.gstin }}
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label small fw-semibold text-dark mb-1">Pharmacist / Owner Proof <span class="text-muted small fw-normal">(Reg. No. / Name)</span></label>
+                        {{ form.owner_proof }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-warning border-0 bg-warning-subtle py-2.5 px-3 small rounded-3 mb-0 text-warning-emphasis d-flex align-items-start gap-2">
+                    <i class="fa-solid fa-clock-rotate-left mt-0.5 flex-shrink-0"></i>
+                    <div>
+                      <strong>Verification Workflow:</strong>
+                      Upon registration, your account status will be set to <strong>VERIFICATION PENDING</strong>. An administrator will review your Form 20/21 license. You cannot publish public inventory until approval is complete.
                     </div>
                   </div>
                 </div>
