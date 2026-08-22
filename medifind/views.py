@@ -2083,6 +2083,28 @@ def notify_reservation_update(reservation, action, actor_user):
                     message=f"Reservation #{reservation.id} for {medicine.name} was marked as Rejected.",
                     notification_type="Rejected"
                 )
+
+        # ACTION 4: Payment Verified (Razorpay)
+        elif action == "PAID":
+            # 1. Notify Customer
+            Notification.objects.create(
+                recipient=customer,
+                sender=actor_user,
+                reservation=reservation,
+                title="Payment Verified",
+                message=f"Your Razorpay payment for {medicine.name} at {pharmacy.name} was successfully verified.",
+                notification_type="Accepted"
+            )
+            # 2. Notify Pharmacy Owner(s)
+            for owner in pharmacy_users:
+                Notification.objects.create(
+                    recipient=owner,
+                    sender=actor_user,
+                    reservation=reservation,
+                    title="Payment Received (Verified)",
+                    message=f"Customer {customer.first_name or customer.username} completed online payment for order #{reservation.id} ({medicine.name}).",
+                    notification_type="Reservation"
+                )
     except Exception as e:
         print("NOTIFICATION CREATION WARNING:", e)
 

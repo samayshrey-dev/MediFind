@@ -361,8 +361,14 @@ class AgenticCommerceService:
             # Mark Reservation Paid if linked
             if order.reservation:
                 order.reservation.is_paid = True
+                order.reservation.payment_method = "Online"
                 order.reservation.status = "Accepted"
-                order.reservation.save(update_fields=["is_paid", "status"])
+                order.reservation.save(update_fields=["is_paid", "payment_method", "status"])
+                try:
+                    from .views import notify_reservation_update
+                    notify_reservation_update(order.reservation, "PAID", user or order.user)
+                except Exception:
+                    pass
 
             # Decrement Stock safely
             if order.inventory:
@@ -501,6 +507,17 @@ class AgenticCommerceService:
                             order.razorpay_payment_id = rzp_payment_id or order.razorpay_payment_id
                             order.paid_at = timezone.now()
                             order.save()
+
+                            if order.reservation:
+                                order.reservation.is_paid = True
+                                order.reservation.payment_method = "Online"
+                                order.reservation.status = "Accepted"
+                                order.reservation.save(update_fields=["is_paid", "payment_method", "status"])
+                                try:
+                                    from .views import notify_reservation_update
+                                    notify_reservation_update(order.reservation, "PAID", order.user)
+                                except Exception:
+                                    pass
 
                             if order.inventory:
                                 inv = Inventory.objects.select_for_update().get(id=order.inventory.id)
