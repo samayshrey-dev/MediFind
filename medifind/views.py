@@ -3042,7 +3042,7 @@ from .otp_service import send_password_reset_otp, verify_and_consume_otp, mask_t
 def forgot_password_request(request):
     """
     Step 1: User enters their email, username, or registered phone number.
-    Generates and dispatches a 6-digit OTP code to their Gmail/phone.
+    Generates and dispatches a 6-digit OTP code to their email/phone.
     """
     if request.user.is_authenticated:
         return redirect("home")
@@ -3080,7 +3080,7 @@ def forgot_password_request(request):
 
 def forgot_password_verify(request):
     """
-    Step 2: User enters the 6-digit OTP received via Gmail/phone along with their new password.
+    Step 2: User enters the 6-digit OTP received via email/phone along with their new password.
     """
     user_id = request.session.get("pwd_reset_user_id")
     masked_target = request.session.get("pwd_reset_masked", "your registered contact")

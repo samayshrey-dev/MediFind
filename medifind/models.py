@@ -613,7 +613,7 @@ class WebhookEvent(models.Model):
 
 class PasswordResetOTP(models.Model):
     """
-    Secure One-Time Password (OTP) model for password resets via Email (Gmail) or SMS.
+    Secure One-Time Password (OTP) model for password resets via Email or SMS.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reset_otps")
     otp_code = models.CharField(max_length=6, db_index=True)
