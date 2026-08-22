@@ -127,7 +127,7 @@
               ${medName ? `<div class="mt-1 small"><strong>${medName}</strong>: <span class="text-success fw-bold">₹${price}</span></div>` : ''}
               <div class="mt-2 pt-1 border-top">
                 <a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" class="btn btn-sm btn-outline-secondary w-100 py-1" style="font-size: 0.75rem;">
-                  🧭 Get Directions
+                  <i class="fa-solid fa-diamond-turn-right me-1 text-primary"></i> Get Directions
                 </a>
               </div>
             </div>
