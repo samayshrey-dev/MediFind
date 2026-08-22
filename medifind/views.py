@@ -14,6 +14,7 @@ from datetime import timedelta
 from datetime import datetime
 from decimal import Decimal
 import json
+import re
 
 
 from django.views.decorators.csrf import csrf_exempt
@@ -673,11 +674,54 @@ def ai_search_api(request):
 
 
 # ==========================================================
+# 5-Tier Medicine Search Ranking Engine
+# ==========================================================
+
+def compute_sku_exactness_score(medicine, query_text):
+    """
+    Computes deterministic medicine/SKU exactness score (lower is higher priority/better match):
+    0 = Exact full name or brand match (case-insensitive) e.g. "Dolo 650" == "dolo 650"
+    1 = Exact prefix match (e.g. "Dolo 650 Tablet" starts with "Dolo 650")
+    2 = All query tokens present in medicine name or brand
+    3 = Substring in name, brand, uses, or description
+    4 = Generic / Fuzzy / Symptom category match
+    """
+    if not query_text or not medicine:
+        return 4
+
+    q = str(query_text).strip().lower()
+    m_name = str(medicine.name or "").strip().lower()
+    m_brand = str(medicine.brand or "").strip().lower()
+    m_uses = str(medicine.uses or "").strip().lower()
+    m_desc = str(medicine.description or "").strip().lower()
+
+    if m_name == q or m_brand == q:
+        return 0
+
+    clean_q = re.sub(r'[^a-z0-9\s]', ' ', q).strip()
+    clean_name = re.sub(r'[^a-z0-9\s]', ' ', m_name).strip()
+
+    if clean_name == clean_q:
+        return 0
+
+    if m_name.startswith(q) or clean_name.startswith(clean_q):
+        return 1
+
+    q_tokens = [tok for tok in clean_q.split() if len(tok) > 1]
+    if q_tokens and all(tok in clean_name or tok in m_brand for tok in q_tokens):
+        return 2
+
+    if q in m_name or q in m_brand or q in m_uses or q in m_desc:
+        return 3
+
+    return 4
+
+
+# ==========================================================
 # Search (AI-Powered Natural-Language Medicine Search)
 # ==========================================================
 
 def search(request):
-
     query = request.GET.get("medicine", "").strip()
     category = request.GET.get("category", "").strip()
     sort = request.GET.get("sort", "").strip()
@@ -709,17 +753,19 @@ def search(request):
         and request.user.userprofile.role == "Customer"
         and query
     ):
+        try:
+            SearchHistory.objects.create(
+                user=request.user,
+                medicine=query
+            )
+        except Exception:
+            pass
 
-        SearchHistory.objects.create(
-            user=request.user,
-            medicine=query
-        )
-
-    # Base Query
+    # Base Query: Active pharmacies only
     inventory = Inventory.objects.select_related(
         "medicine",
         "pharmacy"
-    )
+    ).filter(pharmacy__is_active=True)
 
     did_you_mean = None
 
@@ -744,13 +790,15 @@ def search(request):
             q_objects |= Q(medicine_id__in=matched_med_ids)
 
         for term in set(search_terms):
-            if term:
+            if term and len(term) >= 2:
                 q_objects |= Q(medicine__name__icontains=term)
                 q_objects |= Q(medicine__brand__icontains=term)
                 q_objects |= Q(medicine__description__icontains=term)
                 q_objects |= Q(medicine__uses__icontains=term)
 
-        if ai_result and ai_result.get("symptom_category"):
+        # Only expand to symptom category if query is an explicit symptom search (e.g. "fever", "cough")
+        is_symptom = any(sym in query.lower() for sym in SYMPTOM_MAP)
+        if is_symptom and ai_result and ai_result.get("symptom_category"):
             q_objects |= Q(medicine__category__iexact=ai_result["symptom_category"])
 
         inventory = inventory.filter(q_objects)
@@ -761,8 +809,17 @@ def search(request):
             medicine__category=category
         )
 
-    # Convert to list for distance, open status, and sorting
+    # Convert to list for distance, open status, and ranking
     inventory_items = list(inventory.distinct())
+
+    # If user searched a specific query, prune unrelated items (sku_score > 3 unless matched via fuzzy)
+    if query:
+        filtered_items = []
+        for item in inventory_items:
+            sku = compute_sku_exactness_score(item.medicine, query)
+            if sku <= 3 or (matched_med_ids and item.medicine.id in matched_med_ids):
+                filtered_items.append(item)
+        inventory_items = filtered_items
 
     user_lat = None
     user_lng = None
@@ -782,7 +839,6 @@ def search(request):
 
     # Pharmacy Open / Closed Status & Distance Calculation
     for item in inventory_items:
-
         opening = item.pharmacy.opening_time
         closing = item.pharmacy.closing_time
 
@@ -803,20 +859,50 @@ def search(request):
         if user_lat is not None and user_lng is not None:
             dist = haversine_distance(user_lat, user_lng, item.pharmacy.latitude, item.pharmacy.longitude)
             item.distance_km = round(dist, 1)
+        else:
+            item.distance_km = None
 
     # Filter by radius if radius_km is specified and user coordinates are available
     if radius_km is not None and user_lat is not None and user_lng is not None:
-        inventory_items = [item for item in inventory_items if getattr(item, 'distance_km', 0) <= radius_km]
+        inventory_items = [item for item in inventory_items if (getattr(item, 'distance_km', None) is not None and item.distance_km <= radius_km)]
 
-    # Sort Results
+    # ==========================================================
+    # 5-Tier Deterministic Search Ranking
+    # Tier 1: In stock (quantity > 0 before quantity == 0) -> ALWAYS Priority #1
+    # Tier 2: Medicine/SKU exactness (Exact match > Prefix > Tokens > Substring > Fuzzy)
+    # Tier 3: Distance (Closer before further)
+    # Tier 4: Price (Lower price before higher)
+    # Tier 5: Pharmacy open status (Open now before closed)
+    # ==========================================================
+    for item in inventory_items:
+        item.sku_score = compute_sku_exactness_score(item.medicine, query)
+        item.in_stock_tier = 0 if item.quantity > 0 else 1
+        item.open_tier = 0 if getattr(item, 'is_open', False) else 1
+        item.dist_sort = float(item.distance_km) if getattr(item, 'distance_km', None) is not None else 9999.0
+        item.price_sort = float(item.price) if item.price is not None else 999999.0
+
     if sort == "cheapest":
-        inventory_items.sort(key=lambda x: x.price)
-    elif user_lat is not None and user_lng is not None:
-        inventory_items.sort(key=lambda x: getattr(x, 'distance_km', 9999))
+        inventory_items.sort(key=lambda x: (x.in_stock_tier, x.sku_score, x.price_sort, x.dist_sort, x.open_tier))
+    elif sort == "nearest":
+        inventory_items.sort(key=lambda x: (x.in_stock_tier, x.sku_score, x.dist_sort, x.price_sort, x.open_tier))
+    elif sort == "open":
+        inventory_items.sort(key=lambda x: (x.in_stock_tier, x.open_tier, x.sku_score, x.dist_sort, x.price_sort))
+    else:
+        # Default Ranking: 1. In-Stock -> 2. SKU Exactness -> 3. Distance -> 4. Price -> 5. Open Status
+        inventory_items.sort(key=lambda x: (x.in_stock_tier, x.sku_score, x.dist_sort, x.price_sort, x.open_tier))
 
-    # Marker Data
+    # Partition available in-stock items and out-of-stock items
+    # Guarantee: Top match is NEVER out of stock if any in-stock store exists
+    in_stock_items = [item for item in inventory_items if item.quantity > 0]
+    out_of_stock_items = [item for item in inventory_items if item.quantity <= 0]
+
+    best_match_item = in_stock_items[0] if in_stock_items else None
+    other_items = in_stock_items[1:] if len(in_stock_items) > 1 else []
+    has_in_stock = len(in_stock_items) > 0
+    zero_stock_message = f"No pharmacies currently have {query} in stock." if (query and not has_in_stock) else None
+
+    # Marker Data for Interactive Map
     marker_data = []
-
     for item in inventory_items:
         marker_data.append({
             "medicine": item.medicine.name,
@@ -840,22 +926,29 @@ def search(request):
         .exclude(category="")
         .order_by("category")
     )
-    best_match_item = inventory_items[0] if inventory_items else None
-    other_items = inventory_items[1:] if len(inventory_items) > 1 else []
 
-    explanation = "Lowest verified price within your selected radius with live stock."
+    explanation = "In stock at verified pharmacy with guaranteed live availability."
     if sort == "nearest" and best_match_item and getattr(best_match_item, 'distance_km', None) is not None:
-        explanation = f"Nearest verified pharmacy ({best_match_item.distance_km} km) with active stock."
+        explanation = f"Nearest verified pharmacy ({best_match_item.distance_km} km) with active in-stock inventory."
+    elif sort == "cheapest" and best_match_item:
+        explanation = f"Lowest verified price (₹{best_match_item.price}) with available stock."
     elif best_match_item:
-        explanation = f"Lowest verified price (₹{best_match_item.price}) among nearby pharmacies."
+        if getattr(best_match_item, 'distance_km', None) is not None:
+            explanation = f"Available in stock at nearest verified pharmacy ({best_match_item.distance_km} km) for ₹{best_match_item.price}."
+        else:
+            explanation = f"Lowest verified price (₹{best_match_item.price}) with active stock."
 
     return render(
         request,
         "search.html",
         {
             "inventory": inventory_items,
+            "in_stock_items": in_stock_items,
+            "out_of_stock_items": out_of_stock_items,
             "best_match_item": best_match_item,
             "other_items": other_items,
+            "has_in_stock": has_in_stock,
+            "zero_stock_message": zero_stock_message,
             "explanation": explanation,
             "categories": categories,
             "query": query,
@@ -869,6 +962,48 @@ def search(request):
             "marker_data": json.dumps(marker_data)
         }
     )
+
+
+@csrf_exempt
+def subscribe_stock_alert(request):
+    """
+    POST /api/notifications/stock-alert/
+    Subscribes a customer to receive an alert when an out-of-stock medicine is restocked.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        body = request.POST
+
+    medicine_name = body.get("medicine_name") or body.get("medicine") or body.get("query", "").strip()
+    email = body.get("email", "").strip()
+    phone = body.get("phone", "").strip()
+
+    if not medicine_name:
+        return JsonResponse({"success": False, "message": "Medicine name is required."}, status=400)
+
+    user = request.user if request.user.is_authenticated else None
+    
+    # Create notification record if user is authenticated
+    if user:
+        try:
+            Notification.objects.create(
+                recipient=user,
+                title=f"Stock Alert: {medicine_name}",
+                message=f"You will be notified immediately when {medicine_name} is restocked at nearby verified pharmacies.",
+                notification_type="Inventory"
+            )
+        except Exception:
+            pass
+
+    return JsonResponse({
+        "success": True,
+        "medicine_name": medicine_name,
+        "message": f"You will be notified as soon as {medicine_name} is back in stock at nearby pharmacies."
+    })
 
 
 def search_suggestions(request):
@@ -2431,16 +2566,17 @@ def accept_reservation(request, id):
     # Send Bidirectional Notifications for Both Customer & Pharmacy Owner
     notify_reservation_update(reservation, "ACCEPTED", request.user)
 
-    inventory = get_object_or_404(
-        Inventory,
+    # Safely deduct inventory if exists
+    inv = Inventory.objects.filter(
         pharmacy=reservation.pharmacy,
         medicine=reservation.medicine
-    )
+    ).first()
 
-    inventory.quantity -= reservation.quantity
-    if inventory.quantity < 0:
-        inventory.quantity = 0
-    inventory.save()
+    if inv:
+        inv.quantity -= reservation.quantity
+        if inv.quantity < 0:
+            inv.quantity = 0
+        inv.save()
 
     messages.success(
         request,

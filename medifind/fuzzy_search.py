@@ -309,13 +309,13 @@ class MedicineMatcher:
 
             final_score = max(alias_score, score_name, score_brand, score_cat, score_desc, score_uses)
 
-            # Check if query matches word tokens
-            q_words = [w for w in cleaned_q.split() if len(w) > 2]
-            name_words = [w.lower() for w in med_name.split()]
+            # Check if query matches distinct word tokens (ignoring pure numbers/dosage tokens)
+            q_words = [w for w in cleaned_q.split() if len(w) > 2 and not re.match(r'^\d+(?:mg|ml|g)?$', w)]
+            name_words = [w.lower() for w in med_name.split() if not re.match(r'^\d+(?:mg|ml|g)?$', w.lower())]
             for qw in q_words:
                 for nw in name_words:
-                    if difflib.SequenceMatcher(None, qw, nw).ratio() >= 0.75:
-                        final_score = max(final_score, 0.75)
+                    if difflib.SequenceMatcher(None, qw, nw).ratio() >= 0.82:
+                        final_score = max(final_score, 0.80)
 
             if final_score >= threshold:
                 scored_medicines.append({
@@ -327,6 +327,13 @@ class MedicineMatcher:
 
         # Sort by similarity score descending
         scored_medicines.sort(key=lambda x: x["score"], reverse=True)
+
+        if scored_medicines:
+            top_score = scored_medicines[0]["score"]
+            # If we have an exact or high match (>= 0.85), only include close matches
+            if top_score >= 0.85:
+                scored_medicines = [m for m in scored_medicines if m["score"] >= max(threshold, top_score - 0.18)]
+
         return scored_medicines[:limit]
 
     @classmethod

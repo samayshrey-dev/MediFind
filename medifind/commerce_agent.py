@@ -783,87 +783,101 @@ class DeterministicRankingEngine:
 
         ranked = list(candidates)
 
+        # Helper SKU exactness scorer for candidates
+        def candidate_sku_score(c):
+            if not target_medicine_name:
+                return 4
+            t = target_medicine_name.strip().lower()
+            name = c.get("medicine_name", "").strip().lower()
+            brand = c.get("brand", "").strip().lower()
+            if name == t or brand == t:
+                return 0
+            if name.startswith(t):
+                return 1
+            tokens = [tok for tok in t.split() if len(tok) > 1]
+            if tokens and all(tok in name or tok in brand for tok in tokens):
+                return 2
+            if t in name or t in brand:
+                return 3
+            return 4
+
+        for item in ranked:
+            item["in_stock_tier"] = 0 if item.get("stock", 0) > 0 else 1
+            item["sku_score"] = candidate_sku_score(item)
+            item["open_tier"] = 0 if item.get("is_open", False) else 1
+            item["dist_sort"] = item["distance_km"] if item.get("distance_km") is not None else 9999.0
+            item["price_sort"] = float(item.get("price", 999999.0))
+
         if optimization_goal == OptimizationGoal.LOWEST_PRICE:
-            # 1. Price ascending (strictly lowest price first)
-            # 2. Distance ascending as secondary factor
-            # 3. Open status
+            # 1. In stock -> 2. SKU exactness -> 3. Price -> 4. Distance -> 5. Open status
             ranked.sort(
                 key=lambda x: (
-                    x["price"],
-                    x["distance_km"] if x["distance_km"] is not None else 9999.0,
-                    0 if x["is_open"] else 1
+                    x["in_stock_tier"],
+                    x["sku_score"],
+                    x["price_sort"],
+                    x["dist_sort"],
+                    x["open_tier"]
                 )
             )
 
         elif optimization_goal == OptimizationGoal.CLOSEST:
-            # 1. Distance ascending (strictly shortest distance first)
-            # 2. Price ascending as secondary factor
-            # 3. Open status
+            # 1. In stock -> 2. SKU exactness -> 3. Distance -> 4. Price -> 5. Open status
             ranked.sort(
                 key=lambda x: (
-                    x["distance_km"] if x["distance_km"] is not None else 9999.0,
-                    x["price"],
-                    0 if x["is_open"] else 1
+                    x["in_stock_tier"],
+                    x["sku_score"],
+                    x["dist_sort"],
+                    x["price_sort"],
+                    x["open_tier"]
                 )
             )
 
         elif optimization_goal == OptimizationGoal.FASTEST:
-            # Urgent Mode:
-            # 1. Open pharmacies with reasonable availability first (is_open == True and stock >= 5)
-            # 2. Open pharmacies with any stock (stock > 0)
-            # 3. Distance ascending (shortest distance / proximity)
-            # 4. Price ascending
+            # 1. In stock -> 2. Open status -> 3. SKU exactness -> 4. Distance -> 5. Price
             ranked.sort(
                 key=lambda x: (
-                    0 if (x["is_open"] and x["stock"] >= 5) else (1 if (x["is_open"] and x["stock"] > 0) else 2),
-                    x["distance_km"] if x["distance_km"] is not None else 9999.0,
-                    x["price"]
+                    x["in_stock_tier"],
+                    x["open_tier"],
+                    x["sku_score"],
+                    x["dist_sort"],
+                    x["price_sort"]
                 )
             )
 
         else:
-            # BEST_VALUE: Transparent composite multi-factor scoring (deterministic combination)
-            prices = [c["price"] for c in ranked]
+            # BEST_VALUE: Strict in-stock guarantee + composite scoring
+            prices = [c["price_sort"] for c in ranked]
             min_price, max_price = min(prices), max(prices)
             price_spread = (max_price - min_price) if max_price > min_price else 1.0
 
-            distances = [c["distance_km"] for c in ranked if c["distance_km"] is not None]
+            distances = [c["dist_sort"] for c in ranked if c["dist_sort"] < 9000]
             min_dist = min(distances) if distances else 0.0
             max_dist = max(distances) if distances else 1.0
             dist_spread = (max_dist - min_dist) if max_dist > min_dist else 1.0
 
-            target_word = target_medicine_name.lower().split()[0] if target_medicine_name else ""
-
             for item in ranked:
-                # Normalized price score (0 to 100, lower price is higher score)
-                price_score = 100.0 - ((item["price"] - min_price) / price_spread * 60.0)
-
-                # Normalized distance score (0 to 100, closer is higher score)
-                if item["distance_km"] is not None:
-                    dist_score = 100.0 - ((item["distance_km"] - min_dist) / dist_spread * 50.0)
+                price_score = 100.0 - ((item["price_sort"] - min_price) / price_spread * 60.0)
+                if item["dist_sort"] < 9000:
+                    dist_score = 100.0 - ((item["dist_sort"] - min_dist) / dist_spread * 50.0)
                 else:
                     dist_score = 50.0
 
-                # Stock confidence bonus (reasonable availability)
-                stock_bonus = 15.0 if item["stock"] >= 15 else (8.0 if item["stock"] >= 5 else 3.0)
-
-                # Open status bonus
+                stock_bonus = 20.0 if item["stock"] >= 15 else (10.0 if item["stock"] >= 5 else (5.0 if item["stock"] > 0 else 0.0))
                 open_bonus = 15.0 if item["is_open"] else 0.0
-
-                # Direct brand/name match bonus
-                match_bonus = 25.0 if (target_word and target_word in item["medicine_name"].lower()) else 0.0
+                exactness_bonus = 30.0 if item["sku_score"] == 0 else (20.0 if item["sku_score"] == 1 else (10.0 if item["sku_score"] <= 2 else 0.0))
 
                 composite_score = round(
-                    (0.40 * price_score) +
+                    (0.35 * price_score) +
                     (0.30 * dist_score) +
                     stock_bonus +
                     open_bonus +
-                    match_bonus,
+                    exactness_bonus,
                     1
                 )
                 item["composite_score"] = composite_score
 
-            ranked.sort(key=lambda x: x.get("composite_score", 0), reverse=True)
+            # In-Stock items ALWAYS rank before out-of-stock items, sorted by composite score
+            ranked.sort(key=lambda x: (x["in_stock_tier"], -x.get("composite_score", 0)))
 
 
         # Annotate rankings and decision reasons

@@ -291,30 +291,42 @@
         </div>
       `;
     } else if (!data.needs_clarification && !data.medical_safety_warning) {
+      const qText = intent.matched_medicine_name || intent.medicine_query || 'this medicine';
       topHtml += `
         <div class="card border rounded-4 p-5 text-center my-3 shadow-sm bg-white h-100 d-flex flex-column justify-content-center">
-          <i class="fa-solid fa-box-open fs-1 text-muted mb-3"></i>
-          <h5 class="fw-bold text-dark mb-1">No medicines found nearby</h5>
-          <p class="text-muted small mb-0">${escapeHtml(data.explanation || 'We could not find matching stock at nearby pharmacies. Try searching with a broader name or increasing your search radius.')}</p>
+          <div class="mb-3">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning p-3" style="width: 64px; height: 64px;">
+              <i class="fa-solid fa-box-open fs-2"></i>
+            </span>
+          </div>
+          <h4 class="fw-bold text-dark mb-2">No pharmacies currently have ${escapeHtml(qText)} in stock.</h4>
+          <p class="text-muted small mb-4">We checked all nearby verified pharmacies. You can set an instant alert to be notified the moment new stock arrives.</p>
+          <div>
+            <button type="button" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#stockAlertModal" id="btnNotifyWhenAvailable">
+              <i class="fa-solid fa-bell me-1.5"></i> Notify me when available
+            </button>
+          </div>
         </div>
       `;
     }
 
-    // 5. "OTHER OPTIONS" List (Full screen width 3-4 column grid)
+    // 5. "OTHER AVAILABLE OPTIONS" List (In Stock)
     const otherOptions = (data.all_options || []).filter(opt => !data.best_match || opt.inventory_id !== data.best_match.inventory_id);
+    const inStockOther = otherOptions.filter(opt => (opt.stock || 0) > 0);
+    const outOfStockOther = otherOptions.filter(opt => (opt.stock || 0) <= 0);
 
-    if (otherOptions.length > 0) {
+    if (inStockOther.length > 0) {
       otherHtml += `
         <div class="mt-4 mb-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
-              OTHER OPTIONS (${otherOptions.length} stores nearby)
+              OTHER AVAILABLE OPTIONS (${inStockOther.length} stores nearby)
             </h5>
-            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">In Stock</span>
           </div>
 
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-            ${otherOptions.map((opt, idx) => `
+            ${inStockOther.map((opt, idx) => `
               <div class="col">
                 <div class="med-option-card">
                   <div>
@@ -333,8 +345,8 @@
                       <div class="med-price-display">
                         ₹${parseFloat(opt.price).toFixed(2)}
                       </div>
-                      <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 500;">
-                        ${opt.stock > 0 ? `${opt.stock} in stock` : 'Out of stock'}
+                      <span class="badge bg-light text-success border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 600;">
+                        ${opt.stock} in stock
                       </span>
                     </div>
 
@@ -355,6 +367,61 @@
                     <a href="/reserve/${opt.inventory_id}/" class="btn-med-reserve">
                       Reserve &rarr;
                     </a>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // OUT OF STOCK AT NEARBY STORES SECTION
+    if (outOfStockOther.length > 0) {
+      otherHtml += `
+        <div class="mt-5 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-muted text-uppercase small mb-0" style="letter-spacing: 0.5px;">
+              <i class="fa-solid fa-box-archive text-warning me-1.5"></i> Out of Stock at Nearby Stores (${outOfStockOther.length})
+            </h6>
+            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small">Currently Unavailable</span>
+          </div>
+
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+            ${outOfStockOther.map((opt, idx) => `
+              <div class="col">
+                <div class="med-option-card opacity-75 border-secondary-subtle">
+                  <div>
+                    <div class="med-option-header">
+                      <h6 class="med-pharmacy-title text-muted" title="${escapeHtml(opt.pharmacy_name)}">
+                        ${escapeHtml(opt.pharmacy_name)}
+                      </h6>
+                      <span class="badge bg-danger-subtle text-danger rounded-pill px-2.5 py-1" style="font-size: 0.68rem; font-weight: 600; flex-shrink: 0;">
+                        ● Out of stock
+                      </span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-baseline mb-2">
+                      <div class="med-price-display text-muted">
+                        ₹${parseFloat(opt.price).toFixed(2)}
+                      </div>
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 600;">
+                        0 in stock
+                      </span>
+                    </div>
+
+                    <div class="med-location-meta">
+                      ${opt.distance_km !== null ? `<span class="fw-bold text-muted"><i class="fa-solid fa-location-dot me-1"></i>${opt.distance_km} km</span> &bull; ` : ''}
+                      <span class="text-muted text-truncate" style="max-width: 180px;">
+                        ${escapeHtml(opt.pharmacy_address || opt.pharmacy_city || '')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="med-actions-row">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill w-100 py-1.5 fw-semibold trigger-stock-modal" data-medicine="${escapeHtml(opt.medicine_name || '')}" data-bs-toggle="modal" data-bs-target="#stockAlertModal">
+                      <i class="fa-solid fa-bell me-1 text-primary"></i> Notify When Available
+                    </button>
                   </div>
                 </div>
               </div>
@@ -996,6 +1063,75 @@
         }
       });
     }
+
+    // Handle Stock Alert Form Submission
+    const stockForm = document.getElementById('stockAlertForm');
+    if (stockForm) {
+      stockForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('btnSubmitStockAlert');
+        const successBox = document.getElementById('stockAlertSuccessMsg');
+        const medInput = document.getElementById('alertMedicineInput');
+        const emailInput = document.getElementById('alertEmailInput');
+        const phoneInput = document.getElementById('alertPhoneInput');
+        const medVal = (medInput ? medInput.value : '') || (document.getElementById('medicineSearch')?.value || '');
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Subscribing...';
+        }
+
+        try {
+          const resp = await fetch('/api/notifications/stock-alert/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+              medicine_name: medVal,
+              email: emailInput ? emailInput.value : '',
+              phone: phoneInput ? phoneInput.value : ''
+            })
+          });
+          const res = await resp.json();
+          if (successBox) {
+            successBox.classList.remove('d-none');
+            successBox.innerHTML = `<i class="fa-solid fa-circle-check me-1.5"></i> ${escapeHtml(res.message || 'Restock alert activated! We will notify you as soon as stock arrives.')}`;
+          }
+          if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Alert Active';
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-success');
+          }
+          setTimeout(() => {
+            const modalEl = document.getElementById('stockAlertModal');
+            if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+              const modal = window.bootstrap.Modal.getInstance(modalEl);
+              if (modal) modal.hide();
+            }
+          }, 2500);
+        } catch (err) {
+          console.error('Stock alert subscription error:', err);
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-bell me-1.5"></i> Notify Me When Available';
+          }
+        }
+      });
+    }
+
+    // Dynamic stock alert modal medicine title populate
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.trigger-stock-modal, #btnNotifyWhenAvailable');
+      if (btn) {
+        const medName = btn.getAttribute('data-medicine') || document.getElementById('medicineSearch')?.value || 'this medicine';
+        const titleEl = document.getElementById('modalMedicineName');
+        const inputEl = document.getElementById('alertMedicineInput');
+        if (titleEl) titleEl.textContent = medName;
+        if (inputEl) inputEl.value = medName;
+      }
+    });
 
     // Auto-run if query param exists
     const urlParams = new URLSearchParams(window.location.search);

@@ -132,7 +132,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                   <span class="badge {% if best_match_item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2.5 py-1 small fw-semibold">
                     ● {% if best_match_item.is_open %}Open Now{% else %}Closed{% endif %}
                   </span>
-                  <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
                     {{ best_match_item.quantity }} available
                   </span>
                 </div>
@@ -186,16 +186,27 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                 </div>
               </div>
             </div>
+          {% elif query %}
+            <!-- ZERO IN-STOCK STATE -->
+            <div class="card border rounded-4 p-5 text-center bg-white shadow-sm h-100 d-flex flex-column justify-content-center reveal">
+              <div class="mb-3">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning p-3" style="width: 64px; height: 64px;">
+                  <i class="fa-solid fa-box-open fs-2"></i>
+                </span>
+              </div>
+              <h4 class="fw-bold text-dark mb-2">No pharmacies currently have {{ query }} in stock.</h4>
+              <p class="text-muted small mb-4">We checked all nearby verified pharmacies. You can set an instant alert to be notified the moment new stock arrives.</p>
+              <div>
+                <button type="button" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#stockAlertModal" id="btnNotifyWhenAvailable">
+                  <i class="fa-solid fa-bell me-1.5"></i> Notify me when available
+                </button>
+              </div>
+            </div>
           {% else %}
             <div class="card border rounded-4 p-5 text-center bg-white shadow-sm h-100 d-flex flex-column justify-content-center reveal">
-              <i class="fa-solid fa-box-open fs-1 text-muted mb-3"></i>
-              <h5 class="fw-bold text-dark mb-1">No medicines found</h5>
-              <p class="text-muted small mb-3">Try searching by medicine name (e.g. Dolo 650, Paracetamol, Pan 40) or clearing filters.</p>
-              <div>
-                <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">
-                  View all medicines
-                </a>
-              </div>
+              <i class="fa-solid fa-magnifying-glass fs-1 text-muted mb-3"></i>
+              <h5 class="fw-bold text-dark mb-1">Search for medicines</h5>
+              <p class="text-muted small mb-3">Enter a medicine name, symptom, or active ingredient to compare live prices across nearby stores.</p>
             </div>
           {% endif %}
         </div>
@@ -216,7 +227,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
     </div>
 
     <!-- ===================================== -->
-    <!-- BOTTOM SECTION: OTHER OPTIONS (FULL SCREEN WIDTH 3-4 COLUMNS) -->
+    <!-- BOTTOM SECTION: OTHER AVAILABLE OPTIONS -->
     <!-- ===================================== -->
     <div id="agentOtherOptionsArea" class="d-none"></div>
 
@@ -225,9 +236,9 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
         <div class="mt-4 mb-4 reveal">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold text-dark mb-0" style="letter-spacing: -0.3px;">
-              {% if query %}OTHER OPTIONS ({{ other_items|length }} stores nearby){% else %}All Available Pharmacy Stock ({{ other_items|length }} items){% endif %}
+              {% if query %}OTHER AVAILABLE OPTIONS ({{ other_items|length }} stores nearby){% else %}All Available Pharmacy Stock ({{ other_items|length }} items){% endif %}
             </h5>
-            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small">Compare Price &amp; Distance</span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">In Stock</span>
           </div>
 
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
@@ -250,7 +261,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                       <div class="med-price-display">
                         ₹{{ item.price }}
                       </div>
-                      <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 500;">
+                      <span class="badge bg-light text-success border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 600;">
                         {{ item.quantity }} in stock
                       </span>
                     </div>
@@ -281,7 +292,99 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
           </div>
         </div>
       {% endif %}
+
+      <!-- OUT OF STOCK AT NEARBY PHARMACIES SECTION -->
+      {% if out_of_stock_items %}
+        <div class="mt-5 mb-4 reveal">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-muted text-uppercase small mb-0" style="letter-spacing: 0.5px;">
+              <i class="fa-solid fa-box-archive text-warning me-1.5"></i> Out of Stock at Nearby Stores ({{ out_of_stock_items|length }})
+            </h6>
+            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small">Currently Unavailable</span>
+          </div>
+
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+            {% for item in out_of_stock_items %}
+              <div class="col">
+                <div class="med-option-card opacity-75 border-secondary-subtle">
+                  <div>
+                    <div class="med-option-header">
+                      <h6 class="med-pharmacy-title text-muted" title="{{ item.pharmacy.name }}">
+                        {{ item.pharmacy.name }}
+                      </h6>
+                      <span class="badge bg-danger-subtle text-danger rounded-pill px-2.5 py-1" style="font-size: 0.68rem; font-weight: 600; flex-shrink: 0;">
+                        ● Out of stock
+                      </span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-baseline mb-2">
+                      <div class="med-price-display text-muted">
+                        ₹{{ item.price }}
+                      </div>
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 600;">
+                        0 in stock
+                      </span>
+                    </div>
+
+                    <div class="med-location-meta">
+                      {% if item.distance_km %}
+                        <span class="fw-bold text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ item.distance_km }} km</span> &bull;
+                      {% endif %}
+                      <span class="text-muted text-truncate" style="max-width: 180px;">
+                        {{ item.pharmacy.address }}, {{ item.pharmacy.city }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="med-actions-row">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill w-100 py-1.5 fw-semibold trigger-stock-modal" data-medicine="{{ item.medicine.name }}" data-bs-toggle="modal" data-bs-target="#stockAlertModal">
+                      <i class="fa-solid fa-bell me-1 text-primary"></i> Notify When Available
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     </div>
+
+  </div>
+</section>
+
+<!-- Stock Alert Modal -->
+<div class="modal fade" id="stockAlertModal" tabindex="-1" aria-labelledby="stockAlertModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark" id="stockAlertModalLabel">
+          <i class="fa-solid fa-bell text-primary me-2"></i> Get Restock Notification
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-3">
+          We will monitor stock across all nearby pharmacies and alert you the second <strong id="modalMedicineName">{{ query|default:"this medicine" }}</strong> becomes available.
+        </p>
+        <form id="stockAlertForm">
+          <input type="hidden" id="alertMedicineInput" name="medicine_name" value="{{ query|default:'' }}">
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Email Address</label>
+            <input type="email" class="form-control rounded-3 py-2" id="alertEmailInput" placeholder="name@example.com" value="{{ request.user.email|default:'' }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Mobile Number (Optional SMS)</label>
+            <input type="tel" class="form-control rounded-3 py-2" id="alertPhoneInput" placeholder="+91 98765 43210">
+          </div>
+          <div id="stockAlertSuccessMsg" class="alert alert-success rounded-3 small py-2 d-none"></div>
+          <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill shadow-sm" id="btnSubmitStockAlert">
+            <i class="fa-solid fa-bell me-1.5"></i> Notify Me When Available
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
   </div>
 </section>

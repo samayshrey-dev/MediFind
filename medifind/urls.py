@@ -20,6 +20,7 @@ urlpatterns = [
     path("api/payments/razorpay/webhook/", views.commerce_razorpay_webhook, name="commerce_razorpay_webhook"),
     path("api/orders/<str:order_reference>/", views.commerce_order_status, name="commerce_order_status"),
     path("orders/confirmed/<str:order_reference>/", views.order_confirmed_view, name="order_confirmed_view"),
+    path("api/notifications/stock-alert/", views.subscribe_stock_alert, name="subscribe_stock_alert"),
 
 
     path(
