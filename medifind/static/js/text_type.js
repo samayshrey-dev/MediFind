@@ -95,15 +95,15 @@ function initMedFinderTextType() {
   }
 
   // Pharmacy Landing Page Typewriter
-  const pharmElem = document.getElementById("pharmacyTextTypeContent");
+  const pharmElem = document.getElementById("pharmacyDynamicHeadline") || document.getElementById("pharmacyTextTypeContent");
   if (pharmElem) {
-    const pharmName = pharmElem.getAttribute("data-pharmacy-name") || pharmElem.textContent.trim() || "Your Registered Pharmacy";
-    new TextType("pharmacyTextTypeContent", "pharmacyTextTypeCursor", {
+    const pharmId = pharmElem.id;
+    new TextType(pharmId, "pharmacyTextTypeCursor", {
       texts: [
-        pharmName,
-        `${pharmName} — Store Portal`,
-        `${pharmName} — Manage Inventory`,
-        `${pharmName} — Fulfill Orders`
+        "Manage your pharmacy.",
+        "Manage your inventory.",
+        "Manage incoming orders.",
+        "Manage store operations."
       ],
       typingSpeed: 75,
       pauseDuration: 1500,
