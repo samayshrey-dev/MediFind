@@ -149,7 +149,7 @@
   }
 
   // Load initial markers if available
-  const initialData = typeof pharmacyData !== "undefined" ? pharmacyData : (window.MEDIFIND_MARKERS || []);
+  const initialData = typeof pharmacyData !== "undefined" ? pharmacyData : (window.MEDIAI_MARKERS || window.MEDIFIND_MARKERS || []);
   if (Array.isArray(initialData) && initialData.length > 0) {
     updatePharmacyMarkers(initialData);
   }

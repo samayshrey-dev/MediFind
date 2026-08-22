@@ -436,7 +436,7 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
 
 <!-- Leaflet Map Script Integration -->
 <script>
-  window.MEDIFIND_MARKERS = {{ marker_data|safe }};
+  window.MEDIAI_MARKERS = window.MEDIFIND_MARKERS = {{ marker_data|safe }};
 </script>
 
 {% endblock %}
