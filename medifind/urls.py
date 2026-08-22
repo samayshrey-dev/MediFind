@@ -218,4 +218,6 @@ path(
     views.toggle_pharmacy_status,
     name="toggle_pharmacy_status"
 ),
+path("privacy/", views.privacy_policy, name="privacy"),
+path("terms/", views.terms_of_service, name="terms"),
 ]

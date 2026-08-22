@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Terms of Service — MediAI Healthcare Platform{% endblock %}
+
+{% block content %}
+<div class="bg-light py-5 border-bottom">
+  <div class="container py-3">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2 small">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Terms of Service</li>
+          </ol>
+        </nav>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 mb-2 fw-semibold">
+          <i class="fa-solid fa-scale-balanced me-1"></i> Legal Agreement
+        </span>
+        <h1 class="fw-extrabold text-dark display-5 mb-2" style="letter-spacing: -0.5px;">MediAI Terms of Service</h1>
+        <p class="text-muted lead mb-0" style="font-size: 1.05rem;">
+          Terms, conditions, and medical disclaimer governing your use of the MediAI medicine discovery and reservation platform.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+        <div class="p-3 bg-white rounded-4 border shadow-xs d-inline-block text-start">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small">
+              <i class="fa-regular fa-calendar-check text-primary me-1"></i> Effective Date
+            </span>
+          </div>
+          <div class="fw-bold text-dark fs-6">August 22, 2026</div>
+          <small class="text-muted">Version 2.0 &bull; Platform Agreement</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      
+      <!-- Medical Disclaimer Alert -->
+      <div class="alert alert-warning border-0 rounded-4 p-4 mb-4 shadow-xs d-flex align-items-start gap-3 bg-warning-subtle">
+        <i class="fa-solid fa-triangle-exclamation text-warning-emphasis fs-2 mt-1 flex-shrink-0"></i>
+        <div>
+          <h5 class="fw-bold text-warning-emphasis mb-1">Important Medical Disclaimer</h5>
+          <p class="mb-0 text-warning-emphasis small" style="line-height: 1.6;">
+            MediAI is an informational search and local pharmacy reservation platform. MediAI does not provide medical diagnoses, treatment advice, or replace consultation with qualified healthcare professionals. In any medical emergency, please dial 112 or visit the nearest hospital emergency room immediately. Prescription drugs strictly require a valid doctor's prescription at pharmacy pickup.
+          </p>
+        </div>
+      </div>
+
+      <div class="card border rounded-4 p-4 p-md-5 bg-white shadow-xs">
+        <div class="mb-4">
+          <h4 class="fw-bold text-dark mb-2">1. Acceptance of Terms</h4>
+          <p class="text-secondary small" style="line-height: 1.8;">
+            By accessing, browsing, or creating an account on MediAI, you acknowledge that you have read, understood, and agreed to be bound by these Terms of Service and our <a href="{% url 'privacy' %}" class="text-primary text-decoration-none fw-semibold">Privacy Policy</a>.
+          </p>
+        </div>
+
+        <div class="mb-4">
+          <h4 class="fw-bold text-dark mb-2">2. Services Offered</h4>
+          <p class="text-secondary small" style="line-height: 1.8;">
+            MediAI aggregates real-time inventory listings from licensed local pharmacies, allowing users to compare retail prices, view store operating hours, calculate road distance, and place medicine reservations with online payment (powered by Razorpay) or payment on pharmacy pickup.
+          </p>
+        </div>
+
+        <div class="mb-4">
+          <h4 class="fw-bold text-dark mb-2">3. Prescription Drugs Compliance</h4>
+          <p class="text-secondary small" style="line-height: 1.8;">
+            Schedule H and Schedule X medications under the Indian Drugs and Cosmetics Act strictly require a physical or verified digital prescription upon pickup. Pharmacists reserve the legal right to inspect and verify the prescription before dispensing.
+          </p>
+        </div>
+
+        <div class="mb-4">
+          <h4 class="fw-bold text-dark mb-2">4. Payment &amp; Cancellation Policy</h4>
+          <p class="text-secondary small" style="line-height: 1.8;">
+            Online payments processed via Razorpay are held in escrow until the partner pharmacy confirms the reservation. If a reservation is rejected by the merchant or cannot be fulfilled due to stock discrepancy, an automated full refund is initiated to the original payment source within 3–5 business days.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="fw-bold text-dark mb-2">5. Contact Support</h4>
+          <p class="text-secondary small mb-0" style="line-height: 1.8;">
+            For billing queries, order inquiries, or terms support, email <a href="mailto:support@medifind.io" class="text-primary text-decoration-none fw-semibold">support@medifind.io</a> or call +91 98765 43210.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

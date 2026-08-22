@@ -3088,4 +3088,21 @@ def forgot_password_resend_api(request):
     return JsonResponse({
         "success": True,
         "message": f"A fresh 6-digit OTP code has been sent to {request.session.get('pwd_reset_masked')}."
-    })
+    })
+
+
+def privacy_policy(request):
+    """
+    Renders the comprehensive, transparent MediAI Privacy Policy.
+    Covers: Information collected, account data, pharmacy data, location usage,
+    search history, payment processing, cookies, third-party services, data retention,
+    deletion requests, and contact info.
+    """
+    return render(request, "privacy.html")
+
+
+def terms_of_service(request):
+    """
+    Renders the MediAI Terms of Service.
+    """
+    return render(request, "terms.html")

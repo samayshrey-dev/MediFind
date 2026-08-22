@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Privacy Policy — MediAI Healthcare Platform{% endblock %}
+
+{% block content %}
+<div class="bg-light py-5 border-bottom">
+  <div class="container py-3">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2 small">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Privacy Policy</li>
+          </ol>
+        </nav>
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 mb-2 fw-semibold">
+          <i class="fa-solid fa-shield-halved me-1"></i> Data Privacy &amp; Trust
+        </span>
+        <h1 class="fw-extrabold text-dark display-5 mb-2" style="letter-spacing: -0.5px;">MediAI Privacy Policy</h1>
+        <p class="text-muted lead mb-0" style="font-size: 1.05rem;">
+          How MediAI collects, uses, protects, and handles your personal data, real-time geolocation, and healthcare commerce information.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+        <div class="p-3 bg-white rounded-4 border shadow-xs d-inline-block text-start">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small">
+              <i class="fa-regular fa-calendar-check text-primary me-1"></i> Effective Date
+            </span>
+          </div>
+          <div class="fw-bold text-dark fs-6">August 22, 2026</div>
+          <small class="text-muted">Version 2.4 &bull; DPDP Act 2023 Compliant</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-5">
+    
+    <!-- Table of Contents Sidebar -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <div class="card border rounded-4 p-4 shadow-xs sticky-top bg-white" style="top: 100px; z-index: 10;">
+        <h6 class="fw-bold text-dark text-uppercase small mb-3" style="letter-spacing: 0.5px;">
+          <i class="fa-solid fa-list-ul text-primary me-1.5"></i> Policy Sections
+        </h6>
+        <div class="nav flex-column nav-pills gap-1" id="privacyNav" style="font-size: 0.86rem;">
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#overview">1. Information Collected</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#account-info">2. Account Information</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#pharmacy-info">3. Pharmacy Information</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#location-usage">4. Location Usage</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#search-history">5. Search History &amp; AI</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#payment-processing">6. Payment Processing</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#cookies">7. Cookies &amp; Storage</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#third-party">8. Third-Party Services</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#data-retention">9. Data Retention</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#deletion-requests">10. Deletion Requests &amp; Rights</a>
+          <a class="nav-link text-muted px-2 py-1.5 rounded-3 hover-light" href="#contact-info">11. Contact Information</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Policy Content -->
+    <div class="col-lg-9">
+      
+      <!-- Trust Pledge Banner -->
+      <div class="alert alert-success border-0 rounded-4 p-4 mb-5 shadow-xs d-flex align-items-start gap-3 bg-success-subtle">
+        <i class="fa-solid fa-user-shield text-success fs-2 mt-1 flex-shrink-0"></i>
+        <div>
+          <h5 class="fw-bold text-success-emphasis mb-1">Our Privacy Commitment</h5>
+          <p class="mb-0 text-success-emphasis small" style="line-height: 1.6;">
+            MediAI is built on principles of healthcare transparency, data minimization, and user sovereignty. We never sell your personal healthcare data or medicine search queries to third-party data brokers or advertisers. All interactions are strictly governed under India's Digital Personal Data Protection (DPDP) Act, 2023.
+          </p>
+        </div>
+      </div>
+
+      <!-- Section 1: Information Collected -->
+      <section id="overview" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">01</span>
+          <h3 class="fw-bold text-dark mb-0">Information Collected</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          MediAI collects only the minimum necessary information required to facilitate medicine discovery, inventory verification, and pharmacy reservation workflows. Information collected is grouped into the following categories:
+        </p>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <div class="p-3.5 bg-white border rounded-4 h-100 shadow-2xs">
+              <h6 class="fw-bold text-dark mb-1.5"><i class="fa-solid fa-user-tag text-primary me-2"></i> User-Provided Data</h6>
+              <p class="text-muted small mb-0">Name, email address, phone number, login credentials, and communication preferences provided during registration.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3.5 bg-white border rounded-4 h-100 shadow-2xs">
+              <h6 class="fw-bold text-dark mb-1.5"><i class="fa-solid fa-satellite-dish text-success me-2"></i> Automatically Collected Data</h6>
+              <p class="text-muted small mb-0">Browser user agent, IP address, device telemetry, session duration, and real-time GPS coordinates (when permission is granted).</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 2: Account Information -->
+      <section id="account-info" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">02</span>
+          <h3 class="fw-bold text-dark mb-0">Account Information</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          When you register an account as a <strong>Customer</strong> or <strong>Pharmacy Merchant</strong>, we maintain:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Identity &amp; Contact:</strong> Your full name, email address, password hash (argon2/bcrypt encrypted), and mobile number for reservation status notifications.</li>
+          <li><strong>Role Designation:</strong> Account classification (Customer, Pharmacy Owner, or Administrator) determining access controls and platform permissions.</li>
+          <li><strong>Authentication Records:</strong> Login timestamps, active sessions, and cryptographically signed session tokens.</li>
+          <li><strong>Password Security:</strong> One-time passwords (OTP) for password recovery are hashed, rate-limited, and automatically expired after 10 minutes.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 3: Pharmacy Information -->
+      <section id="pharmacy-info" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">03</span>
+          <h3 class="fw-bold text-dark mb-0">Pharmacy Information</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          For registered partner pharmacies and chemist retailers, MediAI collects and publicly displays store information to help customers locate medicines:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Store Details:</strong> Registered pharmacy business name, physical street address, city, state, postal code (PIN code), and customer support phone number.</li>
+          <li><strong>Operating Hours:</strong> Daily opening and closing schedules, holiday closures, and live store open/closed status.</li>
+          <li><strong>Live Inventory Catalog:</strong> Medicine SKU listings, packaging variants, unit prices, batch numbers, expiry dates, and current stock quantities.</li>
+          <li><strong>Compliance &amp; Verification:</strong> State Drug Controller licenses, GSTIN identification, and partner merchant verification status.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 4: Location Usage -->
+      <section id="location-usage" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">04</span>
+          <h3 class="fw-bold text-dark mb-0">Location Usage &amp; Geolocation</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          MediAI uses your device's geographical coordinates (latitude and longitude) strictly to calculate real-world road distances to nearby partner pharmacies:
+        </p>
+        <div class="p-3.5 bg-light rounded-4 border mb-3">
+          <div class="d-flex align-items-start gap-2.5">
+            <i class="fa-solid fa-location-crosshairs text-primary mt-1"></i>
+            <div>
+              <strong class="text-dark d-block small mb-1">Explicit Consent &amp; Ephemeral Processing</strong>
+              <p class="text-muted small mb-0">
+                Geolocation is accessed exclusively when you click <em>"Use My Location"</em> or permit browser geolocation dialogs. We do not track your location in the background when the app is inactive, nor do we construct persistent geographic movement profiles.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 5: Search History & AI Queries -->
+      <section id="search-history" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">05</span>
+          <h3 class="fw-bold text-dark mb-0">Search History &amp; AI Queries</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          When you use MediAI's medicine search bar or the AI Commerce Agent:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Query Terms:</strong> Searched medicine names, symptoms, or active ingredients are recorded in your personal Search History for your convenience and search suggestions.</li>
+          <li><strong>AI Intent Interpretation:</strong> Natural language prompts submitted to the conversational assistant are processed strictly to identify medical intent and match verified catalog items.</li>
+          <li><strong>Audit Trail Logging:</strong> AI decision-making steps, constraint validations, and score calculations are recorded in an internal audit log with zero personal identifiers.</li>
+          <li><strong>User Control:</strong> You can clear your search history anytime directly from your <a href="{% url 'search_history' %}" class="text-primary text-decoration-none fw-semibold">Search History</a> page.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 6: Payment Processing -->
+      <section id="payment-processing" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">06</span>
+          <h3 class="fw-bold text-dark mb-0">Payment Processing &amp; Security</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          MediAI supports secure online payments and reservations through certified financial infrastructure:
+        </p>
+        <div class="card border rounded-4 p-4 bg-white shadow-2xs mb-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="fa-solid fa-lock text-success fs-5"></i>
+            <strong class="text-dark">Secure payments powered by Razorpay</strong>
+          </div>
+          <p class="text-muted small mb-0" style="line-height: 1.6;">
+            All online transactions (UPI, Credit/Debit Cards, Net Banking, Wallets) are processed directly through <strong>Razorpay Software Private Limited</strong>, an RBI-authorized Payment Aggregator complying with <strong>PCI-DSS Level 1</strong> certification.
+          </p>
+          <hr class="my-3">
+          <ul class="text-secondary small ps-3 mb-0" style="line-height: 1.8;">
+            <li><strong>Zero Card Data Retention:</strong> MediAI servers <strong>never</strong> receive, store, or process raw credit/debit card numbers, CVV codes, or net banking passwords.</li>
+            <li><strong>Transaction Records:</strong> We store only the Razorpay Order ID, Payment ID, transaction timestamp, and amount for order fulfillment and customer dispute resolution.</li>
+            <li><strong>Cryptographic Verification:</strong> All webhook and payment callback payloads are verified using SHA-256 HMAC cryptographic signatures.</li>
+          </ul>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 7: Cookies & Local Storage -->
+      <section id="cookies" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">07</span>
+          <h3 class="fw-bold text-dark mb-0">Cookies &amp; Local Storage</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          We utilize essential and functional cookies to ensure platform reliability and security:
+        </p>
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm small align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Cookie / Token</th>
+                <th>Type</th>
+                <th>Purpose</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>sessionid</code></td>
+                <td>Essential</td>
+                <td>Maintains authenticated user session state across page requests.</td>
+                <td>14 Days (or Logout)</td>
+              </tr>
+              <tr>
+                <td><code>csrftoken</code></td>
+                <td>Security</td>
+                <td>Protects against Cross-Site Request Forgery (CSRF) on form submissions.</td>
+                <td>1 Year</td>
+              </tr>
+              <tr>
+                <td><code>user_lat</code> / <code>user_lng</code></td>
+                <td>Functional</td>
+                <td>Stores temporary geolocation for nearby pharmacy distance sorting.</td>
+                <td>Session Only</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 8: Third-Party Services -->
+      <section id="third-party" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">08</span>
+          <h3 class="fw-bold text-dark mb-0">Third-Party Services</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          To provide platform capabilities, MediAI securely interfaces with the following vetted third-party service providers:
+        </p>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-4 border h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-credit-card text-primary me-1"></i> Razorpay</strong>
+              <p class="text-muted small mb-0">PCI-DSS Level 1 payment gateway processing UPI, card, and banking transactions.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-4 border h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-map text-success me-1"></i> Leaflet &amp; OSM</strong>
+              <p class="text-muted small mb-0">OpenStreetMap tile servers rendering interactive pharmacy navigation maps.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded-4 border h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-robot text-purple me-1"></i> Google Gemini AI</strong>
+              <p class="text-muted small mb-0">Structured natural language intent parsing for medical search queries.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 9: Data Retention -->
+      <section id="data-retention" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">09</span>
+          <h3 class="fw-bold text-dark mb-0">Data Retention Policy</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          We retain personal data only for as long as necessary to fulfill the purposes described in this policy:
+        </p>
+        <ul class="text-secondary small ps-3" style="line-height: 1.8;">
+          <li><strong>Active Accounts:</strong> Account profiles and pharmacy inventory catalogs are retained for the duration of the active account relationship.</li>
+          <li><strong>Reservation &amp; Order Records:</strong> Completed orders and financial transaction logs are retained for 7 years to comply with statutory accounting and tax regulations under Indian law.</li>
+          <li><strong>Search Queries:</strong> Search history entries are stored in your active profile and can be purged on-demand by the user.</li>
+          <li><strong>Security Logs:</strong> Server access logs and security telemetry are automatically rotated and purged after 90 days.</li>
+        </ul>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 10: Deletion Requests & User Rights -->
+      <section id="deletion-requests" class="mb-5 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">10</span>
+          <h3 class="fw-bold text-dark mb-0">Deletion Requests &amp; Your Legal Rights</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          Under the Digital Personal Data Protection Act, you possess explicit rights regarding your personal information:
+        </p>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="p-3.5 bg-white border rounded-4 shadow-2xs h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-eye text-primary me-1.5"></i> Right to Access &amp; Portability</strong>
+              <p class="text-muted small mb-0">You may request an export of all personal data, reservations, and inventory records associated with your account.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3.5 bg-white border rounded-4 shadow-2xs h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-pen-to-square text-success me-1.5"></i> Right to Correction</strong>
+              <p class="text-muted small mb-0">You can update your personal contact details, pharmacy address, or inventory data anytime via your Profile Settings.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3.5 bg-white border rounded-4 shadow-2xs h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-trash-can text-danger me-1.5"></i> Right to Erasure (Deletion)</strong>
+              <p class="text-muted small mb-0">You may submit an account and data deletion request by emailing our privacy desk. We will permanently erase non-statutory records within 30 days.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3.5 bg-white border rounded-4 shadow-2xs h-100">
+              <strong class="text-dark d-block small mb-1"><i class="fa-solid fa-ban text-warning me-1.5"></i> Right to Withdraw Consent</strong>
+              <p class="text-muted small mb-0">You may revoke location permissions or unsubscribe from restock notifications at any time.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="my-4 text-muted opacity-20">
+
+      <!-- Section 11: Contact Information -->
+      <section id="contact-info" class="mb-4 scroll-mt">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">11</span>
+          <h3 class="fw-bold text-dark mb-0">Contact Information &amp; Grievance Officer</h3>
+        </div>
+        <p class="text-secondary" style="line-height: 1.7;">
+          If you have questions regarding this Privacy Policy, wish to exercise your data protection rights, or need to lodge a privacy grievance, please reach out to our dedicated team:
+        </p>
+        <div class="card border rounded-4 p-4 bg-light">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <h6 class="fw-bold text-dark mb-2">Privacy &amp; Data Protection Desk</h6>
+              <p class="text-muted small mb-1"><i class="fa-solid fa-envelope text-primary me-2"></i> <strong>Email:</strong> <a href="mailto:privacy@medifind.io" class="text-decoration-none text-dark fw-semibold">privacy@medifind.io</a></p>
+              <p class="text-muted small mb-1"><i class="fa-solid fa-envelope text-primary me-2"></i> <strong>Support:</strong> <a href="mailto:MediAi@gmail.com" class="text-decoration-none text-dark fw-semibold">MediAi@gmail.com</a></p>
+              <p class="text-muted small mb-0"><i class="fa-solid fa-phone text-primary me-2"></i> <strong>Phone:</strong> +91 98765 43210</p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold text-dark mb-2">Grievance Redressal Officer</h6>
+              <p class="text-muted small mb-1"><strong>Officer:</strong> Data Privacy Officer (DPO)</p>
+              <p class="text-muted small mb-1"><strong>Platform:</strong> MediAI Healthcare Technology</p>
+              <p class="text-muted small mb-0"><i class="fa-solid fa-location-dot text-primary me-2"></i> Chennai, Tamil Nadu, India - 600001</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
