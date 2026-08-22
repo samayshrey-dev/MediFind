@@ -198,7 +198,7 @@ Reserve {{ medicine.name }} | MediAI
                   <strong class="text-dark"><i class="fa-solid fa-credit-card text-success me-1"></i> Pay Now &amp; Reserve Online</strong>
                   <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">● Instant Confirmation</span>
                 </div>
-                <p class="text-muted small mb-0">Pay securely via Razorpay test mode (UPI, Google Pay, Cards, Net Banking) with real-time stock recheck before payment.</p>
+                <p class="text-muted small mb-0">Secure payments powered by Razorpay (UPI, Google Pay, Cards, Net Banking) with real-time stock verification.</p>
               </label>
             </div>
           </div>
@@ -238,7 +238,11 @@ Reserve {{ medicine.name }} | MediAI
             </form>
           </div>
 
-          <div class="text-center mt-3">
+          <div class="d-flex align-items-center justify-content-center gap-2 mt-3 pt-2 text-muted small" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-shield-halved text-success"></i> Secure payments powered by Razorpay
+          </div>
+
+          <div class="text-center mt-2">
             <a href="{% url 'search' %}" class="text-muted small text-decoration-none">
               <i class="fa-solid fa-arrow-left me-1"></i> Cancel and return to search
             </a>

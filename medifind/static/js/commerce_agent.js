@@ -584,14 +584,14 @@
     }
   }
 
-  // STEP 2: Initiate Razorpay Test Mode Payment
+  // STEP 2: Initiate Razorpay Secure Payment
   async function initiateRazorpayPayment(orderReference) {
     const container = document.getElementById('approvalGateContainer');
     if (container) {
       container.innerHTML = `
         <div class="text-center py-3 w-100">
           <div class="spinner-border spinner-border-sm text-success me-2"></div>
-          <span class="small fw-bold text-dark">Connecting to Razorpay Test Gateway...</span>
+          <span class="small fw-bold text-dark">Connecting to Secure Razorpay Gateway...</span>
         </div>
       `;
     }
@@ -1015,8 +1015,8 @@
           <!-- 7. Razorpay order created -->
           <div class="audit-step-item ${activeOrderSnapshot?.razorpay_order_id ? 'completed' : ''}">
             <div class="audit-step-node"><i class="fa-solid fa-credit-card"></i></div>
-            <div class="audit-step-title">Razorpay order created</div>
-            <div class="audit-step-desc">Test mode payload generated with revalidated live stock</div>
+            <div class="audit-step-title">Secure Razorpay order created</div>
+            <div class="audit-step-desc">Encrypted order generated with revalidated live stock</div>
           </div>
 
           <!-- 8. Payment verified -->
