@@ -4,7 +4,7 @@
 (function() {
   'use strict';
   try {
-    localStorage.removeItem('medifind-theme');
+    localStorage.removeItem('MediAI-theme');
     document.documentElement.removeAttribute('data-theme');
   } catch (e) {}
 })();

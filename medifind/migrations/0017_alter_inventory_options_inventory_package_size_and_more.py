@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('medifind', '0016_alter_userprofile_pharmacy'),
+        ('MediAI', '0016_alter_userprofile_pharmacy'),
     ]
 
     operations = [
@@ -30,10 +30,10 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='inventory',
-            index=models.Index(fields=['pharmacy', 'medicine'], name='medifind_in_pharmac_0b199f_idx'),
+            index=models.Index(fields=['pharmacy', 'medicine'], name='MediAI_in_pharmac_0b199f_idx'),
         ),
         migrations.AddIndex(
             model_name='inventory',
-            index=models.Index(fields=['medicine', 'quantity'], name='medifind_in_medicin_c3d8b3_idx'),
+            index=models.Index(fields=['medicine', 'quantity'], name='MediAI_in_medicin_c3d8b3_idx'),
         ),
     ]

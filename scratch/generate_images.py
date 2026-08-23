@@ -79,7 +79,7 @@ def create_medicine_image(med):
     
     # Bottom Manufacturer details
     draw.line([100, 420, 500, 420], fill='#e2e8f0', width=2)
-    draw.text((100, 440), 'MediFind Verified Product - 100% Authentic', fill='#64748b')
+    draw.text((100, 440), 'MediAI Verified Product - 100% Authentic', fill='#64748b')
     draw.text((100, 465), f'Category: {med.category} | Form: Tablet / Capsule', fill='#94a3b8')
     
     safe_name = med.name.lower().replace(" ", "_").replace("/", "_")

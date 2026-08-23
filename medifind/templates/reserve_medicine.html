@@ -24,7 +24,9 @@ Reserve {{ medicine.name }} | MediAI
     </div>
 
     <div class="row g-4">
-      <!-- Left Column: Medicine & Pharmacy Information -->
+      <!-- ══════════════════════════════════════════════
+           LEFT COLUMN: Medicine & Pharmacy Information
+           ══════════════════════════════════════════════ -->
       <div class="col-lg-7">
         <!-- Medicine Card -->
         <div class="card border rounded-4 p-4 shadow-sm bg-white mb-4">
@@ -42,7 +44,7 @@ Reserve {{ medicine.name }} | MediAI
             </div>
           </div>
 
-          <!-- Multiple Pack Sizes Switcher if available at this pharmacy -->
+          <!-- Multiple Pack Sizes Switcher -->
           {% if available_skus and available_skus|length > 1 %}
             <div class="p-3 rounded-3 mb-3 bg-light border">
               <span class="text-muted small fw-bold text-uppercase d-block mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
@@ -119,139 +121,180 @@ Reserve {{ medicine.name }} | MediAI
         </div>
       </div>
 
-      <!-- Right Column: Interactive Order & Payment Selection -->
+      <!-- ══════════════════════════════════════════════
+           RIGHT COLUMN: CONFIRM ORDER PANEL
+           ══════════════════════════════════════════════ -->
       <div class="col-lg-5">
-        <div class="card border rounded-4 p-4 shadow-sm bg-white sticky-top" style="top: 90px;">
+        <div class="card border-0 rounded-4 shadow-lg bg-white sticky-top co-card" style="top: 90px;">
           {% csrf_token %}
-          <h4 class="fw-bold text-dark mb-3">Reservation Details</h4>
 
-          <!-- Quantity Selector -->
-          <div class="mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-              <label class="form-label text-dark fw-bold small mb-0">Select Quantity</label>
-              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.82rem;">
-                <i class="fa-solid fa-box-archive me-1"></i> <span id="badgeStockCount">{{ inventory.quantity }}</span> units in stock
-              </span>
+          <!-- ── Panel header ── -->
+          <div class="co-header px-4 pt-4 pb-3 border-bottom">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="fa-solid fa-receipt text-success" style="font-size: 0.9rem;"></i>
+              <span class="text-uppercase fw-bold text-muted" style="font-size: 0.68rem; letter-spacing: 1.5px;">Confirm Order</span>
             </div>
+            <p class="text-dark fw-bold mb-0" style="font-size: 1.05rem;">What exactly am I paying for?</p>
+          </div>
 
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-              <div class="qty-stepper-box d-inline-flex align-items-center border rounded-pill p-1 bg-light shadow-sm" style="border-color: #cbd5e1 !important; min-width: 140px; justify-content: space-between;">
-                <button type="button" class="btn btn-sm shadow-sm border text-dark fw-bold d-flex align-items-center justify-content-center bg-white rounded-circle qty-btn" id="btnQtyMinus" style="width: 36px; height: 36px; font-size: 1.1rem; line-height: 1;" title="Decrease quantity">
-                  <i class="fa-solid fa-minus"></i>
-                </button>
-                <span id="displayQuantity" class="fw-extrabold text-dark text-center px-2" style="font-size: 1.25rem; min-width: 44px; user-select: none;">1</span>
-                <input type="hidden" id="inputQuantity" name="quantity" value="1">
-                <button type="button" class="btn btn-sm shadow-sm border text-dark fw-bold d-flex align-items-center justify-content-center bg-white rounded-circle qty-btn" id="btnQtyPlus" style="width: 36px; height: 36px; font-size: 1.1rem; line-height: 1;" title="Increase quantity">
-                  <i class="fa-solid fa-plus"></i>
-                </button>
+          <div class="px-4 pt-4 pb-2">
+
+            <!-- ── Medicine row ── -->
+            <div class="co-item d-flex align-items-start gap-3 mb-3 pb-3 border-bottom">
+              <div class="co-icon bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px;">
+                <i class="fa-solid fa-pills fs-6"></i>
               </div>
-              <div class="text-muted small">
-                <span class="d-block text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> In Stock &amp; Ready</span>
-                <span class="text-secondary opacity-75" style="font-size: 0.78rem;">Max {{ max_quantity }} per reservation</span>
+              <div class="flex-grow-1">
+                <div class="fw-bold text-dark" style="font-size: 1rem;">{{ medicine.name }}</div>
+                <div class="text-muted small">
+                  {{ package_size }} &times; <span class="fw-semibold text-dark" id="confirmQtyInline">1</span>
+                </div>
+                {% if medicine.brand %}
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ medicine.brand }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- ── Pharmacy row ── -->
+            <div class="co-item d-flex align-items-start gap-3 mb-4 pb-3 border-bottom">
+              <div class="co-icon bg-success-subtle text-success rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px;">
+                <i class="fa-solid fa-store fs-6"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="fw-bold text-dark" style="font-size: 0.97rem;">{{ pharmacy.name }}</div>
+                <div class="text-muted small">{{ pharmacy.address }}{% if pharmacy.city %}, {{ pharmacy.city }}{% endif %}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">
+                  <i class="fa-solid fa-clock me-1"></i>{{ pharmacy.opening_time|time:"h:i A" }} – {{ pharmacy.closing_time|time:"h:i A" }}
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Price breakdown ── -->
+            <div class="co-price-table mb-4">
+              <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span class="text-muted small">Medicine</span>
+                <span class="fw-semibold text-dark" id="summaryMedicineAmt">₹{{ unit_price }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span class="text-muted small">Delivery</span>
+                <span class="text-success small fw-bold">₹0 &nbsp;<span class="text-muted fw-normal" style="font-size:0.7rem;">(Store Pickup)</span></span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span class="text-muted small">Platform Fee</span>
+                <span class="text-success small fw-bold">₹0 &nbsp;<span class="text-muted fw-normal" style="font-size:0.7rem;">(MediAI Guarantee)</span></span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center pt-3 pb-1">
+                <span class="fw-bold text-dark fs-6">Total</span>
+                <span class="fw-extrabold text-success" id="summaryTotal" style="font-size: 1.4rem; letter-spacing: -0.5px;">₹{{ unit_price }}</span>
+              </div>
+            </div>
+
+            <!-- Hidden compat IDs for JS -->
+            <span id="summaryQty" class="d-none">1</span>
+            <span id="summaryRemainingStock" class="d-none">{{ inventory.quantity }} units</span>
+
+            <!-- ── Quantity selector ── -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label text-dark fw-bold small mb-0">Quantity</label>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold" style="font-size: 0.75rem;">
+                  <i class="fa-solid fa-box-archive me-1"></i><span id="badgeStockCount">{{ inventory.quantity }}</span> in stock
+                </span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <div class="qty-stepper-box d-inline-flex align-items-center border rounded-pill p-1 bg-light shadow-sm" style="border-color: #cbd5e1 !important; min-width: 136px; justify-content: space-between;">
+                  <button type="button" class="btn btn-sm shadow-sm border text-dark fw-bold d-flex align-items-center justify-content-center bg-white rounded-circle qty-btn" id="btnQtyMinus" style="width: 36px; height: 36px; font-size: 1.1rem;" title="Decrease quantity">
+                    <i class="fa-solid fa-minus"></i>
+                  </button>
+                  <span id="displayQuantity" class="fw-extrabold text-dark text-center px-2" style="font-size: 1.25rem; min-width: 40px; user-select: none;">1</span>
+                  <input type="hidden" id="inputQuantity" name="quantity" value="1">
+                  <button type="button" class="btn btn-sm shadow-sm border text-dark fw-bold d-flex align-items-center justify-content-center bg-white rounded-circle qty-btn" id="btnQtyPlus" style="width: 36px; height: 36px; font-size: 1.1rem;" title="Increase quantity">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+                <div class="text-muted small">
+                  <span class="d-block text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> In Stock &amp; Ready</span>
+                  <span class="text-secondary opacity-75" style="font-size: 0.75rem;">Max {{ max_quantity }} per order</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Notes ── -->
+            <div class="mb-4">
+              <label for="reservationNotes" class="form-label text-dark fw-semibold small mb-1">Notes for Pharmacy <span class="text-muted fw-normal">(Optional)</span></label>
+              <textarea id="reservationNotes" class="form-control form-control-sm rounded-3" rows="2" placeholder="e.g. Expected pickup time, special requests..."></textarea>
+            </div>
+
+          </div><!-- /px-4 -->
+
+          <!-- ── Payment mode cards ── -->
+          <div class="px-4 pb-2">
+            <p class="text-dark fw-bold small mb-2">How would you like to pay?</p>
+
+            <!-- Option 1: Pay Online -->
+            <div class="form-check payment-option-card border rounded-3 p-3 mb-2 active-payment-option" id="cardPayOnline" style="cursor: pointer;">
+              <div class="d-flex align-items-start gap-3">
+                <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayOnline" value="Online" checked>
+                <label class="form-check-label w-100" for="optPayOnline" style="cursor: pointer;">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong class="text-dark small"><i class="fa-solid fa-credit-card text-success me-1"></i> Pay Online Now</strong>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2" style="font-size: 0.68rem;">● Instant Confirmation</span>
+                  </div>
+                  <p class="text-muted mb-0" style="font-size: 0.78rem;">UPI, Google Pay, Cards, Net Banking — powered by Razorpay.</p>
+                </label>
+              </div>
+            </div>
+
+            <!-- Option 2: Pay at Store -->
+            <div class="form-check payment-option-card border rounded-3 p-3 mb-4" id="cardPayStore" style="cursor: pointer;">
+              <div class="d-flex align-items-start gap-3">
+                <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayStore" value="PayOnPickup">
+                <label class="form-check-label w-100" for="optPayStore" style="cursor: pointer;">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong class="text-dark small"><i class="fa-solid fa-store text-primary me-1"></i> Pay at Store Counter</strong>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2" style="font-size: 0.68rem;">● Pay on Pickup</span>
+                  </div>
+                  <p class="text-muted mb-0" style="font-size: 0.78rem;">Reserve now, pay cash or UPI directly at the pharmacy. No upfront charge.</p>
+                </label>
               </div>
             </div>
           </div>
 
-          <!-- Notes for Pharmacy -->
-          <div class="mb-4">
-            <label for="reservationNotes" class="form-label text-dark fw-semibold small mb-1">Notes for Pharmacy (Optional)</label>
-            <textarea id="reservationNotes" class="form-control form-control-sm rounded-3" rows="2" placeholder="e.g. Expected pickup time, special requests..."></textarea>
-          </div>
-
-          <!-- Price Summary Breakdown -->
-          <div class="bg-light rounded-3 p-3 mb-4 border">
-            <div class="d-flex justify-content-between text-muted small mb-2">
-              <span>Unit Price</span>
-              <span>₹{{ unit_price }}</span>
-            </div>
-            <div class="d-flex justify-content-between text-muted small mb-2">
-              <span>Quantity Selected</span>
-              <span class="fw-bold text-dark" id="summaryQty">1</span>
-            </div>
-            <div class="d-flex justify-content-between text-muted small mb-2">
-              <span>Stock Remaining</span>
-              <span class="text-success fw-semibold" id="summaryRemainingStock">{{ inventory.quantity }} units</span>
-            </div>
-            <div class="d-flex justify-content-between text-muted small mb-2">
-              <span>Convenience Fee</span>
-              <span class="text-success fw-bold">FREE</span>
-            </div>
-            <hr class="my-2">
-            <div class="d-flex justify-content-between align-items-center">
-              <strong class="text-dark">Total Amount</strong>
-              <h4 class="fw-extrabold text-primary mb-0" id="summaryTotal">₹{{ unit_price }}</h4>
-            </div>
-          </div>
-
-          <!-- Payment Method Options -->
-          <div class="mb-3">
-            <h5 class="fw-bold text-dark mb-1">Select Payment &amp; Reservation Mode</h5>
-            <p class="text-muted small mb-3">Choose whether to pay online now or pay in person when you reach the store.</p>
-          </div>
-
-          <!-- Option 1: Pay Now and Reserve -->
-          <div class="form-check payment-option-card border rounded-4 p-3 mb-3 active-payment-option" id="cardPayOnline" style="cursor: pointer; transition: var(--transition);">
-            <div class="d-flex align-items-start gap-3">
-              <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayOnline" value="Online" checked>
-              <label class="form-check-label w-100" for="optPayOnline" style="cursor: pointer;">
-                <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
-                  <strong class="text-dark"><i class="fa-solid fa-credit-card text-success me-1"></i> Pay Now &amp; Reserve Online</strong>
-                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">● Instant Confirmation</span>
-                </div>
-                <p class="text-muted small mb-0">Secure payments powered by Razorpay (UPI, Google Pay, Cards, Net Banking) with real-time stock verification.</p>
-              </label>
-            </div>
-          </div>
-
-          <!-- Option 2: Pay on the Pharmacy There -->
-          <div class="form-check payment-option-card border rounded-4 p-3 mb-4" id="cardPayStore" style="cursor: pointer; transition: var(--transition);">
-            <div class="d-flex align-items-start gap-3">
-              <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayStore" value="PayOnPickup">
-              <label class="form-check-label w-100" for="optPayStore" style="cursor: pointer;">
-                <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
-                  <strong class="text-dark"><i class="fa-solid fa-store text-primary me-1"></i> Pay on the Pharmacy There (Pay on Pickup)</strong>
-                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2">● Pay at Store Counter</span>
-                </div>
-                <p class="text-muted small mb-0">Reserve without any upfront online payment. Pay the chemist in cash or store UPI when you reach the pharmacy counter.</p>
-              </label>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div id="btnAreaOnline">
-            <button type="button" id="btnPayOnlineNow" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
-              <i class="fa-solid fa-lock"></i>
-              <span>Pay Now <span class="btn-amount-label">₹{{ unit_price }}</span> &amp; Reserve</span>
-            </button>
-          </div>
-
-          <div id="btnAreaStore" style="display: none;">
-            <form method="POST" action="{% url 'reserve_medicine' inventory.id %}">
-              {% csrf_token %}
-              <input type="hidden" name="quantity" id="formQtyStore" value="1">
-              <input type="hidden" name="payment_method" value="PayOnPickup">
-              <input type="hidden" name="notes" id="formNotesStore" value="">
-              <button type="submit" class="btn btn-outline-primary w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
-                <i class="fa-solid fa-store"></i>
-                <span>Reserve Now &amp; Pay on the Pharmacy There</span>
+          <!-- ── CTA buttons ── -->
+          <div class="px-4 pb-4">
+            <div id="btnAreaOnline">
+              <button type="button" id="btnPayOnlineNow" class="btn btn-cta-pay w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow">
+                <i class="fa-solid fa-lock"></i>
+                <span>Pay Securely &mdash; <span class="btn-amount-label">₹{{ unit_price }}</span></span>
               </button>
-            </form>
+            </div>
+
+            <div id="btnAreaStore" style="display: none;">
+              <form method="POST" action="{% url 'reserve_medicine' inventory.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" id="formQtyStore" value="1">
+                <input type="hidden" name="payment_method" value="PayOnPickup">
+                <input type="hidden" name="notes" id="formNotesStore" value="">
+                <button type="submit" class="btn btn-cta-store w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow-sm">
+                  <i class="fa-solid fa-store"></i>
+                  <span>Reserve &amp; Pay at Store</span>
+                </button>
+              </form>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-center gap-2 mt-3 text-muted" style="font-size: 0.74rem;">
+              <i class="fa-solid fa-shield-halved text-success"></i> Payments secured by Razorpay
+            </div>
+            <div class="text-center mt-2">
+              <a href="{% url 'search' %}" class="text-muted text-decoration-none" style="font-size: 0.8rem;">
+                <i class="fa-solid fa-arrow-left me-1"></i> Cancel and return to search
+              </a>
+            </div>
           </div>
 
-          <div class="d-flex align-items-center justify-content-center gap-2 mt-3 pt-2 text-muted small" style="font-size: 0.78rem;">
-            <i class="fa-solid fa-shield-halved text-success"></i> Secure payments powered by Razorpay
-          </div>
-
-          <div class="text-center mt-2">
-            <a href="{% url 'search' %}" class="text-muted small text-decoration-none">
-              <i class="fa-solid fa-arrow-left me-1"></i> Cancel and return to search
-            </a>
-          </div>
-
-        </div>
-
-      </div>
-    </div>
+        </div><!-- /card -->
+      </div><!-- /col -->
+    </div><!-- /row -->
 
   </div>
 </section>
@@ -277,76 +320,65 @@ document.addEventListener('DOMContentLoaded', () => {
     return cookieValue || '{{ csrf_token }}';
   }
 
-  const inputQty = document.getElementById('inputQuantity');
-  const displayQty = document.getElementById('displayQuantity');
-  const btnMinus = document.getElementById('btnQtyMinus');
-  const btnPlus = document.getElementById('btnQtyPlus');
-  const summaryQty = document.getElementById('summaryQty');
-  const summaryTotal = document.getElementById('summaryTotal');
-  const summaryRemainingStock = document.getElementById('summaryRemainingStock');
-  const formQtyStore = document.getElementById('formQtyStore');
-  const formNotesStore = document.getElementById('formNotesStore');
-  const notesText = document.getElementById('reservationNotes');
-  const btnAmountLabels = document.querySelectorAll('.btn-amount-label');
+  const inputQty            = document.getElementById('inputQuantity');
+  const displayQty          = document.getElementById('displayQuantity');
+  const btnMinus            = document.getElementById('btnQtyMinus');
+  const btnPlus             = document.getElementById('btnQtyPlus');
+  const summaryQty          = document.getElementById('summaryQty');            // hidden compat
+  const summaryTotal        = document.getElementById('summaryTotal');
+  const summaryMedicineAmt  = document.getElementById('summaryMedicineAmt');
+  const confirmQtyInline    = document.getElementById('confirmQtyInline');
+  const summaryRemainingStock = document.getElementById('summaryRemainingStock'); // hidden compat
+  const formQtyStore        = document.getElementById('formQtyStore');
+  const formNotesStore      = document.getElementById('formNotesStore');
+  const notesText           = document.getElementById('reservationNotes');
+  const btnAmountLabels     = document.querySelectorAll('.btn-amount-label');
 
-  const optOnline = document.getElementById('optPayOnline');
-  const optStore = document.getElementById('optPayStore');
-  const cardOnline = document.getElementById('cardPayOnline');
-  const cardStore = document.getElementById('cardPayStore');
+  const optOnline   = document.getElementById('optPayOnline');
+  const optStore    = document.getElementById('optPayStore');
+  const cardOnline  = document.getElementById('cardPayOnline');
+  const cardStore   = document.getElementById('cardPayStore');
   const btnAreaOnline = document.getElementById('btnAreaOnline');
-  const btnAreaStore = document.getElementById('btnAreaStore');
+  const btnAreaStore  = document.getElementById('btnAreaStore');
   const btnPayOnlineNow = document.getElementById('btnPayOnlineNow');
 
   function updateTotals() {
-    const qty = parseInt(inputQty.value) || 1;
-    if (displayQty) {
-      displayQty.textContent = qty;
-    }
-    const total = (unitPrice * qty).toFixed(2);
+    const qty     = parseInt(inputQty.value) || 1;
+    const total   = (unitPrice * qty).toFixed(2);
     const remaining = Math.max(0, totalStock - qty);
 
-    summaryQty.textContent = qty;
-    summaryTotal.textContent = `₹${total}`;
-    if (summaryRemainingStock) {
-      summaryRemainingStock.textContent = `${remaining} units`;
-    }
-    formQtyStore.value = qty;
+    if (displayQty)          displayQty.textContent     = qty;
+    if (confirmQtyInline)    confirmQtyInline.textContent = qty;
+    if (summaryQty)          summaryQty.textContent      = qty;
+    if (summaryTotal)        summaryTotal.textContent    = `₹${total}`;
+    if (summaryMedicineAmt)  summaryMedicineAmt.textContent = `₹${total}`;
+    if (summaryRemainingStock) summaryRemainingStock.textContent = `${remaining} units`;
+    if (formQtyStore)        formQtyStore.value          = qty;
 
-    btnAmountLabels.forEach(el => {
-      el.textContent = `₹${total}`;
-    });
+    btnAmountLabels.forEach(el => { el.textContent = `₹${total}`; });
 
-    // Update button states
     if (btnMinus) btnMinus.disabled = (qty <= 1);
-    if (btnPlus) btnPlus.disabled = (qty >= maxQty);
+    if (btnPlus)  btnPlus.disabled  = (qty >= maxQty);
   }
 
   if (btnMinus) {
     btnMinus.addEventListener('click', () => {
       let val = parseInt(inputQty.value) || 1;
-      if (val > 1) {
-        inputQty.value = val - 1;
-        updateTotals();
-      }
+      if (val > 1) { inputQty.value = val - 1; updateTotals(); }
     });
   }
-
   if (btnPlus) {
     btnPlus.addEventListener('click', () => {
       let val = parseInt(inputQty.value) || 1;
-      if (val < maxQty) {
-        inputQty.value = val + 1;
-        updateTotals();
-      }
+      if (val < maxQty) { inputQty.value = val + 1; updateTotals(); }
     });
   }
 
-  // Initial totals sync
   updateTotals();
 
-  notesText.addEventListener('input', () => {
-    formNotesStore.value = notesText.value;
-  });
+  if (notesText && formNotesStore) {
+    notesText.addEventListener('input', () => { formNotesStore.value = notesText.value; });
+  }
 
   // Switch Payment Mode UI
   function syncPaymentMode() {
@@ -354,31 +386,30 @@ document.addEventListener('DOMContentLoaded', () => {
       cardOnline.classList.add('active-payment-option');
       cardStore.classList.remove('active-payment-option');
       btnAreaOnline.style.display = 'block';
-      btnAreaStore.style.display = 'none';
+      btnAreaStore.style.display  = 'none';
     } else {
       cardStore.classList.add('active-payment-option');
       cardOnline.classList.remove('active-payment-option');
       btnAreaOnline.style.display = 'none';
-      btnAreaStore.style.display = 'block';
+      btnAreaStore.style.display  = 'block';
     }
   }
 
   optOnline.addEventListener('change', syncPaymentMode);
   optStore.addEventListener('change', syncPaymentMode);
   cardOnline.addEventListener('click', () => { optOnline.checked = true; syncPaymentMode(); });
-  cardStore.addEventListener('click', () => { optStore.checked = true; syncPaymentMode(); });
+  cardStore.addEventListener('click',  () => { optStore.checked  = true; syncPaymentMode(); });
 
-  // Razorpay Checkout Handler for Online Payment
+  // Razorpay Online Payment
   btnPayOnlineNow.addEventListener('click', async () => {
-    const qty = parseInt(inputQty.value) || 1;
-    const notes = notesText.value.trim();
+    const qty   = parseInt(inputQty.value) || 1;
+    const notes = notesText ? notesText.value.trim() : '';
 
-    btnPayOnlineNow.disabled = true;
+    btnPayOnlineNow.disabled  = true;
     btnPayOnlineNow.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Initializing Secure Payment...';
 
     try {
       const csrfToken = getCsrfToken();
-      // 1. Create online reservation and get Razorpay Order ID
       const resp = await fetch(`{% url 'reserve_medicine' inventory.id %}`, {
         method: 'POST',
         headers: {
@@ -406,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(data.message || 'Failed to initialize reservation payment.');
       }
 
-      // 2. Open Razorpay Checkout Modal
+      // Open Razorpay Checkout Modal
       const options = {
         key: data.key_id || razorpayKey,
         amount: data.amount,
@@ -416,7 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
         image: '{% static "images/logo.svg" %}',
         order_id: data.razorpay_order_id,
         handler: async function (response) {
-          // 3. Verify Payment Signature
           try {
             const verifyToken = getCsrfToken();
             const verifyResp = await fetch('/api/payments/verify/', {
@@ -450,14 +480,12 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = "{% url 'my_reservations' %}";
           }
         },
-        theme: {
-          color: '#10b981'
-        },
+        theme: { color: '#10b981' },
         modal: {
           ondismiss: function () {
             btnPayOnlineNow.disabled = false;
             updateTotals();
-            btnPayOnlineNow.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Pay <span class="btn-amount-label">₹${(unitPrice * qty).toFixed(2)}</span> &amp; Confirm</span>`;
+            btnPayOnlineNow.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Pay Securely &mdash; <span class="btn-amount-label">₹${(unitPrice * qty).toFixed(2)}</span></span>`;
           }
         }
       };
@@ -469,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(err.message || 'Could not complete online payment reservation.');
       btnPayOnlineNow.disabled = false;
       updateTotals();
-      btnPayOnlineNow.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Pay <span class="btn-amount-label">₹${(unitPrice * qty).toFixed(2)}</span> &amp; Confirm</span>`;
+      btnPayOnlineNow.innerHTML = `<i class="fa-solid fa-lock"></i> <span>Pay Securely &mdash; <span class="btn-amount-label">₹${(unitPrice * qty).toFixed(2)}</span></span>`;
     }
   });
 
@@ -477,6 +505,24 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <style>
+/* ── Confirm Order Card ── */
+.co-card {
+  border: 1px solid #e2e8f0 !important;
+}
+.co-header {
+  background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+  border-radius: 1rem 1rem 0 0;
+}
+.co-icon {
+  width: 42px;
+  height: 42px;
+  font-size: 1rem;
+}
+.co-price-table .fw-extrabold {
+  font-weight: 800;
+}
+
+/* ── Qty Stepper ── */
 .qty-stepper-box {
   background-color: #f8fafc;
   transition: all 0.2s ease;
@@ -506,13 +552,9 @@ document.addEventListener('DOMContentLoaded', () => {
   border-color: #334155 !important;
   color: #f8fafc !important;
 }
-[data-theme="dark"] .qty-stepper-box .qty-btn i {
-  color: #f8fafc !important;
-}
-[data-theme="dark"] #displayQuantity {
-  color: #f8fafc !important;
-}
+[data-theme="dark"] #displayQuantity { color: #f8fafc !important; }
 
+/* ── Payment option cards ── */
 .payment-option-card {
   transition: all 0.2s ease;
   cursor: pointer;
@@ -524,11 +566,42 @@ document.addEventListener('DOMContentLoaded', () => {
 .active-payment-option {
   border-color: #10b981 !important;
   background-color: rgba(16, 185, 129, 0.06);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 [data-theme="dark"] .active-payment-option {
   background-color: rgba(16, 185, 129, 0.12);
   border-color: #10b981 !important;
+}
+
+/* ── CTA buttons ── */
+.btn-cta-pay {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  font-size: 1rem;
+  letter-spacing: 0.2px;
+  transition: all 0.2s ease;
+}
+.btn-cta-pay:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+}
+.btn-cta-pay:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.btn-cta-store {
+  background: #fff;
+  color: #334155;
+  border: 2px solid #cbd5e1;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+.btn-cta-store:hover {
+  border-color: #10b981;
+  color: #10b981;
 }
 </style>
 {% endblock %}

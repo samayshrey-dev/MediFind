@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('medifind', '0013_order_reservation_reservation_is_paid'),
+        ('MediAI', '0013_order_reservation_reservation_is_paid'),
     ]
 
     operations = [

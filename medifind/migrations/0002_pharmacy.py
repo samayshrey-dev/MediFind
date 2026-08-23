@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('medifind', '0001_initial'),
+        ('MediAI', '0001_initial'),
     ]
 
     operations = [

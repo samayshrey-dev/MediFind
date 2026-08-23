@@ -4,101 +4,151 @@
 {% block title %}Order Confirmed #{{ order.order_reference }} - MediAI{% endblock %}
 
 {% block content %}
-<div class="container py-5 my-4" style="max-width: 780px;">
-  <!-- Success Confirmation Card -->
-  <div class="card border-0 rounded-4 shadow-sm p-4 p-md-5 mb-4 bg-surface">
-    <div class="text-center mb-4">
-      <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-3" style="width: 72px; height: 72px;">
-        <i class="fa-solid fa-circle-check fs-1"></i>
+<div class="container py-5 my-4" style="max-width: 720px;">
+
+  <!-- ══════════════════════════════════════════════
+       SUCCESS HEADER
+       ══════════════════════════════════════════════ -->
+  <div class="text-center mb-5">
+    <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-3 pulse-success" style="width: 80px; height: 80px;">
+      <i class="fa-solid fa-circle-check" style="font-size: 2.4rem;"></i>
+    </div>
+    <div class="mb-2">
+      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.78rem;">
+        ✓ Payment Verified &amp; Confirmed
+      </span>
+    </div>
+    <h1 class="fw-bold text-dark mb-1" style="font-size: 1.8rem;">Order Confirmed!</h1>
+    <p class="text-muted">Your medicine has been reserved and the pharmacy has been notified.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       WHAT YOU ORDERED PANEL
+       ══════════════════════════════════════════════ -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4 overflow-hidden">
+
+    <!-- Header bar -->
+    <div class="px-4 py-3 border-bottom" style="background: linear-gradient(135deg, #f0fdf4, #f8fafc);">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fa-solid fa-receipt text-success" style="font-size: 0.85rem;"></i>
+        <span class="text-uppercase fw-bold text-muted" style="font-size: 0.65rem; letter-spacing: 1.5px;">Order Summary</span>
       </div>
-      <span class="badge bg-emerald-light text-emerald px-3 py-1 rounded-pill mb-2 fw-semibold">Payment Verified &amp; Confirmed</span>
-      <h2 class="fw-bold text-dark mb-1">Order Confirmed!</h2>
-      <p class="text-muted small">Your medicine reservation has been paid and confirmed with the partner pharmacy.</p>
+      <div class="d-flex justify-content-between align-items-center mt-1 flex-wrap gap-2">
+        <span class="fw-bold font-monospace text-dark" style="font-size: 0.95rem;"># {{ order.order_reference }}</span>
+        {% if order.razorpay_payment_id %}
+          <span class="text-muted font-monospace" style="font-size: 0.72rem;">{{ order.razorpay_payment_id }}</span>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- Order Summary Box -->
-    <div class="card border rounded-4 p-4 mb-4 bg-light">
-      <div class="d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
-        <div>
-          <span class="text-muted small d-block">Order Reference</span>
-          <span class="fw-bold font-monospace text-dark">{{ order.order_reference }}</span>
+    <div class="p-4">
+
+      <!-- Medicine row -->
+      <div class="d-flex align-items-start gap-3 mb-3 pb-3 border-bottom">
+        <div class="d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3 flex-shrink-0" style="width: 44px; height: 44px;">
+          <i class="fa-solid fa-pills"></i>
         </div>
-        <div class="text-end">
-          <span class="text-muted small d-block">Razorpay Payment ID</span>
-          <span class="font-monospace text-secondary small">{{ order.razorpay_payment_id|default:"Verified Digital Payment" }}</span>
+        <div class="flex-grow-1">
+          <div class="text-muted small mb-0">Medicine</div>
+          <div class="fw-bold text-dark fs-6">{{ order.medicine.name }}</div>
+          <div class="text-muted small">
+            {{ order.medicine.brand }}
+            &nbsp;&bull;&nbsp; Qty: <span class="fw-semibold text-dark">{{ order.quantity }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="row g-3">
-        <div class="col-sm-6">
-          <span class="text-muted small d-block mb-1"><i class="fa-solid fa-pills me-1 text-primary"></i> Medicine</span>
-          <span class="fw-bold text-dark fs-6">{{ order.medicine.name }}</span>
-          <span class="badge bg-secondary-subtle text-secondary ms-1 small">{{ order.medicine.brand }}</span>
+      <!-- Pharmacy row -->
+      <div class="d-flex align-items-start gap-3 mb-4 pb-3 border-bottom">
+        <div class="d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-3 flex-shrink-0" style="width: 44px; height: 44px;">
+          <i class="fa-solid fa-store"></i>
         </div>
-        <div class="col-sm-6">
-          <span class="text-muted small d-block mb-1"><i class="fa-solid fa-store me-1 text-success"></i> Pharmacy</span>
-          <span class="fw-bold text-dark fs-6">{{ order.pharmacy.name }}</span>
+        <div class="flex-grow-1">
+          <div class="text-muted small mb-0">Pickup Location</div>
+          <div class="fw-bold text-dark fs-6">{{ order.pharmacy.name }}</div>
           <div class="text-muted small">{{ order.pharmacy.address }}, {{ order.pharmacy.city }}</div>
         </div>
       </div>
 
-      <hr class="my-3">
-
-      <!-- Pricing Breakdown -->
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="text-muted small">Unit Price &times; {{ order.quantity }}</span>
-        <span class="fw-semibold text-dark">₹{{ order.unit_price }}</span>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="text-muted small">Estimated Delivery / Pickup Fee</span>
-        <span class="text-success small fw-semibold">FREE (Partner Guarantee)</span>
-      </div>
-      <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-        <span class="fw-bold text-dark fs-6">Total Amount Paid</span>
-        <span class="fw-bold text-emerald fs-5">₹{{ order.total_amount }}</span>
-      </div>
-    </div>
-
-    <!-- Order Lifecycle Timeline -->
-    <div class="mb-4">
-      <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-timeline me-2 text-primary"></i> Order Status &amp; Timeline</h6>
-      <div class="list-group list-group-flush rounded-3 border">
-        <div class="list-group-item d-flex align-items-center py-3">
-          <i class="fa-solid fa-check-circle text-success fs-5 me-3"></i>
-          <div>
-            <div class="fw-bold text-dark small">Order Selection Approved</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Verified local pharmacy option selected and confirmed</div>
-          </div>
-          <span class="badge bg-success-subtle text-success ms-auto small">Completed</span>
+      <!-- Price breakdown table -->
+      <div class="price-breakdown-table mb-2">
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted small">Medicine ({{ order.quantity }} × ₹{{ order.unit_price }})</span>
+          <span class="fw-semibold text-dark">₹{{ order.total_amount }}</span>
         </div>
-        <div class="list-group-item d-flex align-items-center py-3">
-          <i class="fa-solid fa-shield-halved text-success fs-5 me-3"></i>
-          <div>
-            <div class="fw-bold text-dark small">Secure Payment Captured</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Secure payments powered by Razorpay &bull; Order ID: {{ order.razorpay_order_id }}</div>
-          </div>
-          <span class="badge bg-success-subtle text-success ms-auto small">Captured</span>
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted small">Delivery</span>
+          <span class="text-success small fw-bold">₹0 &nbsp;<span class="text-muted fw-normal" style="font-size:0.7rem;">(Store Pickup)</span></span>
         </div>
-        <div class="list-group-item d-flex align-items-center py-3">
-          <i class="fa-solid fa-box-open text-primary fs-5 me-3"></i>
-          <div>
-            <div class="fw-bold text-dark small">Pharmacy Dispensing &amp; Pickup Ready</div>
-            <div class="text-muted" style="font-size: 0.78rem;">Stock reserved at {{ order.pharmacy.name }}</div>
-          </div>
-          <span class="badge bg-primary-subtle text-primary ms-auto small">Ready for Pickup</span>
+        <div class="d-flex justify-content-between py-2 border-bottom">
+          <span class="text-muted small">Platform Fee</span>
+          <span class="text-success small fw-bold">₹0 &nbsp;<span class="text-muted fw-normal" style="font-size:0.7rem;">(MediAI Guarantee)</span></span>
+        </div>
+        <div class="d-flex justify-content-between pt-3 pb-1">
+          <span class="fw-bold text-dark fs-6">Total Paid</span>
+          <span class="fw-bold text-success" style="font-size: 1.4rem; letter-spacing: -0.5px;">₹{{ order.total_amount }}</span>
         </div>
       </div>
-    </div>
 
-    <!-- Action Buttons -->
-    <div class="d-flex flex-wrap gap-2 justify-content-center">
-      <a href="{% url 'search' %}" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold">
-        <i class="fa-solid fa-magnifying-glass me-2"></i> Find More Medicines
-      </a>
-      <a href="{% url 'pharmacies' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold">
-        <i class="fa-solid fa-map-location-dot me-2"></i> View All Pharmacies
-      </a>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════
+       WHAT HAPPENS NEXT
+       ══════════════════════════════════════════════ -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="p-4">
+      <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-timeline me-2 text-primary"></i> What Happens Next</h6>
+      <div class="list-group list-group-flush rounded-3 border">
+        <div class="list-group-item d-flex align-items-center py-3 gap-3">
+          <i class="fa-solid fa-check-circle text-success fs-5 flex-shrink-0"></i>
+          <div class="flex-grow-1">
+            <div class="fw-bold text-dark small">Payment Captured</div>
+            <div class="text-muted" style="font-size: 0.78rem;">Secure payment processed via Razorpay</div>
+          </div>
+          <span class="badge bg-success-subtle text-success small ms-auto">Done</span>
+        </div>
+        <div class="list-group-item d-flex align-items-center py-3 gap-3">
+          <i class="fa-solid fa-shield-halved text-success fs-5 flex-shrink-0"></i>
+          <div class="flex-grow-1">
+            <div class="fw-bold text-dark small">Stock Reserved at Pharmacy</div>
+            <div class="text-muted" style="font-size: 0.78rem;">{{ order.pharmacy.name }} has been notified and stock is held for 24 hours</div>
+          </div>
+          <span class="badge bg-success-subtle text-success small ms-auto">Reserved</span>
+        </div>
+        <div class="list-group-item d-flex align-items-center py-3 gap-3">
+          <i class="fa-solid fa-box-open text-primary fs-5 flex-shrink-0"></i>
+          <div class="flex-grow-1">
+            <div class="fw-bold text-dark small">Your Pickup</div>
+            <div class="text-muted" style="font-size: 0.78rem;">Visit {{ order.pharmacy.name }}, show your Order ID, and collect your medicine</div>
+          </div>
+          <span class="badge bg-primary-subtle text-primary small ms-auto">Pending</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       ACTION BUTTONS
+       ══════════════════════════════════════════════ -->
+  <div class="d-flex flex-wrap gap-3 justify-content-center">
+    <a href="{% url 'my_reservations' %}" class="btn btn-primary rounded-pill px-5 py-2 fw-semibold">
+      <i class="fa-solid fa-list-check me-2"></i> View My Orders
+    </a>
+    <a href="{% url 'search' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold">
+      <i class="fa-solid fa-magnifying-glass me-2"></i> Find More Medicines
+    </a>
+  </div>
+
 </div>
+
+<style>
+@keyframes pulse-check {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
+  50%       { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
+}
+.pulse-success {
+  animation: pulse-check 2s ease-in-out 3;
+}
+</style>
 {% endblock %}

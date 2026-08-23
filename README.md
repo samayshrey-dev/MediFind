@@ -9,7 +9,7 @@
 
 **Real-time medicine inventory discovery, multi-tier ranking, pharmacy ownership verification, and autonomous agentic commerce.**
 
-[Live Production Demo](https://medifind-steel.vercel.app) • [Privacy Policy](https://medifind-steel.vercel.app/privacy/) • [Terms of Service](https://medifind-steel.vercel.app/terms/)
+[Live Production Demo](https://MediAI-steel.vercel.app) • [Privacy Policy](https://MediAI-steel.vercel.app/privacy/) • [Terms of Service](https://MediAI-steel.vercel.app/terms/)
 
 </div>
 
@@ -95,8 +95,8 @@
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/samayshrey-dev/MediFind.git
-cd MediFind
+git clone https://github.com/samayshrey-dev/MediAI.git
+cd MediAI
 ```
 
 ### 2. Create and activate a virtual environment
@@ -140,7 +140,7 @@ python scratch/test_step4_test_mode_messaging.py
 python scratch/test_step3_distinct_stores_count.py
 python scratch/test_duplicate_listings_deduplication.py
 python scratch/test_search_ranking_hierarchy.py
-python manage.py test medifind.tests
+python manage.py test MediAI.tests
 ```
 
 ---

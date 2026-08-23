@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('medifind', '0002_pharmacy'),
+        ('MediAI', '0002_pharmacy'),
     ]
 
     operations = [
@@ -21,8 +21,8 @@ class Migration(migrations.Migration):
                 ('expiry_date', models.DateField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('medicine', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='medifind.medicine')),
-                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='medifind.pharmacy')),
+                ('medicine', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='MediAI.medicine')),
+                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='MediAI.pharmacy')),
             ],
         ),
     ]

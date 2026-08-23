@@ -2,7 +2,7 @@
 // MediAI Live Notifications System (Pop-once guarantee)
 // ============================================
 
-let lastNotificationId = parseInt(localStorage.getItem("mediai_last_toasted_id") || localStorage.getItem("medifind_last_toasted_id") || "0", 10);
+let lastNotificationId = parseInt(localStorage.getItem("MediAI_last_toasted_id") || localStorage.getItem("MediAI_last_toasted_id") || "0", 10);
 let firstLoad = true;
 
 function fetchNotifications() {
@@ -100,16 +100,16 @@ function checkForNewNotification(notifications) {
         firstLoad = false;
         if (newestId > lastNotificationId) {
             lastNotificationId = newestId;
-            localStorage.setItem("mediai_last_toasted_id", String(newestId));
+            localStorage.setItem("MediAI_last_toasted_id", String(newestId));
         }
         return;
     }
 
     // New notification arrived in real-time via live polling
-    const storedLastId = parseInt(localStorage.getItem("mediai_last_toasted_id") || localStorage.getItem("medifind_last_toasted_id") || "0", 10);
+    const storedLastId = parseInt(localStorage.getItem("MediAI_last_toasted_id") || localStorage.getItem("MediAI_last_toasted_id") || "0", 10);
     if (newestId > lastNotificationId && newestId > storedLastId) {
         lastNotificationId = newestId;
-        localStorage.setItem("mediai_last_toasted_id", String(newestId));
+        localStorage.setItem("MediAI_last_toasted_id", String(newestId));
         animateBell();
         playNotificationSound();
         showToast(newest);
