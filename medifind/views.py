@@ -1904,6 +1904,13 @@ def inventory(request):
             "is_verified": (verification_status == "Approved"),
             "claimed_pharmacy": claimed_pharmacy,
             "active_claim": active_claim,
+            # Pre-built tab data for the template (avoids logic in HTML)
+            "stock_tabs": [
+                ("all",          "All",          total_count,         "secondary"),
+                ("in_stock",     "Healthy",       in_stock_count,      "success"),
+                ("low_stock",    "Low Stock",     low_stock_count,     "warning"),
+                ("out_of_stock", "Out of Stock",  out_of_stock_count,  "danger"),
+            ],
         }
     )
 
@@ -2063,6 +2070,87 @@ def delete_inventory(request, pk):
     )
 
     return redirect("inventory")
+
+
+@login_required
+@verified_pharmacy_required
+def update_stock(request, pk):
+    """
+    AJAX endpoint: update inventory quantity inline.
+    POST body (JSON or form): { "action": "set"|"add"|"subtract", "value": N }
+    Returns JSON { success, quantity, status_label, status_class }
+    """
+    item = get_object_or_404(Inventory, pk=pk)
+    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+
+    if not request.user.is_superuser and item.pharmacy != user_pharmacy:
+        return JsonResponse({"success": False, "message": "Permission denied."}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST required."}, status=405)
+
+    try:
+        import json as _json
+        body = _json.loads(request.body)
+    except Exception:
+        body = request.POST
+
+    action = body.get("action", "set")
+    try:
+        value = int(body.get("value", 0))
+    except (ValueError, TypeError):
+        return JsonResponse({"success": False, "message": "Invalid value."}, status=400)
+
+    if action == "add":
+        item.quantity = max(0, item.quantity + value)
+    elif action == "subtract":
+        item.quantity = max(0, item.quantity - value)
+    else:  # "set"
+        item.quantity = max(0, value)
+
+    item.save(update_fields=["quantity", "updated_at"])
+
+    # Compute human-readable status
+    if item.quantity > 10:
+        status_label, status_class = "Healthy", "success"
+    elif item.quantity > 0:
+        status_label, status_class = "Low Stock", "warning"
+    else:
+        status_label, status_class = "Out of Stock", "danger"
+
+    return JsonResponse({
+        "success": True,
+        "quantity": item.quantity,
+        "status_label": status_label,
+        "status_class": status_class,
+        "medicine_name": item.medicine.name,
+    })
+
+
+@login_required
+def inventory_history(request, pk):
+    """
+    Shows all reservations and orders for a specific inventory item.
+    Accessible by the owning pharmacy user.
+    """
+    item = get_object_or_404(Inventory.objects.select_related("medicine", "pharmacy"), pk=pk)
+    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+
+    if not request.user.is_superuser and item.pharmacy != user_pharmacy:
+        return render(request, "403.html", status=403)
+
+    reservations = (
+        Reservation.objects
+        .filter(medicine=item.medicine, pharmacy=item.pharmacy)
+        .select_related("customer")
+        .order_by("-requested_at")[:50]
+    )
+
+    return render(request, "inventory_history.html", {
+        "item": item,
+        "reservations": reservations,
+        "pharmacy": item.pharmacy,
+    })
 
 
 # ==========================================================

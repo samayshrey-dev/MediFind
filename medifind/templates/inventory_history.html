@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock History — {{ item.medicine.name }} | MediAI{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="margin-top: 70px; max-width: 900px;">
+
+  <!-- Header -->
+  <div class="mb-4">
+    <a href="{% url 'inventory' %}" class="btn btn-sm btn-light border rounded-pill px-3 mb-3">
+      <i class="fa-solid fa-arrow-left me-1"></i> Back to Inventory
+    </a>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border text-muted small fw-semibold mb-2">
+          <i class="fa-solid fa-clock-rotate-left text-primary"></i>
+          <span>{{ pharmacy.name }} &bull; Reservation History</span>
+        </div>
+        <h1 class="fw-extrabold text-dark mb-1" style="font-size: 1.7rem; letter-spacing: -0.5px;">
+          {{ item.medicine.name }}
+        </h1>
+        <p class="text-muted small mb-0">
+          {{ item.medicine.brand|default:"Generic" }}
+          &bull; {{ item.package_size|default:"Strip of 15" }}
+          &bull; ₹{{ item.price|floatformat:2 }}
+        </p>
+      </div>
+      <!-- Current stock callout -->
+      <div class="text-center px-4 py-3 border rounded-4 bg-white shadow-sm">
+        <div class="text-muted small mb-0">Current Stock</div>
+        <div class="fw-bold text-dark" style="font-size: 2rem; line-height: 1.1;">{{ item.quantity }}</div>
+        <div class="text-muted small">units</div>
+        {% if item.quantity > 10 %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 mt-1 small fw-bold">Healthy</span>
+        {% elif item.quantity > 0 %}
+          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 mt-1 small fw-bold">Low Stock</span>
+        {% else %}
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 mt-1 small fw-bold">Out of Stock</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- History table -->
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    {% if reservations %}
+      <div class="px-4 py-3 border-bottom d-flex align-items-center gap-2">
+        <i class="fa-solid fa-list-ul text-muted small"></i>
+        <span class="fw-semibold text-dark small">{{ reservations|length }} recent reservation{{ reservations|length|pluralize }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0 table-hover" style="font-size: 0.875rem;">
+          <thead class="bg-light text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            <tr>
+              <th class="ps-4 py-3">Customer</th>
+              <th class="py-3">Qty</th>
+              <th class="py-3">Payment</th>
+              <th class="py-3">Status</th>
+              <th class="py-3">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reservations %}
+            <tr>
+              <td class="ps-4 py-3">
+                <div class="fw-semibold text-dark">{{ r.customer.first_name|default:r.customer.username }}</div>
+                <div class="text-muted small">{{ r.customer.email }}</div>
+              </td>
+              <td class="py-3">
+                <span class="badge bg-light border text-dark rounded-pill px-2">{{ r.quantity }} unit{{ r.quantity|pluralize }}</span>
+              </td>
+              <td class="py-3">
+                {% if r.is_paid %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-bold small">
+                    <i class="fa-solid fa-circle-check me-1" style="font-size:0.65rem;"></i>Paid
+                  </span>
+                {% elif r.payment_method == "PayOnPickup" %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                    Pay at Store
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">Pending</span>
+                {% endif %}
+              </td>
+              <td class="py-3">
+                {% if r.status == "Pending" %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">Pending</span>
+                {% elif r.status == "Accepted" %}
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small">Ready</span>
+                {% elif r.status == "Collected" %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">Collected</span>
+                {% elif r.status == "Rejected" %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">Rejected</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">{{ r.status }}</span>
+                {% endif %}
+              </td>
+              <td class="py-3 text-muted small">{{ r.requested_at|date:"d M Y, h:i A" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5 px-3">
+        <i class="fa-solid fa-clock-rotate-left fs-1 text-muted mb-3"></i>
+        <h5 class="fw-bold text-dark mb-1">No reservation history yet</h5>
+        <p class="text-muted small mb-0">Reservations for this medicine will appear here once customers start ordering.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Edit & Update quick links -->
+  <div class="d-flex gap-3 mt-4">
+    <a href="{% url 'edit_inventory' item.id %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+      <i class="fa-solid fa-pen me-1"></i> Edit Details
+    </a>
+    <a href="{% url 'inventory' %}" class="btn btn-light border rounded-pill px-4 fw-semibold">
+      <i class="fa-solid fa-boxes-stacked me-1"></i> Back to Inventory
+    </a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,81 +1,75 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}
-Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI
-{% endblock %}
+{% block title %}Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI{% endblock %}
 
 {% block content %}
-<div class="container py-5" style="margin-top: 70px; max-width: 1200px;">
+<div class="container py-5" style="margin-top: 70px; max-width: 1160px;">
 
-  <!-- Header & Actions -->
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 pb-4 mb-4 border-bottom reveal hero-entrance">
+  <!-- ══ Page Header ══ -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 pb-4 mb-4 border-bottom">
     <div>
       <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border text-muted small fw-semibold mb-2">
         <i class="fa-solid fa-boxes-stacked text-success"></i>
-        <span>{{ pharmacy.name|default:"Partner Store" }} &bull; Catalog Management</span>
+        <span>{{ pharmacy.name|default:"Partner Store" }} &bull; Inventory</span>
       </div>
-      <h1 class="fw-extrabold text-dark display-6 mb-1" style="letter-spacing: -0.8px;">
-        Inventory
-      </h1>
-      <p class="text-muted mb-0" style="font-size: 1.05rem;">
-        Manage medicines available at your pharmacy.
-      </p>
+      <h1 class="fw-extrabold text-dark mb-1" style="font-size: 1.9rem; letter-spacing: -0.6px;">Inventory</h1>
+      <p class="text-muted mb-0 small">Manage medicines available at your pharmacy.</p>
     </div>
 
-    <div>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Stats pills -->
+      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold small">
+        <i class="fa-solid fa-circle-check me-1"></i> {{ in_stock_count }} Healthy
+      </span>
+      {% if low_stock_count %}
+      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2 fw-semibold small">
+        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ low_stock_count }} Low
+      </span>
+      {% endif %}
+      {% if out_of_stock_count %}
+      <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold small">
+        <i class="fa-solid fa-circle-xmark me-1"></i> {{ out_of_stock_count }} Out
+      </span>
+      {% endif %}
+
+      <!-- Add Stock CTA -->
       {% if verification_status == "Pending" %}
-      <button class="btn btn-secondary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2 opacity-75" disabled title="Verification Pending: You cannot publish inventory until verification is complete.">
-        <i class="fa-solid fa-lock"></i>
-        <span>Add Stock (Locked)</span>
-      </button>
+        <button class="btn btn-secondary rounded-pill px-4 py-2 fw-bold shadow-sm opacity-75" disabled title="Verify pharmacy first">
+          <i class="fa-solid fa-lock me-1"></i> Add Stock
+        </button>
       {% else %}
-      <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2">
-        <i class="fa-solid fa-circle-plus"></i>
-        <span>Add Stock</span>
-      </a>
+        <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+          <i class="fa-solid fa-circle-plus me-1"></i> Add Stock
+        </a>
       {% endif %}
     </div>
   </div>
 
+  <!-- ══ Verification Banner ══ -->
   {% if verification_status == "Pending" %}
-  <!-- VERIFICATION PENDING ALERT -->
-  <div class="alert alert-warning border rounded-4 p-4 mb-4 shadow-xs d-flex align-items-start gap-3 bg-warning-subtle reveal" style="border-color: #FDE68A !important;">
-    <div class="d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle p-2.5 fs-4 flex-shrink-0" style="width: 44px; height: 44px;">
-      <i class="fa-solid fa-clock-rotate-left"></i>
-    </div>
-    <div class="flex-grow-1">
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
-        <h5 class="fw-bold text-dark mb-0">VERIFICATION PENDING</h5>
-        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold small">
-          <i class="fa-solid fa-shield-halved me-1"></i> Admin Review In Progress
-        </span>
-      </div>
-      <p class="text-secondary mb-2 fw-semibold" style="font-size: 0.95rem;">
-        Your pharmacy is being reviewed.
-      </p>
-      <div class="p-3 bg-white rounded-3 border small text-muted">
-        <div class="fw-bold text-danger-emphasis mb-1">
-          <i class="fa-solid fa-lock text-warning me-1.5"></i> You cannot publish inventory until verification is complete.
-        </div>
-        <div class="text-secondary">
-          Store: <strong>{{ claimed_pharmacy.name|default:pharmacy.name }}</strong> &bull; License Submitted: <code>{{ active_claim.drug_license_number|default:"Form 20/21 In Review" }}</code> &bull; Verification Status: <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5">Pending Approval</span>
-        </div>
-      </div>
+  <div class="alert alert-warning border rounded-4 p-4 mb-4 d-flex align-items-start gap-3 bg-warning-subtle" style="border-color: #FDE68A !important;">
+    <i class="fa-solid fa-clock-rotate-left fs-4 text-warning mt-1 flex-shrink-0"></i>
+    <div>
+      <h6 class="fw-bold text-dark mb-1">Verification Pending</h6>
+      <p class="text-muted small mb-0">Your pharmacy is under admin review. You can view inventory but cannot publish or edit stock until verification is approved.</p>
     </div>
   </div>
   {% endif %}
 
-  <!-- Filter & Search Control Panel -->
-  <div class="card border rounded-4 p-3.5 bg-white shadow-xs mb-4 reveal">
-    <form method="GET" class="row g-3 align-items-center">
-      <!-- Search Input -->
-      <div class="col-lg-5 col-md-6">
+  <!-- ══ Search + Filter Bar ══ -->
+  <div class="card border-0 rounded-4 shadow-sm bg-white p-3 mb-4">
+    <form method="GET" class="d-flex align-items-center gap-3 flex-wrap">
+      <!-- Search -->
+      <div class="flex-grow-1" style="min-width: 200px;">
         <div class="input-group">
-          <span class="input-group-text bg-light border-end-0 text-muted ps-3">
+          <span class="input-group-text bg-light border-end-0 text-muted">
             <i class="fa-solid fa-magnifying-glass small"></i>
           </span>
-          <input type="text" name="q" class="form-control bg-light border-start-0 py-2 small" placeholder="Search inventory by medicine name, brand, or batch..." value="{{ query|default:'' }}">
+          <input type="text" name="q"
+            class="form-control bg-light border-start-0"
+            placeholder="Search medicine name, brand or batch…"
+            value="{{ query|default:'' }}">
           {% if query %}
             <a href="{% url 'inventory' %}" class="input-group-text bg-light border-start-0 text-muted text-decoration-none">
               <i class="fa-solid fa-xmark small"></i>
@@ -84,214 +78,260 @@ Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI
         </div>
       </div>
 
-      <!-- Category Filter -->
-      <div class="col-lg-3 col-md-3 col-sm-6">
-        <select name="category" class="form-select bg-light py-2 small" onchange="this.form.submit()">
-          <option value="">All Categories</option>
-          {% for cat in categories %}
-            <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
-          {% endfor %}
-        </select>
-      </div>
+      <!-- Category -->
+      <select name="category" class="form-select bg-light" style="max-width: 180px;" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
 
-      <!-- Sort By -->
-      <div class="col-lg-2 col-md-3 col-sm-6">
-        <select name="sort" class="form-select bg-light py-2 small" onchange="this.form.submit()">
-          <option value="name" {% if sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
-          <option value="stock_asc" {% if sort == 'stock_asc' %}selected{% endif %}>Stock: Low to High</option>
-          <option value="stock_desc" {% if sort == 'stock_desc' %}selected{% endif %}>Stock: High to Low</option>
-          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
-          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
-          <option value="updated" {% if sort == 'updated' %}selected{% endif %}>Recently Updated</option>
-        </select>
-      </div>
+      <!-- Sort -->
+      <select name="sort" class="form-select bg-light" style="max-width: 170px;" onchange="this.form.submit()">
+        <option value="name"       {% if sort == 'name'       %}selected{% endif %}>Name (A–Z)</option>
+        <option value="stock_asc"  {% if sort == 'stock_asc'  %}selected{% endif %}>Stock: Low → High</option>
+        <option value="stock_desc" {% if sort == 'stock_desc' %}selected{% endif %}>Stock: High → Low</option>
+        <option value="price_asc"  {% if sort == 'price_asc'  %}selected{% endif %}>Price: Low → High</option>
+        <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High → Low</option>
+        <option value="updated"    {% if sort == 'updated'    %}selected{% endif %}>Recently Updated</option>
+      </select>
 
-      <!-- Submit / Reset -->
-      <div class="col-lg-2 col-md-12 d-flex gap-2">
-        <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-semibold small">
-          Filter
-        </button>
-      </div>
-
-      <!-- Preserve Stock Status Filter in Form -->
+      <button type="submit" class="btn btn-dark rounded-pill px-4 fw-semibold">
+        <i class="fa-solid fa-filter me-1"></i> Filter
+      </button>
       <input type="hidden" name="stock_status" value="{{ stock_status|default:'all' }}">
     </form>
 
-    <!-- Quick Stock Status Filter Pills -->
+    <!-- Stock status quick tabs -->
     <div class="d-flex align-items-center gap-2 flex-wrap pt-3 mt-3 border-top">
-      <span class="text-muted small fw-semibold me-1" style="font-size: 0.78rem;">Stock Status:</span>
-      <a href="?stock_status=all{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1 {% if stock_status == 'all' or not stock_status %}btn-dark text-white fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.8rem;">
-        All <span class="badge bg-secondary-subtle text-dark ms-1">{{ total_count }}</span>
-      </a>
-      <a href="?stock_status=in_stock{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1 {% if stock_status == 'in_stock' %}btn-success text-white fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.8rem;">
-        <span class="d-inline-block rounded-circle bg-success me-1" style="width: 6px; height: 6px;"></span>
-        In Stock <span class="badge bg-success-subtle text-success ms-1">{{ in_stock_count }}</span>
-      </a>
-      <a href="?stock_status=low_stock{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1 {% if stock_status == 'low_stock' %}btn-warning text-dark fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.8rem;">
-        <span class="d-inline-block rounded-circle bg-warning me-1" style="width: 6px; height: 6px;"></span>
-        Low Stock (&le;10) <span class="badge bg-warning-subtle text-warning-emphasis ms-1">{{ low_stock_count }}</span>
-      </a>
-      <a href="?stock_status=out_of_stock{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="btn btn-sm rounded-pill px-3 py-1 {% if stock_status == 'out_of_stock' %}btn-danger text-white fw-bold{% else %}btn-light border text-muted{% endif %}" style="font-size: 0.8rem;">
-        <span class="d-inline-block rounded-circle bg-danger me-1" style="width: 6px; height: 6px;"></span>
-        Out of Stock (0) <span class="badge bg-danger-subtle text-danger ms-1">{{ out_of_stock_count }}</span>
-      </a>
+      <span class="text-muted small fw-semibold me-1">Stock:</span>
+      {% for tab_val, tab_label, tab_count, tab_cls in stock_tabs %}
+        <a href="?stock_status={{ tab_val }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
+           class="btn btn-sm rounded-pill px-3 py-1 {% if stock_status == tab_val or (tab_val == 'all' and not stock_status) %}btn-dark text-white fw-bold{% else %}btn-light border text-muted{% endif %}"
+           style="font-size: 0.8rem;">
+          {{ tab_label }} <span class="badge bg-secondary-subtle text-dark ms-1">{{ tab_count }}</span>
+        </a>
+      {% endfor %}
     </div>
   </div>
 
-  <!-- Inventory Data Section -->
-  <div class="card border rounded-4 bg-white shadow-xs overflow-hidden reveal">
+  <!-- ══ Inventory Table ══ -->
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
     {% if inventory %}
-      <!-- Desktop Table View -->
+
+      <!-- Desktop Table -->
       <div class="table-responsive d-none d-md-block">
-        <table class="table align-middle mb-0 table-hover">
-          <thead class="bg-light">
-            <tr style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;" class="text-muted">
-              <th class="ps-3.5 py-3">Medicine &amp; Details</th>
-              <th class="py-3">Category</th>
-              <th class="py-3">Batch / Expiry</th>
-              <th class="py-3">Price</th>
-              <th class="py-3">Stock Units</th>
-              <th class="py-3">Status</th>
-              <th class="text-end pe-3.5 py-3">Actions</th>
+        <table class="table align-middle mb-0 inv-table">
+          <thead class="bg-light" style="font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.6px;">
+            <tr class="text-muted">
+              <th class="ps-4 py-3">Medicine</th>
+              <th class="py-3">Pack Size</th>
+              <th class="py-3 text-center">Stock</th>
+              <th class="py-3 text-center">Status</th>
+              <th class="py-3 text-end">Price</th>
+              <th class="py-3 text-end">Batch / Exp</th>
+              <th class="py-3 text-end pe-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for item in inventory %}
-              <tr>
-                <!-- Medicine Name & Brand -->
-                <td class="ps-3.5 py-3">
-                  <strong class="text-dark d-block">
-                    <a href="{% url 'medicine_detail' item.medicine.id %}" class="text-decoration-none text-dark hover-primary">
-                      {{ item.medicine.name }}
-                    </a>
-                  </strong>
-                  <small class="text-muted">{{ item.medicine.brand|default:"Generic" }} &bull; <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">{{ item.package_size|default:item.medicine.dosage|default:"Strip of 15" }}</span></small>
-                </td>
+            <tr class="inv-row" data-item-id="{{ item.id }}" data-item-name="{{ item.medicine.name }}">
 
-                <!-- Category -->
-                <td class="py-3">
-                  <span class="badge bg-light border text-dark rounded-pill px-2.5 py-1 small">
-                    {{ item.medicine.category|default:"General" }}
+              <!-- Medicine name + brand -->
+              <td class="ps-4 py-3">
+                <div class="fw-bold text-dark">
+                  <a href="{% url 'medicine_detail' item.medicine.id %}" class="text-dark text-decoration-none hover-primary">
+                    {{ item.medicine.name }}
+                  </a>
+                </div>
+                <div class="text-muted small">{{ item.medicine.brand|default:"Generic" }}</div>
+              </td>
+
+              <!-- Pack size -->
+              <td class="py-3">
+                <span class="badge bg-light border text-dark rounded-pill px-2 py-1 small">
+                  {{ item.package_size|default:"Strip of 15" }}
+                </span>
+              </td>
+
+              <!-- Stock quantity with inline ± controls -->
+              <td class="py-3 text-center">
+                <div class="inv-stock-ctrl d-inline-flex align-items-center gap-1" data-item-id="{{ item.id }}">
+                  <button class="btn btn-sm btn-light border rounded-circle p-0 inv-btn-sub"
+                    style="width:28px;height:28px;font-size:0.8rem;"
+                    data-item-id="{{ item.id }}" title="Remove 1">
+                    <i class="fa-solid fa-minus" style="font-size:0.65rem;"></i>
+                  </button>
+                  <span class="inv-qty fw-bold text-dark px-2" style="min-width:36px;text-align:center;font-size:1.05rem;"
+                    id="qty-{{ item.id }}">{{ item.quantity }}</span>
+                  <button class="btn btn-sm btn-light border rounded-circle p-0 inv-btn-add"
+                    style="width:28px;height:28px;font-size:0.8rem;"
+                    data-item-id="{{ item.id }}" title="Add 1">
+                    <i class="fa-solid fa-plus" style="font-size:0.65rem;"></i>
+                  </button>
+                </div>
+                <div class="text-muted" style="font-size:0.68rem;">units</div>
+              </td>
+
+              <!-- Status badge -->
+              <td class="py-3 text-center">
+                {% if item.quantity > 10 %}
+                  <span class="inv-status-badge badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold"
+                    id="status-{{ item.id }}">
+                    <i class="fa-solid fa-circle-check me-1" style="font-size:0.65rem;"></i>Healthy
                   </span>
-                </td>
+                {% elif item.quantity > 0 %}
+                  <span class="inv-status-badge badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-bold"
+                    id="status-{{ item.id }}">
+                    <i class="fa-solid fa-triangle-exclamation me-1" style="font-size:0.65rem;"></i>Low Stock
+                  </span>
+                {% else %}
+                  <span class="inv-status-badge badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold"
+                    id="status-{{ item.id }}">
+                    <i class="fa-solid fa-circle-xmark me-1" style="font-size:0.65rem;"></i>Out of Stock
+                  </span>
+                {% endif %}
+              </td>
 
-                <!-- Batch / Expiry -->
-                <td class="py-3">
-                  <code class="text-dark fw-semibold" style="font-size: 0.8rem;">{{ item.batch_number|default:"N/A" }}</code>
-                  {% if item.expiry_date %}
-                    <small class="d-block text-muted" style="font-size: 0.75rem;">Exp: {{ item.expiry_date|date:"M Y" }}</small>
-                  {% endif %}
-                </td>
+              <!-- Price -->
+              <td class="py-3 text-end fw-bold text-dark">₹{{ item.price|floatformat:2 }}</td>
 
-                <!-- Price -->
-                <td class="py-3 fw-bold text-dark fs-6">
-                  ₹{{ item.price|floatformat:2 }}
-                </td>
+              <!-- Batch + Expiry -->
+              <td class="py-3 text-end">
+                <code class="text-muted small">{{ item.batch_number|default:"—" }}</code>
+                {% if item.expiry_date %}
+                  <div class="text-muted" style="font-size:0.72rem;">Exp: {{ item.expiry_date|date:"M Y" }}</div>
+                {% endif %}
+              </td>
 
-                <!-- Quantity -->
-                <td class="py-3">
-                  <span class="fw-bold text-dark">{{ item.quantity }}</span>
-                  <small class="text-muted">units</small>
-                </td>
-
-                <!-- Clear Status Indicator -->
-                <td class="py-3">
-                  {% if item.quantity > 10 %}
-                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold d-inline-flex align-items-center gap-1">
-                      <i class="fa-solid fa-circle-check" style="font-size: 0.7rem;"></i> In stock
-                    </span>
-                  {% elif item.quantity > 0 %}
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-bold d-inline-flex align-items-center gap-1">
-                      <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.7rem;"></i> Low stock
-                    </span>
-                  {% else %}
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-bold d-inline-flex align-items-center gap-1">
-                      <i class="fa-solid fa-circle-xmark" style="font-size: 0.7rem;"></i> Out of stock
-                    </span>
-                  {% endif %}
-                </td>
-
-                <!-- Actions -->
-                <td class="text-end pe-3.5 py-3">
-                  <div class="d-flex align-items-center justify-content-end gap-1.5">
-                    <a href="{% url 'edit_inventory' item.id %}" class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-dark small fw-semibold" title="Edit Stock">
-                      <i class="fa-solid fa-pen small me-1"></i> Edit
-                    </a>
-                    <a href="{% url 'delete_inventory' item.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 small" onclick="return confirm('Are you sure you want to remove {{ item.medicine.name }} from your pharmacy inventory?')" title="Delete">
-                      <i class="fa-solid fa-trash-can small"></i>
-                    </a>
-                  </div>
-                </td>
-              </tr>
+              <!-- 4-action button group -->
+              <td class="py-3 text-end pe-4">
+                <div class="d-flex align-items-center justify-content-end gap-1 flex-wrap">
+                  <!-- Edit -->
+                  <a href="{% url 'edit_inventory' item.id %}"
+                    class="btn btn-sm btn-light border rounded-pill px-3 py-1 fw-semibold small"
+                    title="Edit full details">
+                    <i class="fa-solid fa-pen small me-1"></i>Edit
+                  </a>
+                  <!-- Update Stock (modal) -->
+                  <button type="button"
+                    class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold small btn-update-stock"
+                    data-item-id="{{ item.id }}"
+                    data-item-name="{{ item.medicine.name }}"
+                    data-current-qty="{{ item.quantity }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#updateStockModal"
+                    title="Update stock quantity">
+                    <i class="fa-solid fa-arrow-up-right-dots small me-1"></i>Update Stock
+                  </button>
+                  <!-- View History -->
+                  <a href="{% url 'inventory_history' item.id %}"
+                    class="btn btn-sm btn-light border rounded-pill px-3 py-1 fw-semibold small"
+                    title="View reservation history">
+                    <i class="fa-solid fa-clock-rotate-left small me-1"></i>History
+                  </a>
+                  <!-- Remove -->
+                  <a href="{% url 'delete_inventory' item.id %}"
+                    class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 small"
+                    onclick="return confirm('Remove {{ item.medicine.name }} from inventory?')"
+                    title="Remove from inventory">
+                    <i class="fa-solid fa-trash-can small"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
-      <!-- Mobile Stacked Card View -->
+      <!-- Mobile card view -->
       <div class="d-md-none p-3 d-flex flex-column gap-3">
         {% for item in inventory %}
-          <div class="card border rounded-3 p-3 bg-white shadow-xs">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div>
-                <strong class="text-dark d-block fs-6">{{ item.medicine.name }}</strong>
-                <small class="text-muted">{{ item.medicine.brand }} &bull; {{ item.medicine.category }}</small>
-              </div>
-              <div>
-                {% if item.quantity > 10 %}
-                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 small fw-bold">In stock</span>
-                {% elif item.quantity > 0 %}
-                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 small fw-bold">Low stock</span>
-                {% else %}
-                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5 small fw-bold">Out of stock</span>
-                {% endif %}
-              </div>
+        <div class="card border rounded-3 p-3 bg-white shadow-xs">
+          <!-- Top row: name + status badge -->
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <strong class="text-dark d-block">{{ item.medicine.name }}</strong>
+              <small class="text-muted">{{ item.medicine.brand }} &bull; {{ item.package_size|default:"Strip of 15" }}</small>
             </div>
+            {% if item.quantity > 10 %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-bold"
+                id="status-mob-{{ item.id }}">Healthy</span>
+            {% elif item.quantity > 0 %}
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small fw-bold"
+                id="status-mob-{{ item.id }}">Low Stock</span>
+            {% else %}
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small fw-bold"
+                id="status-mob-{{ item.id }}">Out of Stock</span>
+            {% endif %}
+          </div>
 
-            <div class="row g-2 py-2 my-1 border-top border-bottom bg-light rounded-2 text-center">
-              <div class="col-4">
-                <small class="text-muted d-block" style="font-size: 0.72rem;">Price</small>
-                <strong class="text-dark">₹{{ item.price }}</strong>
-              </div>
-              <div class="col-4">
-                <small class="text-muted d-block" style="font-size: 0.72rem;">Stock</small>
-                <strong class="text-dark">{{ item.quantity }} units</strong>
-              </div>
-              <div class="col-4">
-                <small class="text-muted d-block" style="font-size: 0.72rem;">Batch</small>
-                <code class="text-dark small">{{ item.batch_number|default:"N/A" }}</code>
-              </div>
+          <!-- Key metrics row -->
+          <div class="row g-2 py-2 my-1 border-top border-bottom bg-light rounded-2 text-center">
+            <div class="col-4">
+              <div class="text-muted small" style="font-size:0.7rem;">Price</div>
+              <strong class="text-dark">₹{{ item.price }}</strong>
             </div>
-
-            <div class="d-flex justify-content-between align-items-center mt-2 pt-1">
-              <small class="text-muted" style="font-size: 0.75rem;">Exp: {{ item.expiry_date|date:"d M Y"|default:"N/A" }}</small>
-              <div class="d-flex gap-1.5">
-                <a href="{% url 'edit_inventory' item.id %}" class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-dark small fw-semibold">Edit</a>
-                <a href="{% url 'delete_inventory' item.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1" onclick="return confirm('Remove {{ item.medicine.name }}?')">
-                  <i class="fa-solid fa-trash-can small"></i>
-                </a>
-              </div>
+            <div class="col-4">
+              <div class="text-muted small" style="font-size:0.7rem;">Stock</div>
+              <strong class="text-dark" id="qty-mob-{{ item.id }}">{{ item.quantity }}</strong>
+            </div>
+            <div class="col-4">
+              <div class="text-muted small" style="font-size:0.7rem;">Batch</div>
+              <code class="text-dark small">{{ item.batch_number|default:"N/A" }}</code>
             </div>
           </div>
+
+          <!-- Action row -->
+          <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+            <a href="{% url 'edit_inventory' item.id %}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold small">
+              <i class="fa-solid fa-pen small me-1"></i>Edit
+            </a>
+            <button type="button"
+              class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold small btn-update-stock"
+              data-item-id="{{ item.id }}"
+              data-item-name="{{ item.medicine.name }}"
+              data-current-qty="{{ item.quantity }}"
+              data-bs-toggle="modal"
+              data-bs-target="#updateStockModal">
+              <i class="fa-solid fa-arrow-up-right-dots small me-1"></i>Update Stock
+            </button>
+            <a href="{% url 'inventory_history' item.id %}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold small">
+              <i class="fa-solid fa-clock-rotate-left small me-1"></i>History
+            </a>
+            <a href="{% url 'delete_inventory' item.id %}"
+              class="btn btn-sm btn-outline-danger rounded-pill px-3 small"
+              onclick="return confirm('Remove {{ item.medicine.name }}?')">
+              <i class="fa-solid fa-trash-can small me-1"></i>Remove
+            </a>
+          </div>
+        </div>
         {% endfor %}
       </div>
 
       <!-- Pagination -->
       {% if inventory.has_other_pages %}
-        <div class="p-3.5 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
           <small class="text-muted">
-            Showing page {{ inventory.number }} of {{ inventory.paginator.num_pages }} ({{ inventory.paginator.count }} medicines)
+            Page {{ inventory.number }} of {{ inventory.paginator.num_pages }} ({{ inventory.paginator.count }} medicines)
           </small>
-          <nav aria-label="Inventory pagination">
+          <nav>
             <ul class="pagination pagination-sm mb-0">
               {% if inventory.has_previous %}
                 <li class="page-item">
-                  <a class="page-link rounded-pill px-3 me-1" href="?page={{ inventory.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">&larr; Previous</a>
+                  <a class="page-link rounded-pill px-3 me-1"
+                    href="?page={{ inventory.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                    &larr; Prev
+                  </a>
                 </li>
               {% endif %}
               {% if inventory.has_next %}
                 <li class="page-item">
-                  <a class="page-link rounded-pill px-3" href="?page={{ inventory.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next &rarr;</a>
+                  <a class="page-link rounded-pill px-3"
+                    href="?page={{ inventory.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                    Next &rarr;
+                  </a>
                 </li>
               {% endif %}
             </ul>
@@ -300,26 +340,25 @@ Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI
       {% endif %}
 
     {% else %}
-      <!-- Empty State -->
+      <!-- Empty state -->
       <div class="text-center py-5 px-3">
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-muted mb-3" style="width: 56px; height: 56px;">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-muted mb-3"
+          style="width:56px;height:56px;">
           <i class="fa-solid fa-boxes-stacked fs-4"></i>
         </div>
-        <h5 class="fw-bold text-dark mb-1">No medicines in your inventory yet.</h5>
-        <p class="text-muted small mb-3" style="max-width: 420px; margin: 0 auto;">
+        <h5 class="fw-bold text-dark mb-1">No medicines in inventory</h5>
+        <p class="text-muted small mb-3" style="max-width:380px;margin:0 auto;">
           {% if query or category or stock_status != 'all' %}
-            No inventory matched your active search or filter criteria. Try resetting filters.
+            No results matched your filters. Try resetting.
           {% else %}
             Add medicines to your live catalog so nearby customers can discover and reserve stock.
           {% endif %}
         </p>
         {% if query or category or stock_status != 'all' %}
-          <a href="{% url 'inventory' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold small">
-            Reset Filters
-          </a>
+          <a href="{% url 'inventory' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold small">Reset Filters</a>
         {% else %}
           <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
-            <i class="fa-solid fa-circle-plus me-1.5"></i> Add your first medicine
+            <i class="fa-solid fa-circle-plus me-1"></i> Add your first medicine
           </a>
         {% endif %}
       </div>
@@ -327,4 +366,199 @@ Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI
   </div>
 
 </div>
+
+<!-- ══ Update Stock Modal ══ -->
+<div class="modal fade" id="updateStockModal" tabindex="-1" aria-labelledby="updateStockModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+
+      <div class="modal-header border-bottom px-4 py-3" style="background: #f8fafc;">
+        <div>
+          <span class="text-uppercase text-muted fw-bold" style="font-size:0.65rem;letter-spacing:1px;">Update Stock</span>
+          <h5 class="modal-title fw-bold text-dark mb-0 mt-1" id="updateStockModalLabel" style="font-size:1.1rem;">
+            <span id="modal-med-name">Medicine</span>
+          </h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Current stock display -->
+        <div class="text-center mb-4">
+          <div class="text-muted small mb-1">Current stock</div>
+          <div class="fw-bold text-dark" style="font-size: 2.5rem; line-height: 1;" id="modal-current-qty">—</div>
+          <div class="text-muted small">units</div>
+        </div>
+
+        <!-- Quick ± buttons -->
+        <p class="text-muted small fw-semibold mb-2">Quick adjust</p>
+        <div class="d-flex gap-2 mb-4 flex-wrap">
+          {% for delta in "-10,-5,-1,+1,+5,+10,+25,+50,+100" %}{% endfor %}
+          <button class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="-10">−10</button>
+          <button class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="-5">−5</button>
+          <button class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="-1">−1</button>
+          <button class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="+1">+1</button>
+          <button class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="+5">+5</button>
+          <button class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="+10">+10</button>
+          <button class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="+25">+25</button>
+          <button class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="+50">+50</button>
+        </div>
+
+        <!-- Or set exact value -->
+        <p class="text-muted small fw-semibold mb-2">Or set exact value</p>
+        <div class="input-group mb-1">
+          <input type="number" id="modal-exact-qty" class="form-control rounded-start-pill"
+            placeholder="Enter exact stock count" min="0">
+          <button class="btn btn-dark rounded-end-pill px-4 fw-semibold" id="btn-set-exact">Set</button>
+        </div>
+        <div class="text-muted" style="font-size:0.72rem;">This will replace the current stock count entirely.</div>
+      </div>
+
+      <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <div id="modal-save-feedback" class="text-success small fw-semibold d-none">
+          <i class="fa-solid fa-circle-check me-1"></i> Stock updated!
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const CSRF = (() => {
+    const c = document.cookie.split('; ').find(r => r.startsWith('csrftoken='));
+    return c ? c.split('=')[1] : '';
+  })();
+
+  // ── Inline ± buttons on table rows ──
+  document.querySelectorAll('.inv-btn-add, .inv-btn-sub').forEach(btn => {
+    btn.addEventListener('click', async function () {
+      const itemId = this.dataset.itemId;
+      const action = this.classList.contains('inv-btn-add') ? 'add' : 'subtract';
+      await patchStock(itemId, action, 1);
+    });
+  });
+
+  // ── Update Stock Modal ──
+  let modalItemId = null;
+
+  document.querySelectorAll('.btn-update-stock').forEach(btn => {
+    btn.addEventListener('click', function () {
+      modalItemId = this.dataset.itemId;
+      document.getElementById('modal-med-name').textContent = this.dataset.itemName;
+      document.getElementById('modal-current-qty').textContent = this.dataset.currentQty;
+      document.getElementById('modal-exact-qty').value = '';
+      document.getElementById('modal-save-feedback').classList.add('d-none');
+    });
+  });
+
+  // Quick ± buttons inside modal
+  document.querySelectorAll('.btn-quick-adj').forEach(btn => {
+    btn.addEventListener('click', async function () {
+      if (!modalItemId) return;
+      const delta = parseInt(this.dataset.delta, 10);
+      const action = delta > 0 ? 'add' : 'subtract';
+      const value  = Math.abs(delta);
+      const newQty = await patchStock(modalItemId, action, value);
+      if (newQty !== null) {
+        document.getElementById('modal-current-qty').textContent = newQty;
+        flashFeedback();
+      }
+    });
+  });
+
+  // Set exact value
+  document.getElementById('btn-set-exact').addEventListener('click', async function () {
+    if (!modalItemId) return;
+    const val = parseInt(document.getElementById('modal-exact-qty').value, 10);
+    if (isNaN(val) || val < 0) {
+      document.getElementById('modal-exact-qty').classList.add('is-invalid');
+      return;
+    }
+    document.getElementById('modal-exact-qty').classList.remove('is-invalid');
+    const newQty = await patchStock(modalItemId, 'set', val);
+    if (newQty !== null) {
+      document.getElementById('modal-current-qty').textContent = newQty;
+      flashFeedback();
+    }
+  });
+
+  function flashFeedback () {
+    const el = document.getElementById('modal-save-feedback');
+    el.classList.remove('d-none');
+    setTimeout(() => el.classList.add('d-none'), 3000);
+  }
+
+  // ── Core AJAX stock update ──
+  async function patchStock(itemId, action, value) {
+    const url = `/inventory/${itemId}/update-stock/`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ action, value })
+      });
+      const data = await res.json();
+      if (!data.success) { console.error(data.message); return null; }
+
+      // Update quantity display (desktop + mobile)
+      const qtyEl    = document.getElementById(`qty-${itemId}`);
+      const qtyElMob = document.getElementById(`qty-mob-${itemId}`);
+      if (qtyEl)    qtyEl.textContent    = data.quantity;
+      if (qtyElMob) qtyElMob.textContent = data.quantity;
+
+      // Update status badge
+      updateStatusBadge(`status-${itemId}`,     data.status_label, data.status_class);
+      updateStatusBadge(`status-mob-${itemId}`, data.status_label, data.status_class);
+
+      // Flash the row green briefly
+      const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+      if (row) {
+        row.classList.add('row-flash');
+        setTimeout(() => row.classList.remove('row-flash'), 800);
+      }
+
+      return data.quantity;
+    } catch (e) {
+      console.error('Stock update failed:', e);
+      return null;
+    }
+  }
+
+  function updateStatusBadge(id, label, cls) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const iconMap = { success: 'fa-circle-check', warning: 'fa-triangle-exclamation', danger: 'fa-circle-xmark' };
+    const clsMap  = {
+      success: 'bg-success-subtle text-success border-success-subtle',
+      warning: 'bg-warning-subtle text-warning-emphasis border-warning-subtle',
+      danger:  'bg-danger-subtle text-danger border-danger-subtle',
+    };
+    // Remove old colour classes
+    el.classList.remove(
+      'bg-success-subtle','text-success','border-success-subtle',
+      'bg-warning-subtle','text-warning-emphasis','border-warning-subtle',
+      'bg-danger-subtle','text-danger','border-danger-subtle'
+    );
+    clsMap[cls].split(' ').forEach(c => el.classList.add(c));
+    el.innerHTML = `<i class="fa-solid ${iconMap[cls]} me-1" style="font-size:0.65rem;"></i>${label}`;
+  }
+})();
+</script>
+
+<style>
+/* ── Table ── */
+.inv-table thead th { font-weight: 700; }
+.inv-table tbody tr { transition: background 0.15s; }
+.inv-table tbody tr:hover { background: #f8fafc; }
+
+/* flash row on stock update */
+@keyframes row-flash { 0%{background:#d1fae5;} 100%{background:transparent;} }
+.row-flash { animation: row-flash 0.8s ease; }
+
+/* ── Inline ± controls ── */
+.inv-btn-add:hover  { background: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; }
+.inv-btn-sub:hover  { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+</style>
 {% endblock %}

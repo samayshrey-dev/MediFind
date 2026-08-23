@@ -103,7 +103,19 @@ path(
 path(
     "inventory/delete/<int:pk>/",
     views.delete_inventory,
-    name="delete_inventory"
+    name="delete_inventory",
+),
+
+path(
+    "inventory/<int:pk>/update-stock/",
+    views.update_stock,
+    name="update_stock",
+),
+
+path(
+    "inventory/<int:pk>/history/",
+    views.inventory_history,
+    name="inventory_history",
 ),
     path(
         "login/",
