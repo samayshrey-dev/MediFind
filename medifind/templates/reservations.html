@@ -116,33 +116,43 @@ Orders — {{ pharmacy.name|default:"Store Portal" }} | MediAI
                   ₹{{ r.calculated_total|floatformat:2 }}
                 </td>
 
-                <!-- Payment Status -->
+                <!-- Payment Status — prominent PAID / PAY AT STORE -->
                 <td class="py-3">
                   {% if r.is_paid %}
-                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold d-inline-flex align-items-center gap-1">
-                      <i class="fa-solid fa-circle-check" style="font-size: 0.7rem;"></i> Paid Online
+                    <span class="pharm-pay-badge pharm-pay-paid">
+                      <i class="fa-solid fa-circle-check"></i> PAID
+                    </span>
+                  {% elif r.payment_method == "PayOnPickup" %}
+                    <span class="pharm-pay-badge pharm-pay-store">
+                      <i class="fa-solid fa-store"></i> PAY AT STORE
                     </span>
                   {% else %}
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold d-inline-flex align-items-center gap-1">
-                      <i class="fa-solid fa-store" style="font-size: 0.7rem;"></i> Pay on pickup
+                    <span class="pharm-pay-badge pharm-pay-pending">
+                      <i class="fa-solid fa-clock"></i> UNPAID
                     </span>
                   {% endif %}
                 </td>
 
-                <!-- Order Status -->
+                <!-- Order Status — payment-aware language -->
                 <td class="py-3">
                   {% if r.status == "Pending" %}
                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                      ● Pending
+                      ● Awaiting Confirmation
                     </span>
                   {% elif r.status == "Accepted" %}
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                      ● Ready for pickup
+                      ● Ready for Pickup
                     </span>
                   {% elif r.status == "Collected" %}
-                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                      ● Completed
-                    </span>
+                    {% if r.is_paid %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                        ● 🟢 Paid &amp; Collected
+                      </span>
+                    {% else %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                        ● Collected (Cash)
+                      </span>
+                    {% endif %}
                   {% else %}
                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-semibold">
                       ● {{ r.status }}
@@ -210,9 +220,21 @@ Orders — {{ pharmacy.name|default:"Store Portal" }} | MediAI
                 <strong class="text-dark">{{ r.medicine.name }}</strong>
                 <span class="badge bg-white border text-dark">{{ r.quantity }} unit(s)</span>
               </div>
-              <div class="d-flex justify-content-between align-items-center small text-muted">
-                <span>Total: <strong class="text-dark">₹{{ r.calculated_total|floatformat:2 }}</strong></span>
-                <span>{% if r.is_paid %}<span class="text-success fw-bold"><i class="fa-solid fa-circle-check"></i> Paid Online</span>{% else %}Pay on pickup{% endif %}</span>
+              <div class="d-flex justify-content-between align-items-center small">
+                <span class="text-muted">Total: <strong class="text-dark">₹{{ r.calculated_total|floatformat:2 }}</strong></span>
+                {% if r.is_paid %}
+                  <span class="pharm-pay-badge pharm-pay-paid" style="font-size:0.65rem;padding:0.2rem 0.6rem;">
+                    <i class="fa-solid fa-circle-check"></i> PAID
+                  </span>
+                {% elif r.payment_method == "PayOnPickup" %}
+                  <span class="pharm-pay-badge pharm-pay-store" style="font-size:0.65rem;padding:0.2rem 0.6rem;">
+                    <i class="fa-solid fa-store"></i> PAY AT STORE
+                  </span>
+                {% else %}
+                  <span class="pharm-pay-badge pharm-pay-pending" style="font-size:0.65rem;padding:0.2rem 0.6rem;">
+                    <i class="fa-solid fa-clock"></i> UNPAID
+                  </span>
+                {% endif %}
               </div>
             </div>
 
@@ -328,14 +350,18 @@ Orders — {{ pharmacy.name|default:"Store Portal" }} | MediAI
               <small class="text-muted d-block">{{ r.customer.email }}</small>
             </div>
             <div class="col-6">
-              <span class="text-muted d-block">Payment Method</span>
+              <span class="text-muted d-block mb-1">Payment</span>
               {% if r.is_paid %}
-                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-bold">
-                  <i class="fa-solid fa-circle-check me-1"></i> Paid Online
+                <span class="pharm-pay-badge pharm-pay-paid">
+                  <i class="fa-solid fa-circle-check"></i> PAID
+                </span>
+              {% elif r.payment_method == "PayOnPickup" %}
+                <span class="pharm-pay-badge pharm-pay-store">
+                  <i class="fa-solid fa-store"></i> PAY AT STORE
                 </span>
               {% else %}
-                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 fw-semibold">
-                  Pay on pickup
+                <span class="pharm-pay-badge pharm-pay-pending">
+                  <i class="fa-solid fa-clock"></i> UNPAID
                 </span>
               {% endif %}
             </div>
@@ -410,5 +436,45 @@ Orders — {{ pharmacy.name|default:"Store Portal" }} | MediAI
     </div>
   </div>
 {% endfor %}
+
+<style>
+/* ── Pharmacy portal: prominent payment state badges ── */
+.pharm-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  border: 2px solid transparent;
+  white-space: nowrap;
+}
+.pharm-pay-paid {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #34d399;
+  animation: paid-pulse 2.5s ease-in-out 3;
+}
+.pharm-pay-store {
+  background: #fef3c7;
+  color: #78350f;
+  border-color: #fbbf24;
+}
+.pharm-pay-pending {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+@keyframes paid-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+}
+[data-theme="dark"] .pharm-pay-paid    { background: #064e3b; color: #6ee7b7; border-color: #10b981; }
+[data-theme="dark"] .pharm-pay-store   { background: #451a03; color: #fcd34d; border-color: #f59e0b; }
+[data-theme="dark"] .pharm-pay-pending { background: #450a0a; color: #fca5a5; border-color: #ef4444; }
+</style>
 
 {% endblock %}

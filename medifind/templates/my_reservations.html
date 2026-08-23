@@ -1,18 +1,16 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-My Orders | MediAI
-{% endblock %}
+{% block title %}My Orders | MediAI{% endblock %}
 
 {% block content %}
-
 <section class="py-5" style="background: var(--surface-secondary); min-height: 85vh;">
   <div class="container py-3">
 
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
       <div>
         <h3 class="fw-bold text-dark mb-1">My Orders</h3>
-        <p class="text-muted small mb-0">Track and manage your local pharmacy orders, pickup confirmations, and payments.</p>
+        <p class="text-muted small mb-0">Track your medicine reservations, payment status, and pickup confirmations.</p>
       </div>
       <a href="{% url 'search' %}" class="btn btn-sm btn-primary rounded-pill px-4 fw-semibold">
         <i class="fa-solid fa-magnifying-glass me-1"></i> Search Medicines
@@ -20,106 +18,206 @@ My Orders | MediAI
     </div>
 
     {% if reservations %}
-      <div class="card border rounded-4 shadow-sm bg-white overflow-hidden mb-4">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th class="ps-4">Medicine</th>
-                <th>Pharmacy</th>
-                <th>Quantity</th>
-                <th>Status</th>
-                <th>Requested Date</th>
-                <th class="text-end pe-4">Payment &amp; Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for reservation in reservations %}
-                <tr>
-                  <td class="ps-4">
-                    <strong>
-                      <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-dark text-decoration-none">
-                        {{ reservation.medicine.name }}
-                      </a>
-                    </strong>
-                    <small class="text-muted d-block">{{ reservation.medicine.brand }}</small>
-                  </td>
-                  <td>
-                    <a href="{% url 'pharmacy_detail' reservation.pharmacy.id %}" class="text-dark text-decoration-none fw-semibold">
-                      <i class="fa-solid fa-hospital text-primary me-1"></i> {{ reservation.pharmacy.name }}
-                    </a>
-                    <small class="text-muted d-block">{{ reservation.pharmacy.city }}</small>
-                  </td>
-                  <td>
-                    <span class="badge bg-light text-dark border px-3 py-1 rounded-pill">
-                      {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}
-                    </span>
-                  </td>
-                  <td>
-                    {% if reservation.status == "Pending" %}
-                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">
-                        ● Pending Confirmation
-                      </span>
-                    {% elif reservation.status == "Accepted" %}
-                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
-                        ● Ready for Pickup
-                      </span>
-                    {% elif reservation.status == "Rejected" %}
-                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
-                        ● Unavailable
-                      </span>
-                    {% elif reservation.status == "Collected" %}
-                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
-                        ● Collected
-                      </span>
-                    {% else %}
-                      <span class="badge bg-secondary rounded-pill px-3 py-1">
-                        {{ reservation.status }}
-                      </span>
-                    {% endif %}
-                  </td>
-                  <td class="text-muted small">
-                    {{ reservation.requested_at|date:"d M Y, h:i A" }}
-                  </td>
-                  <td class="text-end pe-4">
-                    {% if reservation.is_paid %}
-                      <span class="badge bg-emerald-light text-emerald rounded-pill px-3 py-2 fw-bold">
-                        <i class="fa-solid fa-circle-check me-1"></i> Paid Online (Razorpay)
-                      </span>
-                    {% elif reservation.status != "Rejected" and reservation.status != "Cancelled" %}
-                      <div class="d-flex flex-column align-items-end gap-1">
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 small">
-                          <i class="fa-solid fa-store me-1"></i> Pay on Pickup
-                        </span>
-                        <button
-                          type="button"
-                          class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold btn-pay-reservation mt-1"
-                          data-reservation-id="{{ reservation.id }}"
-                          data-med-name="{{ reservation.medicine.name }}"
-                          data-pharm-name="{{ reservation.pharmacy.name }}">
-                          <i class="fa-solid fa-credit-card me-1"></i> Pay Online Now
-                        </button>
-                      </div>
-                    {% else %}
-                      <span class="text-muted small">N/A</span>
-                    {% endif %}
+      <div class="d-flex flex-column gap-4">
+        {% for reservation in reservations %}
 
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
+          {# ── Compute payment_state for template branching ── #}
+          {% with ps=reservation.payment_state %}
+
+          <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden res-card">
+
+            {# ═══ Top stripe — colour coded by payment state ═══ #}
+            <div class="res-stripe
+              {% if ps == 'COMPLETED' %}stripe-completed
+              {% elif ps == 'READY_FOR_PICKUP' %}stripe-ready
+              {% elif ps == 'ORDER_CONFIRMED' %}stripe-confirmed
+              {% elif ps == 'PAYMENT_PENDING' %}stripe-pending
+              {% elif ps == 'CANCELLED' %}stripe-cancelled
+              {% elif ps == 'PAY_AT_STORE' %}stripe-store
+              {% endif %}
+            "></div>
+
+            <div class="p-4">
+
+              {# ── Header row ── #}
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+
+                {# Medicine + pharmacy ident #}
+                <div class="d-flex align-items-start gap-3">
+                  <div class="res-med-icon d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3 flex-shrink-0" style="width:48px;height:48px;">
+                    <i class="fa-solid fa-pills fs-5"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark" style="font-size: 1.05rem;">
+                      <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-dark text-decoration-none">{{ reservation.medicine.name }}</a>
+                    </div>
+                    <div class="text-muted small">{{ reservation.medicine.brand }} &bull; {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}</div>
+                    <div class="text-muted small">
+                      <i class="fa-solid fa-store me-1 text-success"></i>
+                      <a href="{% url 'pharmacy_detail' reservation.pharmacy.id %}" class="text-muted text-decoration-none">{{ reservation.pharmacy.name }}</a>
+                      &bull; {{ reservation.pharmacy.city }}
+                    </div>
+                  </div>
+                </div>
+
+                {# Big payment state pill #}
+                <div>
+                  {% if ps == 'COMPLETED' %}
+                    <span class="ps-badge ps-badge-completed">
+                      <i class="fa-solid fa-circle-check me-1"></i> Completed
+                    </span>
+                  {% elif ps == 'READY_FOR_PICKUP' %}
+                    <span class="ps-badge ps-badge-ready">
+                      <i class="fa-solid fa-store me-1"></i> Ready for Pickup
+                    </span>
+                  {% elif ps == 'ORDER_CONFIRMED' %}
+                    <span class="ps-badge ps-badge-confirmed">
+                      <i class="fa-solid fa-circle-check me-1"></i> Order Confirmed
+                    </span>
+                  {% elif ps == 'PAYMENT_PENDING' %}
+                    <span class="ps-badge ps-badge-pending">
+                      <i class="fa-solid fa-clock me-1"></i> Payment Pending
+                    </span>
+                  {% elif ps == 'CANCELLED' %}
+                    <span class="ps-badge ps-badge-cancelled">
+                      <i class="fa-solid fa-xmark me-1"></i> Cancelled
+                    </span>
+                  {% elif ps == 'PAY_AT_STORE' %}
+                    <span class="ps-badge ps-badge-store">
+                      <i class="fa-solid fa-store me-1"></i> Pay at Store
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+
+              {# ═══════════════════════════════════════
+                 5-STEP PAYMENT STATE STEPPER
+                 (Only for online payment orders)
+                 ═══════════════════════════════════════ #}
+              {% if reservation.payment_method == "Online" and ps != "CANCELLED" %}
+
+                {# Determine how many steps are lit #}
+                {% if ps == "PAYMENT_PENDING" %}{% with lit=1 %}
+                {% elif ps == "ORDER_CONFIRMED" %}{% with lit=3 %}
+                {% elif ps == "READY_FOR_PICKUP" %}{% with lit=4 %}
+                {% elif ps == "COMPLETED" %}{% with lit=5 %}
+                {% else %}{% with lit=0 %}
+                {% endif %}
+
+                  <div class="stepper-wrap mb-4">
+                    {% for step in "12345" %}
+                      {% if forloop.counter == 1 %}
+                        {% with label="Payment Pending" icon="fa-clock" %}
+                        <div class="stepper-step {% if lit >= 1 %}step-done{% if lit == 1 %} step-active{% endif %}{% endif %}">
+                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
+                          <div class="step-label">{{ label }}</div>
+                        </div>
+                        {% endwith %}
+                        <div class="stepper-connector {% if lit >= 2 %}connector-done{% endif %}"></div>
+                      {% elif forloop.counter == 2 %}
+                        {% with label="Payment Verified" icon="fa-shield-check" %}
+                        <div class="stepper-step {% if lit >= 2 %}step-done{% if lit == 2 %} step-active{% endif %}{% endif %}">
+                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
+                          <div class="step-label">{{ label }}</div>
+                        </div>
+                        {% endwith %}
+                        <div class="stepper-connector {% if lit >= 3 %}connector-done{% endif %}"></div>
+                      {% elif forloop.counter == 3 %}
+                        {% with label="Order Confirmed" icon="fa-circle-check" %}
+                        <div class="stepper-step {% if lit >= 3 %}step-done{% if lit == 3 %} step-active{% endif %}{% endif %}">
+                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
+                          <div class="step-label">{{ label }}</div>
+                        </div>
+                        {% endwith %}
+                        <div class="stepper-connector {% if lit >= 4 %}connector-done{% endif %}"></div>
+                      {% elif forloop.counter == 4 %}
+                        {% with label="Ready for Pickup" icon="fa-store" %}
+                        <div class="stepper-step {% if lit >= 4 %}step-done{% if lit == 4 %} step-active{% endif %}{% endif %}">
+                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
+                          <div class="step-label">{{ label }}</div>
+                        </div>
+                        {% endwith %}
+                        <div class="stepper-connector {% if lit >= 5 %}connector-done{% endif %}"></div>
+                      {% elif forloop.counter == 5 %}
+                        {% with label="Completed" icon="fa-bag-shopping" %}
+                        <div class="stepper-step {% if lit >= 5 %}step-done{% if lit == 5 %} step-active{% endif %}{% endif %}">
+                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
+                          <div class="step-label">{{ label }}</div>
+                        </div>
+                        {% endwith %}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+
+                {% endwith %}
+
+              {% elif reservation.payment_method == "PayOnPickup" and ps != "CANCELLED" %}
+                {# Pay-at-store simplified stepper #}
+                <div class="stepper-wrap mb-4">
+                  <div class="stepper-step step-done">
+                    <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="step-label">Reserved</div>
+                  </div>
+                  <div class="stepper-connector {% if ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}connector-done{% endif %}"></div>
+                  <div class="stepper-step {% if ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}step-done{% if ps == 'READY_FOR_PICKUP' %} step-active{% endif %}{% endif %}">
+                    <div class="step-circle"><i class="fa-solid fa-store"></i></div>
+                    <div class="step-label">Ready for Pickup</div>
+                  </div>
+                  <div class="stepper-connector {% if ps == 'COMPLETED' %}connector-done{% endif %}"></div>
+                  <div class="stepper-step {% if ps == 'COMPLETED' %}step-done step-active{% endif %}">
+                    <div class="step-circle"><i class="fa-solid fa-bag-shopping"></i></div>
+                    <div class="step-label">Completed</div>
+                  </div>
+                </div>
+              {% endif %}
+
+              {# ── Bottom meta row ── #}
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-3 border-top">
+                <div class="text-muted small">
+                  <i class="fa-regular fa-calendar me-1"></i> {{ reservation.requested_at|date:"d M Y, h:i A" }}
+                  {% if reservation.payment_method == "Online" %}
+                    &nbsp;&bull;&nbsp;
+                    {% if reservation.is_paid %}
+                      <span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>Paid via Razorpay</span>
+                    {% else %}
+                      <span class="text-warning-emphasis fw-semibold"><i class="fa-solid fa-clock me-1"></i>Awaiting payment</span>
+                    {% endif %}
+                  {% else %}
+                    &nbsp;&bull;&nbsp; <span class="text-muted"><i class="fa-solid fa-store me-1"></i>Pay at store counter</span>
+                  {% endif %}
+                </div>
+
+                {# Pay online CTA — only for pending online reservations #}
+                {% if reservation.payment_method == "Online" and not reservation.is_paid and reservation.status != "Rejected" and reservation.status != "Cancelled" %}
+                  <button
+                    type="button"
+                    class="btn btn-success btn-sm rounded-pill px-4 fw-bold btn-pay-reservation shadow-sm"
+                    data-reservation-id="{{ reservation.id }}"
+                    data-med-name="{{ reservation.medicine.name }}"
+                    data-pharm-name="{{ reservation.pharmacy.name }}">
+                    <i class="fa-solid fa-lock me-1"></i> Complete Payment
+                  </button>
+                {% elif ps == "READY_FOR_PICKUP" %}
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
+                    <i class="fa-solid fa-location-dot me-1"></i> Head to {{ reservation.pharmacy.name }}
+                  </span>
+                {% endif %}
+              </div>
+
+            </div><!-- /p-4 -->
+          </div><!-- /card -->
+
+          {% endwith %}
+        {% endfor %}
+      </div><!-- /flex col -->
+
     {% else %}
       <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
         <i class="fa-solid fa-bag-shopping fs-1 text-muted mb-3"></i>
         <h5 class="fw-bold text-dark mb-1">No orders yet</h5>
         <p class="text-muted small mb-3">Reserve a medicine from any partner pharmacy and it will appear here.</p>
         <div>
-          <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">
-            Search Medicines
-          </a>
+          <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">Search Medicines</a>
         </div>
       </div>
     {% endif %}
@@ -127,7 +225,9 @@ My Orders | MediAI
   </div>
 </section>
 
-<!-- Direct Razorpay Merchant Payment Script -->
+<!-- Razorpay SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   function getCsrfToken() {
@@ -180,21 +280,13 @@ document.addEventListener("DOMContentLoaded", function () {
           name: "MediAI Pharmacy Checkout",
           description: `${data.medicine_name} at ${data.pharmacy_name}`,
           order_id: data.razorpay_order_id,
-          notes: {
-            order_reference: data.order_reference,
-            reservation_id: resId
-          },
-          theme: {
-            color: "#10b981"
-          },
+          notes: { order_reference: data.order_reference, reservation_id: resId },
+          theme: { color: "#10b981" },
           handler: async function (rzpResponse) {
             btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Verifying...`;
             const verifyResp = await fetch("/api/payments/verify/", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCsrfToken()
-              },
+              headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
               body: JSON.stringify({
                 order_reference: data.order_reference,
                 razorpay_order_id: rzpResponse.razorpay_order_id,
@@ -202,7 +294,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 razorpay_signature: rzpResponse.razorpay_signature
               })
             });
-
             const verifyData = await verifyResp.json();
             if (verifyData.success) {
               window.location.href = `/orders/confirmed/${data.order_reference}/`;
@@ -234,4 +325,117 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+<style>
+/* ── Card top stripe ── */
+.res-card { border-top: 3px solid transparent !important; }
+.stripe-completed  { height: 4px; background: #10b981; }
+.stripe-ready      { height: 4px; background: #3b82f6; }
+.stripe-confirmed  { height: 4px; background: #8b5cf6; }
+.stripe-pending    { height: 4px; background: #f59e0b; }
+.stripe-cancelled  { height: 4px; background: #ef4444; }
+.stripe-store      { height: 4px; background: #6b7280; }
+
+/* ── Payment state badge ── */
+.ps-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  border: 1.5px solid transparent;
+}
+.ps-badge-completed  { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.ps-badge-ready      { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+.ps-badge-confirmed  { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+.ps-badge-pending    { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.ps-badge-cancelled  { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.ps-badge-store      { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+
+/* ── 5-step Stepper ── */
+.stepper-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 68px;
+}
+.step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 2px solid #e2e8f0;
+  transition: all 0.25s ease;
+}
+.step-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-align: center;
+  color: #94a3b8;
+  max-width: 64px;
+  line-height: 1.3;
+}
+.stepper-connector {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin-top: 17px;
+  min-width: 20px;
+  transition: background 0.25s ease;
+}
+.connector-done { background: #10b981; }
+
+/* Done step */
+.stepper-step.step-done .step-circle {
+  background: #d1fae5;
+  color: #059669;
+  border-color: #6ee7b7;
+}
+.stepper-step.step-done .step-label { color: #059669; }
+
+/* Active (current) step */
+.stepper-step.step-active .step-circle {
+  background: #10b981;
+  color: #fff;
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+.stepper-step.step-active .step-label {
+  color: #065f46;
+  font-weight: 700;
+}
+
+/* Dark mode */
+[data-theme="dark"] .step-circle {
+  background: #1e293b;
+  border-color: #334155;
+  color: #64748b;
+}
+[data-theme="dark"] .stepper-connector { background: #334155; }
+[data-theme="dark"] .stepper-step.step-done .step-circle {
+  background: #064e3b;
+  color: #34d399;
+  border-color: #065f46;
+}
+[data-theme="dark"] .stepper-step.step-done .step-label { color: #34d399; }
+[data-theme="dark"] .stepper-step.step-active .step-circle {
+  background: #10b981;
+  color: #fff;
+  border-color: #10b981;
+}
+</style>
 {% endblock %}

@@ -383,6 +383,51 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"{self.customer.username} - {self.medicine.name}"
+
+    @property
+    def payment_state(self):
+        """
+        Derives a canonical 6-state payment lifecycle string from existing fields.
+        No migration required — computed from is_paid + payment_method + status.
+
+        States (in order):
+          PAYMENT_PENDING   – Online reservation created, payment not yet captured
+          PAYMENT_VERIFIED  – Razorpay payment successfully captured & signature verified
+          ORDER_CONFIRMED   – Pharmacy has received and acknowledged the paid order (Pending → Accepted transition)
+          READY_FOR_PICKUP  – Pharmacy has confirmed stock is held (Accepted)
+          COMPLETED         – Customer collected medicine (Collected)
+          CANCELLED         – Rejected or Cancelled
+          PAY_AT_STORE      – PayOnPickup method, counter payment expected
+        """
+        if self.status in ("Rejected", "Cancelled"):
+            return "CANCELLED"
+        if self.status == "Collected":
+            return "COMPLETED"
+        if self.payment_method == "PayOnPickup":
+            if self.status == "Accepted":
+                return "READY_FOR_PICKUP"
+            return "PAY_AT_STORE"
+        # Online payment path
+        if not self.is_paid:
+            return "PAYMENT_PENDING"
+        # is_paid = True
+        if self.status == "Accepted":
+            return "READY_FOR_PICKUP"
+        # Pending + paid = verified and confirmed, waiting pharmacy to accept
+        return "ORDER_CONFIRMED"
+
+    @property
+    def payment_state_display(self):
+        """Human-readable label for the payment_state."""
+        return {
+            "PAYMENT_PENDING":  "Payment Pending",
+            "PAYMENT_VERIFIED": "Payment Verified",
+            "ORDER_CONFIRMED":  "Order Confirmed",
+            "READY_FOR_PICKUP": "Ready for Pickup",
+            "COMPLETED":        "Completed",
+            "CANCELLED":        "Cancelled",
+            "PAY_AT_STORE":     "Pay at Store",
+        }.get(self.payment_state, self.payment_state)
     # ==========================================================
 
 # Notification Model
