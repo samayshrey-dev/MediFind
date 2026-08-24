@@ -200,7 +200,7 @@
       <span class="text-muted small fw-semibold me-1">Stock:</span>
       {% for tab_val, tab_label, tab_count, tab_cls in stock_tabs %}
         <a href="?stock_status={{ tab_val }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}"
-           class="btn btn-sm rounded-pill px-3 py-1 {% if stock_status == tab_val or (tab_val == 'all' and not stock_status) %}btn-dark text-white fw-bold{% else %}btn-light border text-muted{% endif %}"
+           class="btn btn-sm rounded-pill px-3 py-1 {% if stock_status == tab_val or not stock_status and tab_val == 'all' %}btn-dark text-white fw-bold{% else %}btn-light border text-muted{% endif %}"
            style="font-size: 0.8rem;">
           {{ tab_label }} <span class="badge bg-secondary-subtle text-dark ms-1">{{ tab_count }}</span>
         </a>
