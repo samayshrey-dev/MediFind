@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0007_searchhistory'),
+        ('medifind', '0007_searchhistory'),
     ]
 
     operations = [

@@ -7,13 +7,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0004_userprofile'),
+        ('medifind', '0004_userprofile'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='userprofile',
             name='pharmacy',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='MediAI.pharmacy'),
+            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='medifind.pharmacy'),
         ),
     ]

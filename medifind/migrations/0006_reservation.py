@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0005_userprofile_pharmacy'),
+        ('medifind', '0005_userprofile_pharmacy'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -23,8 +23,8 @@ class Migration(migrations.Migration):
                 ('pickup_before', models.DateTimeField(blank=True, null=True)),
                 ('notes', models.TextField(blank=True)),
                 ('customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reservations', to=settings.AUTH_USER_MODEL)),
-                ('medicine', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='MediAI.medicine')),
-                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='MediAI.pharmacy')),
+                ('medicine', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='medifind.medicine')),
+                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='medifind.pharmacy')),
             ],
         ),
     ]

@@ -68,9 +68,9 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
 
         <!-- 4. Primary & Secondary Action CTAs -->
         <div class="hero-anim-4 d-flex align-items-center flex-wrap gap-3 mb-4">
-          <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2 btn-merchant-cta">
-            <i class="fa-solid fa-circle-plus"></i>
-            <span>Add Stock</span>
+          <a href="{% url 'inventory' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2 btn-merchant-cta">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Upload Inventory</span>
           </a>
           <a href="{% url 'reservations' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold d-flex align-items-center gap-2 btn-merchant-secondary" style="border-color: #E2E8F0; color: #0F172A; background: #ffffff;">
             <i class="fa-solid fa-clipboard-list text-muted"></i>
@@ -375,16 +375,16 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
     </div>
 
     <div class="row g-3">
-      <!-- Quick Action 1: Add Stock -->
+      <!-- Quick Action 1: Upload Inventory -->
       <div class="col-md-6 col-lg-3">
-        <a href="{% url 'add_inventory' %}" class="card border rounded-4 p-3.5 bg-white text-decoration-none shadow-xs h-100 quick-action-card">
+        <a href="{% url 'inventory' %}" class="card border rounded-4 p-3.5 bg-white text-decoration-none shadow-xs h-100 quick-action-card">
           <div class="d-flex align-items-center gap-3">
             <div class="p-2.5 rounded-3 bg-success-subtle text-success flex-shrink-0" style="font-size: 1.1rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
-              <i class="fa-solid fa-circle-plus"></i>
+              <i class="fa-solid fa-cloud-arrow-up"></i>
             </div>
             <div>
-              <strong class="text-dark d-block" style="font-size: 0.95rem; color: #0F172A;">Add Stock</strong>
-              <small class="text-muted" style="color: #64748B;">Add or restock medicine batches</small>
+              <strong class="text-dark d-block" style="font-size: 0.95rem; color: #0F172A;">Upload Inventory</strong>
+              <small class="text-muted" style="color: #64748B;">Sync stock via Excel or POS API</small>
             </div>
           </div>
         </a>

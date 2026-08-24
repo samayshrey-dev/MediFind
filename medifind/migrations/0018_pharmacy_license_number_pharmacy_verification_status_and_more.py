@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0017_alter_inventory_options_inventory_package_size_and_more'),
+        ('medifind', '0017_alter_inventory_options_inventory_package_size_and_more'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='userprofile',
             name='claimed_pharmacy',
-            field=models.ForeignKey(blank=True, help_text='Pharmacy being claimed while verification is pending', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='claimants', to='MediAI.pharmacy'),
+            field=models.ForeignKey(blank=True, help_text='Pharmacy being claimed while verification is pending', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='claimants', to='medifind.pharmacy'),
         ),
         migrations.AddField(
             model_name='userprofile',
@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 ('admin_notes', models.TextField(blank=True, default='')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ownership_claims', to='MediAI.pharmacy')),
+                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ownership_claims', to='medifind.pharmacy')),
                 ('reviewed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviewed_pharmacy_claims', to=settings.AUTH_USER_MODEL)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pharmacy_claims', to=settings.AUTH_USER_MODEL)),
             ],

@@ -1,23 +1,23 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Inventory — {{ pharmacy.name|default:"Store Portal" }} | MediAI{% endblock %}
+{% block title %}Inventory & POS Integration — {{ pharmacy.name|default:"Store Portal" }} | MediAI{% endblock %}
 
 {% block content %}
-<div class="container py-5" style="margin-top: 70px; max-width: 1160px;">
+<div class="container py-5" style="margin-top: 70px; max-width: 1180px;">
 
   <!-- ══ Page Header ══ -->
   <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 pb-4 mb-4 border-bottom">
     <div>
       <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-light border text-muted small fw-semibold mb-2">
         <i class="fa-solid fa-boxes-stacked text-success"></i>
-        <span>{{ pharmacy.name|default:"Partner Store" }} &bull; Inventory</span>
+        <span>{{ pharmacy.name|default:"Partner Store" }} &bull; Inventory & POS Sync</span>
       </div>
-      <h1 class="fw-extrabold text-dark mb-1" style="font-size: 1.9rem; letter-spacing: -0.6px;">Inventory</h1>
-      <p class="text-muted mb-0 small">Manage medicines available at your pharmacy.</p>
+      <h1 class="fw-extrabold text-dark mb-1" style="font-size: 1.9rem; letter-spacing: -0.6px;">Pharmacy Inventory</h1>
+      <p class="text-muted mb-0 small">Automated stock management via Direct Pharmacy API & Bulk Excel template synchronization.</p>
     </div>
 
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
       <!-- Stats pills -->
       <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold small">
         <i class="fa-solid fa-circle-check me-1"></i> {{ in_stock_count }} Healthy
@@ -33,16 +33,109 @@
       </span>
       {% endif %}
 
-      <!-- Add Stock CTA -->
+      <!-- Template & Export Actions -->
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle rounded-pill px-3 py-2 fw-semibold small shadow-xs" type="button" data-bs-toggle="dropdown">
+          <i class="fa-solid fa-file-excel text-success me-1"></i> Template
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3 border-0 p-2" style="font-size: 0.85rem;">
+          <li>
+            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" href="{% url 'download_inventory_template' %}?format=xlsx">
+              <i class="fa-solid fa-file-excel text-success"></i>
+              <div>
+                <div class="fw-bold">Download Excel (.xlsx)</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">Pre-formatted with sample columns</div>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" href="{% url 'download_inventory_template' %}?format=csv">
+              <i class="fa-solid fa-file-csv text-primary"></i>
+              <div>
+                <div class="fw-bold">Download CSV (.csv)</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">Lightweight format</div>
+              </div>
+            </a>
+          </li>
+          <li><hr class="dropdown-divider my-1"></li>
+          <li>
+            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" href="{% url 'export_inventory_excel' %}">
+              <i class="fa-solid fa-cloud-arrow-down text-dark"></i>
+              <div>
+                <div class="fw-bold">Export Current Inventory</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">Download your live database items</div>
+              </div>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- API Settings Button -->
+      <button class="btn btn-outline-dark rounded-pill px-3.5 py-2 fw-bold small shadow-xs d-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#apiSettingsModal">
+        <i class="fa-solid fa-bolt text-warning"></i>
+        <span>POS API Integration</span>
+      </button>
+
+      <!-- Upload Excel CTA -->
       {% if verification_status == "Pending" %}
         <button class="btn btn-secondary rounded-pill px-4 py-2 fw-bold shadow-sm opacity-75" disabled title="Verify pharmacy first">
-          <i class="fa-solid fa-lock me-1"></i> Add Stock
+          <i class="fa-solid fa-lock me-1"></i> Upload Excel
         </button>
       {% else %}
-        <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
-          <i class="fa-solid fa-circle-plus me-1"></i> Add Stock
-        </a>
+        <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Upload Excel</span>
+        </button>
       {% endif %}
+    </div>
+  </div>
+
+  <!-- ══ Real-Time API & Sync Status Bar ══ -->
+  <div class="card border-0 rounded-4 shadow-sm p-3.5 mb-4 {% if api_sync_enabled and api_endpoint_url %}bg-primary-subtle border-primary-subtle text-primary-emphasis{% else %}bg-light border{% endif %}">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {% if api_sync_enabled and api_endpoint_url %}bg-primary text-white{% else %}bg-secondary-subtle text-muted{% endif %}" style="width: 44px; height: 44px;">
+          <i class="fa-solid {% if api_sync_enabled and api_endpoint_url %}fa-bolt fs-5{% else %}fa-file-excel fs-5{% endif %}"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="fw-bold fs-6 text-dark">
+              {% if api_sync_enabled and api_endpoint_url %}
+                Real-Time POS API Active
+              {% else %}
+                Excel / Manual Template Mode (No API Configured)
+              {% endif %}
+            </span>
+            {% if api_sync_enabled and api_endpoint_url %}
+              <span class="badge bg-success text-white rounded-pill px-2.5 py-1 small fw-bold">
+                <i class="fa-solid fa-circle-check me-1"></i> Live Checking Enabled
+              </span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small fw-semibold">
+                Excel Sync Fallback
+              </span>
+            {% endif %}
+          </div>
+          <p class="text-muted small mb-0 mt-0.5">
+            {% if api_sync_enabled and api_endpoint_url %}
+              Customer searches query your pharmacy POS system directly at <code class="text-dark bg-white px-2 py-0.5 rounded border">{{ api_endpoint_url|truncatechars:45 }}</code>
+              {% if api_last_synced_at %} &bull; Last checked: {{ api_last_synced_at|date:"H:i, d M Y" }}{% endif %}
+            {% else %}
+              No direct pharmacy API is configured. Your stock is managed by uploading the standard Excel template sheet below.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1.5 fw-semibold" data-bs-toggle="modal" data-bs-target="#apiSettingsModal">
+          <i class="fa-solid fa-gear me-1"></i> Configure API
+        </button>
+        {% if not api_sync_enabled %}
+        <button class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-bold" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+          <i class="fa-solid fa-file-arrow-up me-1"></i> Upload Sheet
+        </button>
+        {% endif %}
+      </div>
     </div>
   </div>
 
@@ -139,104 +232,107 @@
 
               <!-- Medicine name + brand -->
               <td class="ps-4 py-3">
-                <div class="fw-bold text-dark">
+                <div class="fw-bold text-dark d-flex align-items-center gap-1.5">
                   <a href="{% url 'medicine_detail' item.medicine.id %}" class="text-dark text-decoration-none hover-primary">
                     {{ item.medicine.name }}
                   </a>
+                  {% if item.sku_code %}
+                    <span class="badge bg-light text-muted border px-1.5 py-0.5 rounded" style="font-size: 0.68rem;">{{ item.sku_code }}</span>
+                  {% endif %}
                 </div>
-                <div class="text-muted small">{{ item.medicine.brand|default:"Generic" }}</div>
+                <div class="text-muted small">{{ item.medicine.brand|default:"Generic" }} &bull; <span class="text-secondary">{{ item.medicine.category }}</span></div>
               </td>
 
               <!-- Pack size -->
-              <td class="py-3">
-                <span class="badge bg-light border text-dark rounded-pill px-2 py-1 small">
-                  {{ item.package_size|default:"Strip of 15" }}
-                </span>
+              <td class="py-3 text-muted small">
+                {{ item.package_size|default:"Strip of 15" }}
               </td>
 
-              <!-- Stock quantity with inline ± controls -->
-              <td class="py-3 text-center">
-                <div class="inv-stock-ctrl d-inline-flex align-items-center gap-1" data-item-id="{{ item.id }}">
-                  <button class="btn btn-sm btn-light border rounded-circle p-0 inv-btn-sub"
-                    style="width:28px;height:28px;font-size:0.8rem;"
-                    data-item-id="{{ item.id }}" title="Remove 1">
+              <!-- Quick ± stock controls -->
+              <td class="py-3 text-center" style="min-width: 140px;">
+                <div class="d-inline-flex align-items-center gap-1">
+                  <button class="btn btn-sm btn-outline-secondary rounded-circle inv-btn-sub"
+                    style="width:26px;height:26px;padding:0;line-height:1;"
+                    data-item-id="{{ item.id }}"
+                    title="Deduct 1 unit">
                     <i class="fa-solid fa-minus" style="font-size:0.65rem;"></i>
                   </button>
-                  <span class="inv-qty fw-bold text-dark px-2" style="min-width:36px;text-align:center;font-size:1.05rem;"
-                    id="qty-{{ item.id }}">{{ item.quantity }}</span>
-                  <button class="btn btn-sm btn-light border rounded-circle p-0 inv-btn-add"
-                    style="width:28px;height:28px;font-size:0.8rem;"
-                    data-item-id="{{ item.id }}" title="Add 1">
+                  <span class="fw-bold text-dark px-2" id="qty-{{ item.id }}" style="min-width:32px;font-size:0.95rem;">
+                    {{ item.quantity }}
+                  </span>
+                  <button class="btn btn-sm btn-outline-secondary rounded-circle inv-btn-add"
+                    style="width:26px;height:26px;padding:0;line-height:1;"
+                    data-item-id="{{ item.id }}"
+                    title="Add 1 unit">
                     <i class="fa-solid fa-plus" style="font-size:0.65rem;"></i>
                   </button>
                 </div>
-                <div class="text-muted" style="font-size:0.68rem;">units</div>
               </td>
 
-              <!-- Status badge -->
+              <!-- Stock status badge -->
               <td class="py-3 text-center">
                 {% if item.quantity > 10 %}
-                  <span class="inv-status-badge badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold"
-                    id="status-{{ item.id }}">
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold" id="status-{{ item.id }}">
                     <i class="fa-solid fa-circle-check me-1" style="font-size:0.65rem;"></i>Healthy
                   </span>
                 {% elif item.quantity > 0 %}
-                  <span class="inv-status-badge badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-bold"
-                    id="status-{{ item.id }}">
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold" id="status-{{ item.id }}">
                     <i class="fa-solid fa-triangle-exclamation me-1" style="font-size:0.65rem;"></i>Low Stock
                   </span>
                 {% else %}
-                  <span class="inv-status-badge badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold"
-                    id="status-{{ item.id }}">
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-semibold" id="status-{{ item.id }}">
                     <i class="fa-solid fa-circle-xmark me-1" style="font-size:0.65rem;"></i>Out of Stock
                   </span>
                 {% endif %}
               </td>
 
               <!-- Price -->
-              <td class="py-3 text-end fw-bold text-dark">₹{{ item.price|floatformat:2 }}</td>
-
-              <!-- Batch + Expiry -->
-              <td class="py-3 text-end">
-                <code class="text-muted small">{{ item.batch_number|default:"—" }}</code>
-                {% if item.expiry_date %}
-                  <div class="text-muted" style="font-size:0.72rem;">Exp: {{ item.expiry_date|date:"M Y" }}</div>
-                {% endif %}
+              <td class="py-3 text-end fw-bold text-dark" style="font-size:0.95rem;">
+                ₹{{ item.price }}
               </td>
 
-              <!-- 4-action button group -->
+              <!-- Batch & Expiry -->
+              <td class="py-3 text-end text-muted small">
+                <div>{{ item.batch_number|default:"—" }}</div>
+                <div style="font-size:0.75rem;">Exp: {{ item.expiry_date|date:"M Y"|default:"—" }}</div>
+              </td>
+
+              <!-- Actions -->
               <td class="py-3 text-end pe-4">
-                <div class="d-flex align-items-center justify-content-end gap-1 flex-wrap">
-                  <!-- Edit -->
-                  <a href="{% url 'edit_inventory' item.id %}"
-                    class="btn btn-sm btn-light border rounded-pill px-3 py-1 fw-semibold small"
-                    title="Edit full details">
-                    <i class="fa-solid fa-pen small me-1"></i>Edit
-                  </a>
-                  <!-- Update Stock (modal) -->
-                  <button type="button"
-                    class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold small btn-update-stock"
+                <div class="d-inline-flex gap-1">
+                  <!-- Quick edit modal -->
+                  <button class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-dark btn-update-stock"
                     data-item-id="{{ item.id }}"
                     data-item-name="{{ item.medicine.name }}"
                     data-current-qty="{{ item.quantity }}"
                     data-bs-toggle="modal"
                     data-bs-target="#updateStockModal"
-                    title="Update stock quantity">
-                    <i class="fa-solid fa-arrow-up-right-dots small me-1"></i>Update Stock
+                    title="Quick set stock">
+                    <i class="fa-solid fa-sliders small"></i>
                   </button>
-                  <!-- View History -->
-                  <a href="{% url 'inventory_history' item.id %}"
-                    class="btn btn-sm btn-light border rounded-pill px-3 py-1 fw-semibold small"
-                    title="View reservation history">
-                    <i class="fa-solid fa-clock-rotate-left small me-1"></i>History
+
+                  <a href="{% url 'inventory_history' item.id %}" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-muted" title="Order history">
+                    <i class="fa-solid fa-clock-rotate-left small"></i>
                   </a>
-                  <!-- Remove -->
-                  <a href="{% url 'delete_inventory' item.id %}"
-                    class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 small"
-                    onclick="return confirm('Remove {{ item.medicine.name }} from inventory?')"
-                    title="Remove from inventory">
-                    <i class="fa-solid fa-trash-can small"></i>
-                  </a>
+
+                  <!-- Edit / Delete dropdown -->
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-light border rounded-pill px-2 py-1 text-muted" data-bs-toggle="dropdown">
+                      <i class="fa-solid fa-ellipsis-vertical small"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 p-1">
+                      <li>
+                        <a class="dropdown-item rounded-2 py-1.5 small" href="{% url 'edit_inventory' item.id %}">
+                          <i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Edit details
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item rounded-2 py-1.5 small text-danger" href="{% url 'delete_inventory' item.id %}" onclick="return confirm('Remove {{ item.medicine.name }} from your store inventory?');">
+                          <i class="fa-solid fa-trash me-2"></i>Delete
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -245,66 +341,59 @@
         </table>
       </div>
 
-      <!-- Mobile card view -->
-      <div class="d-md-none p-3 d-flex flex-column gap-3">
+      <!-- Mobile List View -->
+      <div class="d-md-none divide-y">
         {% for item in inventory %}
-        <div class="card border rounded-3 p-3 bg-white shadow-xs">
-          <!-- Top row: name + status badge -->
-          <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="p-3 border-bottom inv-mobile-row">
+          <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
             <div>
-              <strong class="text-dark d-block">{{ item.medicine.name }}</strong>
-              <small class="text-muted">{{ item.medicine.brand }} &bull; {{ item.package_size|default:"Strip of 15" }}</small>
+              <a href="{% url 'medicine_detail' item.medicine.id %}" class="fw-bold text-dark text-decoration-none">
+                {{ item.medicine.name }}
+              </a>
+              <div class="text-muted small">{{ item.medicine.brand|default:"Generic" }} &bull; {{ item.package_size|default:"Strip of 15" }}</div>
             </div>
-            {% if item.quantity > 10 %}
-              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-bold"
-                id="status-mob-{{ item.id }}">Healthy</span>
-            {% elif item.quantity > 0 %}
-              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small fw-bold"
-                id="status-mob-{{ item.id }}">Low Stock</span>
-            {% else %}
-              <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small fw-bold"
-                id="status-mob-{{ item.id }}">Out of Stock</span>
-            {% endif %}
-          </div>
-
-          <!-- Key metrics row -->
-          <div class="row g-2 py-2 my-1 border-top border-bottom bg-light rounded-2 text-center">
-            <div class="col-4">
-              <div class="text-muted small" style="font-size:0.7rem;">Price</div>
-              <strong class="text-dark">₹{{ item.price }}</strong>
-            </div>
-            <div class="col-4">
-              <div class="text-muted small" style="font-size:0.7rem;">Stock</div>
-              <strong class="text-dark" id="qty-mob-{{ item.id }}">{{ item.quantity }}</strong>
-            </div>
-            <div class="col-4">
-              <div class="text-muted small" style="font-size:0.7rem;">Batch</div>
-              <code class="text-dark small">{{ item.batch_number|default:"N/A" }}</code>
+            <div class="text-end">
+              <div class="fw-bold text-dark">₹{{ item.price }}</div>
+              <div class="text-muted" style="font-size:0.72rem;">Exp: {{ item.expiry_date|date:"M Y"|default:"—" }}</div>
             </div>
           </div>
 
-          <!-- Action row -->
-          <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
-            <a href="{% url 'edit_inventory' item.id %}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold small">
-              <i class="fa-solid fa-pen small me-1"></i>Edit
-            </a>
-            <button type="button"
-              class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold small btn-update-stock"
-              data-item-id="{{ item.id }}"
-              data-item-name="{{ item.medicine.name }}"
-              data-current-qty="{{ item.quantity }}"
-              data-bs-toggle="modal"
-              data-bs-target="#updateStockModal">
-              <i class="fa-solid fa-arrow-up-right-dots small me-1"></i>Update Stock
-            </button>
-            <a href="{% url 'inventory_history' item.id %}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold small">
-              <i class="fa-solid fa-clock-rotate-left small me-1"></i>History
-            </a>
-            <a href="{% url 'delete_inventory' item.id %}"
-              class="btn btn-sm btn-outline-danger rounded-pill px-3 small"
-              onclick="return confirm('Remove {{ item.medicine.name }}?')">
-              <i class="fa-solid fa-trash-can small me-1"></i>Remove
-            </a>
+          <div class="d-flex align-items-center justify-content-between pt-1">
+            <!-- Mobile stock ± controls -->
+            <div class="d-flex align-items-center gap-1.5">
+              <button class="btn btn-sm btn-outline-secondary rounded-circle inv-btn-sub"
+                style="width:28px;height:28px;padding:0;"
+                data-item-id="{{ item.id }}">
+                <i class="fa-solid fa-minus" style="font-size:0.65rem;"></i>
+              </button>
+              <span class="fw-bold text-dark px-2" id="qty-mob-{{ item.id }}" style="min-width:30px;text-align:center;">
+                {{ item.quantity }}
+              </span>
+              <button class="btn btn-sm btn-outline-secondary rounded-circle inv-btn-add"
+                style="width:28px;height:28px;padding:0;"
+                data-item-id="{{ item.id }}">
+                <i class="fa-solid fa-plus" style="font-size:0.65rem;"></i>
+              </button>
+            </div>
+
+            <div class="d-flex align-items-center gap-1.5">
+              {% if item.quantity > 10 %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold" id="status-mob-{{ item.id }}">Healthy</span>
+              {% elif item.quantity > 0 %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold" id="status-mob-{{ item.id }}">Low</span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-semibold" id="status-mob-{{ item.id }}">Out</span>
+              {% endif %}
+
+              <button class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 btn-update-stock"
+                data-item-id="{{ item.id }}"
+                data-item-name="{{ item.medicine.name }}"
+                data-current-qty="{{ item.quantity }}"
+                data-bs-toggle="modal"
+                data-bs-target="#updateStockModal">
+                <i class="fa-solid fa-sliders small"></i>
+              </button>
+            </div>
           </div>
         </div>
         {% endfor %}
@@ -312,54 +401,70 @@
 
       <!-- Pagination -->
       {% if inventory.has_other_pages %}
-        <div class="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <small class="text-muted">
-            Page {{ inventory.number }} of {{ inventory.paginator.num_pages }} ({{ inventory.paginator.count }} medicines)
-          </small>
-          <nav>
-            <ul class="pagination pagination-sm mb-0">
-              {% if inventory.has_previous %}
-                <li class="page-item">
-                  <a class="page-link rounded-pill px-3 me-1"
-                    href="?page={{ inventory.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
-                    &larr; Prev
-                  </a>
-                </li>
-              {% endif %}
-              {% if inventory.has_next %}
-                <li class="page-item">
-                  <a class="page-link rounded-pill px-3"
-                    href="?page={{ inventory.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
-                    Next &rarr;
-                  </a>
-                </li>
-              {% endif %}
-            </ul>
-          </nav>
+      <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light flex-wrap gap-2">
+        <div class="text-muted small">
+          Showing page {{ inventory.number }} of {{ inventory.paginator.num_pages }}
         </div>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            {% if inventory.has_previous %}
+              <li class="page-item">
+                <a class="page-link rounded-pill px-3 me-1" href="?page={{ inventory.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                  &laquo; Prev
+                </a>
+              </li>
+            {% endif %}
+            {% for p in inventory.paginator.page_range %}
+              {% if p == inventory.number %}
+                <li class="page-item active">
+                  <span class="page-link rounded-circle px-2.5 mx-0.5">{{ p }}</span>
+                </li>
+              {% elif p >= inventory.number|add:"-2" and p <= inventory.number|add:"2" %}
+                <li class="page-item">
+                  <a class="page-link rounded-circle px-2.5 mx-0.5" href="?page={{ p }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                    {{ p }}
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            {% if inventory.has_next %}
+              <li class="page-item">
+                <a class="page-link rounded-pill px-3 ms-1" href="?page={{ inventory.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if stock_status %}&stock_status={{ stock_status }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+                  Next &raquo;
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
       {% endif %}
 
     {% else %}
       <!-- Empty state -->
       <div class="text-center py-5 px-3">
         <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-muted mb-3"
-          style="width:56px;height:56px;">
-          <i class="fa-solid fa-boxes-stacked fs-4"></i>
+          style="width:64px;height:64px;">
+          <i class="fa-solid fa-boxes-stacked fs-3 text-primary"></i>
         </div>
         <h5 class="fw-bold text-dark mb-1">No medicines in inventory</h5>
-        <p class="text-muted small mb-3" style="max-width:380px;margin:0 auto;">
+        <p class="text-muted small mb-3" style="max-width:440px;margin:0 auto;">
           {% if query or category or stock_status != 'all' %}
-            No results matched your filters. Try resetting.
+            No results matched your filters. Try resetting the search terms.
           {% else %}
-            Add medicines to your live catalog so nearby customers can discover and reserve stock.
+            Upload your inventory sheet in Excel format or connect your pharmacy POS system API to automatically sync stock with live customer searches.
           {% endif %}
         </p>
         {% if query or category or stock_status != 'all' %}
           <a href="{% url 'inventory' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold small">Reset Filters</a>
         {% else %}
-          <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
-            <i class="fa-solid fa-circle-plus me-1"></i> Add your first medicine
-          </a>
+          <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Upload Excel Sheet
+            </button>
+            <button class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#apiSettingsModal">
+              <i class="fa-solid fa-bolt text-warning"></i> Connect POS API
+            </button>
+          </div>
         {% endif %}
       </div>
     {% endif %}
@@ -367,7 +472,179 @@
 
 </div>
 
-<!-- ══ Update Stock Modal ══ -->
+<!-- ══ Modal 1: Upload Inventory Excel ══ -->
+<div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 540px;">
+    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+      
+      <div class="modal-header border-bottom px-4 py-3" style="background: #f0fdfa;">
+        <div class="d-flex align-items-center gap-2.5">
+          <div class="rounded-circle bg-teal-subtle text-teal p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: #ccfbf1; color: #0d9488;">
+            <i class="fa-solid fa-file-excel fs-5"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0" id="uploadExcelModalLabel">Upload Inventory Spreadsheet</h5>
+            <span class="text-muted small" style="font-size: 0.78rem;">Upload your store inventory in .xlsx or .csv format</span>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form action="{% url 'upload_inventory_excel' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+
+          <!-- Drag and Drop Box -->
+          <div class="border border-2 border-dashed rounded-4 p-4 text-center mb-3 bg-light" style="border-color: #cbd5e1 !important; cursor: pointer;" onclick="document.getElementById('excelFileInput').click();">
+            <div class="mb-2">
+              <i class="fa-solid fa-cloud-arrow-up text-primary fs-2"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">Choose Excel / CSV file</h6>
+            <p class="text-muted small mb-2" style="font-size: 0.8rem;">Supports .xlsx, .xls, and .csv files up to 25MB</p>
+            <input type="file" name="excel_file" id="excelFileInput" class="d-none" accept=".xlsx,.xls,.csv" required onchange="handleFileSelected(this)">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold">Browse File</button>
+            <div id="selectedFileName" class="mt-2 fw-bold text-success small d-none"></div>
+          </div>
+
+          <!-- Template Download CTA Box -->
+          <div class="card border rounded-3 p-3 bg-white mb-3 shadow-xs">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <div class="fw-bold text-dark small"><i class="fa-solid fa-circle-info text-info me-1"></i> Don't have a template yet?</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Download the pre-formatted MediAI spreadsheet with sample rows.</div>
+              </div>
+              <a href="{% url 'download_inventory_template' %}?format=xlsx" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-bold">
+                <i class="fa-solid fa-download me-1"></i> Get Template
+              </a>
+            </div>
+          </div>
+
+          <!-- Column guidelines collapse -->
+          <div class="accordion accordion-flush" id="accordionGuide">
+            <div class="accordion-item border-0">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed px-0 py-1 text-muted small fw-semibold bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#collapseColumns">
+                  <i class="fa-solid fa-table-columns me-1.5 text-primary"></i> View Supported Spreadsheet Columns
+                </button>
+              </h2>
+              <div id="collapseColumns" class="accordion-collapse collapse" data-bs-parent="#accordionGuide">
+                <div class="accordion-body px-0 py-2">
+                  <ul class="list-unstyled small text-muted mb-0" style="font-size: 0.78rem; line-height: 1.6;">
+                    <li>&bull; <strong class="text-dark">Medicine Name</strong> (Mandatory, e.g. Dolo 650)</li>
+                    <li>&bull; <strong class="text-dark">Price (INR)</strong> (Mandatory retail price, e.g. 30.50)</li>
+                    <li>&bull; <strong class="text-dark">Quantity</strong> (Mandatory stock count, e.g. 100)</li>
+                    <li>&bull; <strong class="text-dark">Expiry Date</strong> (Mandatory, YYYY-MM-DD or DD/MM/YYYY)</li>
+                    <li>&bull; <strong class="text-dark">Brand, Category, Dosage</strong> (Optional details)</li>
+                    <li>&bull; <strong class="text-dark">Package Size, SKU Code, Batch Number</strong> (Optional)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-3.5" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="btnUploadSubmit" disabled>
+            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload & Sync Stock
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal 2: Pharmacy POS / ERP API Settings ══ -->
+<div class="modal fade" id="apiSettingsModal" tabindex="-1" aria-labelledby="apiSettingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
+    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+
+      <div class="modal-header border-bottom px-4 py-3" style="background: #fffbeb;">
+        <div class="d-flex align-items-center gap-2.5">
+          <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: #fef3c7; color: #b45309;">
+            <i class="fa-solid fa-bolt fs-5"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0" id="apiSettingsModalLabel">Pharmacy System API Integration</h5>
+            <span class="text-muted small" style="font-size: 0.78rem;">Direct live inventory querying during customer search</span>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <form id="pharmacyApiForm" method="POST" action="{% url 'pharmacy_api_settings' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save">
+
+          <!-- Enable Live Sync Checkbox -->
+          <div class="form-check form-switch p-3 bg-light rounded-3 mb-3 border">
+            <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="api_sync_enabled" name="api_sync_enabled" {% if api_sync_enabled %}checked{% endif %}>
+            <label class="form-check-label fw-bold text-dark small" for="api_sync_enabled">
+              Enable Real-Time Inventory API Lookup
+            </label>
+            <div class="text-muted ps-4" style="font-size: 0.74rem;">
+              When enabled, customer searches will query your pharmacy system API directly in real-time.
+            </div>
+          </div>
+
+          <!-- API Endpoint URL -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-dark small mb-1">
+              POS / ERP Endpoint URL <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-link small"></i></span>
+              <input type="url" name="api_endpoint_url" id="api_endpoint_url" class="form-control"
+                placeholder="https://api.yourpharmacy.com/v1/inventory/search"
+                value="{{ api_endpoint_url|default:'' }}">
+            </div>
+            <div class="form-text small" style="font-size: 0.74rem;">
+              The GET/POST endpoint called with query parameters <code>?q=medicine_name</code>.
+            </div>
+          </div>
+
+          <!-- API Auth Secret Token -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-dark small mb-1">
+              API Authorization Key / Bearer Token <span class="text-muted fw-normal">(Optional)</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-key small"></i></span>
+              <input type="password" name="api_auth_token" id="api_auth_token" class="form-control"
+                placeholder="Bearer token or API Secret Key"
+                value="{{ api_auth_token|default:'' }}">
+            </div>
+          </div>
+
+          <!-- Test Connection Action & Response Box -->
+          <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-bold" id="btnTestApi">
+              <i class="fa-solid fa-satellite-dish me-1"></i> Test Connection
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1.5 fw-bold text-dark" id="btnUseMockPos">
+              <i class="fa-solid fa-flask me-1 text-warning"></i> Use MediAI Mock POS
+            </button>
+          </div>
+
+          <!-- Live Ping Results Container -->
+          <div id="apiTestFeedback" class="p-3 rounded-3 border small d-none mt-2" style="background: #f8fafc; font-size: 0.78rem;">
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-3.5" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm" id="btnSaveApiSettings">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Save API Configuration
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal 3: Update Stock Modal (Inline Adjustment) ══ -->
 <div class="modal fade" id="updateStockModal" tabindex="-1" aria-labelledby="updateStockModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
     <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
@@ -393,7 +670,6 @@
         <!-- Quick ± buttons -->
         <p class="text-muted small fw-semibold mb-2">Quick adjust</p>
         <div class="d-flex gap-2 mb-4 flex-wrap">
-          {% for delta in "-10,-5,-1,+1,+5,+10,+25,+50,+100" %}{% endfor %}
           <button class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="-10">−10</button>
           <button class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="-5">−5</button>
           <button class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold btn-quick-adj" data-delta="-1">−1</button>
@@ -411,7 +687,7 @@
             placeholder="Enter exact stock count" min="0">
           <button class="btn btn-dark rounded-end-pill px-4 fw-semibold" id="btn-set-exact">Set</button>
         </div>
-        <div class="text-muted" style="font-size:0.72rem;">This will replace the current stock count entirely.</div>
+        <div class="text-muted" style="font-size:0.72rem;">This will update the stock count immediately.</div>
       </div>
 
       <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-between">
@@ -430,6 +706,104 @@
     const c = document.cookie.split('; ').find(r => r.startsWith('csrftoken='));
     return c ? c.split('=')[1] : '';
   })();
+
+  // ── Excel File Selected Feedback ──
+  window.handleFileSelected = function(input) {
+    const submitBtn = document.getElementById('btnUploadSubmit');
+    const nameLabel = document.getElementById('selectedFileName');
+    if (input.files && input.files[0]) {
+      nameLabel.textContent = `Selected file: ${input.files[0].name} (${(input.files[0].size / 1024).toFixed(1)} KB)`;
+      nameLabel.classList.remove('d-none');
+      submitBtn.removeAttribute('disabled');
+    } else {
+      nameLabel.classList.add('d-none');
+      submitBtn.setAttribute('disabled', 'true');
+    }
+  };
+
+  // ── Pharmacy API Settings AJAX ──
+  const btnTestApi = document.getElementById('btnTestApi');
+  const btnUseMockPos = document.getElementById('btnUseMockPos');
+  const btnSaveApiSettings = document.getElementById('btnSaveApiSettings');
+  const feedbackBox = document.getElementById('apiTestFeedback');
+
+  if (btnTestApi) {
+    btnTestApi.addEventListener('click', async function() {
+      const endpoint = document.getElementById('api_endpoint_url').value.trim();
+      const token = document.getElementById('api_auth_token').value.trim();
+      if (!endpoint) {
+        feedbackBox.className = "p-3 rounded-3 border small mt-2 text-danger bg-danger-subtle border-danger-subtle";
+        feedbackBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Please enter an Endpoint URL to test.';
+        feedbackBox.classList.remove('d-none');
+        return;
+      }
+
+      feedbackBox.className = "p-3 rounded-3 border small mt-2 text-info bg-info-subtle border-info-subtle";
+      feedbackBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Testing live connection to pharmacy POS API...';
+      feedbackBox.classList.remove('d-none');
+
+      const formData = new FormData();
+      formData.append('action', 'test');
+      formData.append('api_endpoint_url', endpoint);
+      formData.append('api_auth_token', token);
+      formData.append('test_query', 'Dolo 650');
+
+      try {
+        const res = await fetch("{% url 'pharmacy_api_settings' %}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF },
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          feedbackBox.className = "p-3 rounded-3 border small mt-2 text-success bg-success-subtle border-success-subtle";
+          feedbackBox.innerHTML = `<strong><i class="fa-solid fa-circle-check me-1"></i> Connected Successfully (${data.latency_ms}ms)!</strong><br>${data.message}`;
+        } else {
+          feedbackBox.className = "p-3 rounded-3 border small mt-2 text-danger bg-danger-subtle border-danger-subtle";
+          feedbackBox.innerHTML = `<strong><i class="fa-solid fa-circle-xmark me-1"></i> Connection Failed</strong><br>${data.message}`;
+        }
+      } catch (err) {
+        feedbackBox.className = "p-3 rounded-3 border small mt-2 text-danger bg-danger-subtle border-danger-subtle";
+        feedbackBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> Network error: ${err.message}`;
+      }
+    });
+  }
+
+  if (btnUseMockPos) {
+    btnUseMockPos.addEventListener('click', async function() {
+      feedbackBox.className = "p-3 rounded-3 border small mt-2 text-info bg-info-subtle border-info-subtle";
+      feedbackBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Setting up MediAI Mock Pharmacy System API...';
+      feedbackBox.classList.remove('d-none');
+
+      const formData = new FormData();
+      formData.append('action', 'use_mock');
+
+      try {
+        const res = await fetch("{% url 'pharmacy_api_settings' %}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF },
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('api_endpoint_url').value = data.api_endpoint_url;
+          document.getElementById('api_sync_enabled').checked = true;
+          feedbackBox.className = "p-3 rounded-3 border small mt-2 text-success bg-success-subtle border-success-subtle";
+          feedbackBox.innerHTML = `<strong><i class="fa-solid fa-circle-check me-1"></i> Mock POS Connected!</strong><br>Now searching medicines on MediAI will query live stock via the mock pharmacy API.`;
+          setTimeout(() => location.reload(), 1500);
+        }
+      } catch (err) {
+        feedbackBox.className = "p-3 rounded-3 border small mt-2 text-danger bg-danger-subtle border-danger-subtle";
+        feedbackBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> Setup error: ${err.message}`;
+      }
+    });
+  }
+
+  if (btnSaveApiSettings) {
+    btnSaveApiSettings.addEventListener('click', function() {
+      document.getElementById('pharmacyApiForm').submit();
+    });
+  }
 
   // ── Inline ± buttons on table rows ──
   document.querySelectorAll('.inv-btn-add, .inv-btn-sub').forEach(btn => {
@@ -535,7 +909,6 @@
       warning: 'bg-warning-subtle text-warning-emphasis border-warning-subtle',
       danger:  'bg-danger-subtle text-danger border-danger-subtle',
     };
-    // Remove old colour classes
     el.classList.remove(
       'bg-success-subtle','text-success','border-success-subtle',
       'bg-warning-subtle','text-warning-emphasis','border-warning-subtle',
@@ -548,16 +921,13 @@
 </script>
 
 <style>
-/* ── Table ── */
 .inv-table thead th { font-weight: 700; }
 .inv-table tbody tr { transition: background 0.15s; }
 .inv-table tbody tr:hover { background: #f8fafc; }
 
-/* flash row on stock update */
 @keyframes row-flash { 0%{background:#d1fae5;} 100%{background:transparent;} }
 .row-flash { animation: row-flash 0.8s ease; }
 
-/* ── Inline ± controls ── */
 .inv-btn-add:hover  { background: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; }
 .inv-btn-sub:hover  { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
 </style>

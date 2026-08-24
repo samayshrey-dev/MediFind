@@ -5,12 +5,13 @@
 
 {% block content %}
 <section class="py-5" style="background: var(--surface-secondary); min-height: 85vh;">
-  <div class="container py-3">
+  <div class="container py-3" style="max-width: 820px;">
 
+    <!-- Page header -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
       <div>
         <h3 class="fw-bold text-dark mb-1">My Orders</h3>
-        <p class="text-muted small mb-0">Track your medicine reservations, payment status, and pickup confirmations.</p>
+        <p class="text-muted small mb-0">Your medicine reservations — payment and pickup status tracked separately.</p>
       </div>
       <a href="{% url 'search' %}" class="btn btn-sm btn-primary rounded-pill px-4 fw-semibold">
         <i class="fa-solid fa-magnifying-glass me-1"></i> Search Medicines
@@ -18,142 +19,155 @@
     </div>
 
     {% if reservations %}
-      <div class="d-flex flex-column gap-4">
-        {% for reservation in reservations %}
+      <div class="d-flex flex-column gap-3">
+        {% for r in reservations %}
+        {% with ps=r.payment_state %}
 
-          {# ── Compute payment_state for template branching ── #}
-          {% with ps=reservation.payment_state %}
+        <div class="order-card card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
 
-          <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden res-card">
-
-            {# ═══ Top stripe — colour coded by payment state ═══ #}
-            <div class="res-stripe
-              {% if ps == 'COMPLETED' %}stripe-completed
-              {% elif ps == 'READY_FOR_PICKUP' %}stripe-ready
-              {% elif ps == 'ORDER_CONFIRMED' %}stripe-confirmed
-              {% elif ps == 'PAYMENT_PENDING' %}stripe-pending
-              {% elif ps == 'CANCELLED' %}stripe-cancelled
-              {% elif ps == 'PAY_AT_STORE' %}stripe-store
+          <!-- Coloured left accent bar -->
+          <div class="d-flex" style="min-height: 0;">
+            <div class="order-accent flex-shrink-0
+              {% if ps == 'COMPLETED' %}accent-done
+              {% elif ps == 'READY_FOR_PICKUP' %}accent-ready
+              {% elif ps == 'ORDER_CONFIRMED' or ps == 'PAY_AT_STORE' %}accent-confirmed
+              {% elif ps == 'PAYMENT_PENDING' %}accent-pending
+              {% elif ps == 'CANCELLED' %}accent-cancelled
               {% endif %}
             "></div>
 
-            <div class="p-4">
+            <div class="flex-grow-1 p-4">
 
-              {# ── Header row ── #}
-              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+              <!-- ══ ROW 1: Order reference + medicine + amount ══ -->
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
 
-                {# Medicine + pharmacy ident #}
+                <!-- Left: medicine details -->
                 <div class="d-flex align-items-start gap-3">
-                  <div class="res-med-icon d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3 flex-shrink-0" style="width:48px;height:48px;">
-                    <i class="fa-solid fa-pills fs-5"></i>
+                  <div class="order-med-icon d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3 flex-shrink-0"
+                    style="width:44px;height:44px;">
+                    <i class="fa-solid fa-pills"></i>
                   </div>
                   <div>
-                    <div class="fw-bold text-dark" style="font-size: 1.05rem;">
-                      <a href="{% url 'medicine_detail' reservation.medicine.id %}" class="text-dark text-decoration-none">{{ reservation.medicine.name }}</a>
+                    <div class="text-muted" style="font-size:0.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+                      #MF-{{ r.id|stringformat:"04d" }}
                     </div>
-                    <div class="text-muted small">{{ reservation.medicine.brand }} &bull; {{ reservation.quantity }} unit{{ reservation.quantity|pluralize }}</div>
+                    <div class="fw-bold text-dark" style="font-size:1.05rem;">
+                      <a href="{% url 'medicine_detail' r.medicine.id %}" class="text-dark text-decoration-none">
+                        {{ r.medicine.name }}
+                      </a>
+                      <span class="text-muted fw-normal" style="font-size:0.9rem;">&times; {{ r.quantity }}</span>
+                    </div>
                     <div class="text-muted small">
-                      <i class="fa-solid fa-store me-1 text-success"></i>
-                      <a href="{% url 'pharmacy_detail' reservation.pharmacy.id %}" class="text-muted text-decoration-none">{{ reservation.pharmacy.name }}</a>
-                      &bull; {{ reservation.pharmacy.city }}
+                      <i class="fa-solid fa-store me-1 text-success" style="font-size:0.7rem;"></i>
+                      <a href="{% url 'pharmacy_detail' r.pharmacy.id %}" class="text-muted text-decoration-none">
+                        {{ r.pharmacy.name }}
+                      </a>
+                      &bull; {{ r.pharmacy.city }}
                     </div>
                   </div>
                 </div>
 
-                {# Big payment state pill #}
-                <div>
-                  {% if ps == 'COMPLETED' %}
-                    <span class="ps-badge ps-badge-completed">
-                      <i class="fa-solid fa-circle-check me-1"></i> Completed
-                    </span>
-                  {% elif ps == 'READY_FOR_PICKUP' %}
-                    <span class="ps-badge ps-badge-ready">
-                      <i class="fa-solid fa-store me-1"></i> Ready for Pickup
-                    </span>
-                  {% elif ps == 'ORDER_CONFIRMED' %}
-                    <span class="ps-badge ps-badge-confirmed">
-                      <i class="fa-solid fa-circle-check me-1"></i> Order Confirmed
-                    </span>
-                  {% elif ps == 'PAYMENT_PENDING' %}
-                    <span class="ps-badge ps-badge-pending">
-                      <i class="fa-solid fa-clock me-1"></i> Payment Pending
-                    </span>
-                  {% elif ps == 'CANCELLED' %}
-                    <span class="ps-badge ps-badge-cancelled">
-                      <i class="fa-solid fa-xmark me-1"></i> Cancelled
-                    </span>
-                  {% elif ps == 'PAY_AT_STORE' %}
-                    <span class="ps-badge ps-badge-store">
-                      <i class="fa-solid fa-store me-1"></i> Pay at Store
-                    </span>
+                <!-- Right: total amount -->
+                <div class="text-end">
+                  <div class="text-muted small fw-semibold" style="font-size:0.7rem;letter-spacing:0.5px;text-transform:uppercase;">Total</div>
+                  <div class="fw-bold text-dark" style="font-size: 1.5rem; letter-spacing: -0.5px;">
+                    ₹{{ r.orders.first.total_amount|default:"—" }}
+                  </div>
+                  <div class="text-muted" style="font-size:0.72rem;">{{ r.medicine.brand }}</div>
+                </div>
+              </div>
+
+              <!-- ══ ROW 2: PAYMENT STATUS + ORDER STATUS — clearly separated ══ -->
+              <div class="d-flex align-items-stretch gap-3 mb-3 flex-wrap">
+
+                <!-- PAYMENT STATUS block -->
+                <div class="status-block flex-fill" style="min-width: 160px;">
+                  <div class="status-label">Payment</div>
+                  {% if r.is_paid %}
+                    <div class="status-value pay-paid">
+                      <i class="fa-solid fa-circle-check me-1"></i>PAID
+                    </div>
+                    <div class="status-sub">Verified via Razorpay</div>
+                  {% elif r.payment_method == "PayOnPickup" %}
+                    <div class="status-value pay-store">
+                      <i class="fa-solid fa-store me-1"></i>PAY AT STORE
+                    </div>
+                    <div class="status-sub">Cash / counter on pickup</div>
+                  {% else %}
+                    <div class="status-value pay-pending">
+                      <i class="fa-solid fa-clock me-1"></i>PAYMENT PENDING
+                    </div>
+                    <div class="status-sub">Complete payment below</div>
+                  {% endif %}
+                </div>
+
+                <!-- Divider -->
+                <div class="status-divider"></div>
+
+                <!-- ORDER STATUS block -->
+                <div class="status-block flex-fill" style="min-width: 160px;">
+                  <div class="status-label">Order Status</div>
+                  {% if r.status == "Pending" %}
+                    <div class="status-value ord-pending">
+                      <i class="fa-solid fa-hourglass-half me-1"></i>AWAITING CONFIRMATION
+                    </div>
+                    <div class="status-sub">Pharmacy is reviewing your order</div>
+                  {% elif r.status == "Accepted" %}
+                    <div class="status-value ord-ready">
+                      <i class="fa-solid fa-store me-1"></i>READY FOR PICKUP
+                    </div>
+                    <div class="status-sub">Head to {{ r.pharmacy.name }}</div>
+                  {% elif r.status == "Collected" %}
+                    <div class="status-value ord-done">
+                      <i class="fa-solid fa-circle-check me-1"></i>COMPLETED
+                    </div>
+                    <div class="status-sub">Medicine collected</div>
+                  {% elif r.status == "Rejected" %}
+                    <div class="status-value ord-cancelled">
+                      <i class="fa-solid fa-xmark me-1"></i>REJECTED
+                    </div>
+                    <div class="status-sub">Stock unavailable — contact pharmacy</div>
+                  {% elif r.status == "Cancelled" %}
+                    <div class="status-value ord-cancelled">
+                      <i class="fa-solid fa-xmark me-1"></i>CANCELLED
+                    </div>
+                    <div class="status-sub">This order was cancelled</div>
+                  {% else %}
+                    <div class="status-value ord-pending">{{ r.status }}</div>
                   {% endif %}
                 </div>
               </div>
 
-              {# ═══════════════════════════════════════
-                 5-STEP PAYMENT STATE STEPPER
-                 (Only for online payment orders)
-                 ═══════════════════════════════════════ #}
-              {% if reservation.payment_method == "Online" and ps != "CANCELLED" %}
-
-                {# Determine how many steps are lit #}
-                {% if ps == "PAYMENT_PENDING" %}{% with lit=1 %}
-                {% elif ps == "ORDER_CONFIRMED" %}{% with lit=3 %}
-                {% elif ps == "READY_FOR_PICKUP" %}{% with lit=4 %}
-                {% elif ps == "COMPLETED" %}{% with lit=5 %}
-                {% else %}{% with lit=0 %}
-                {% endif %}
-
-                  <div class="stepper-wrap mb-4">
-                    {% for step in "12345" %}
-                      {% if forloop.counter == 1 %}
-                        {% with label="Payment Pending" icon="fa-clock" %}
-                        <div class="stepper-step {% if lit >= 1 %}step-done{% if lit == 1 %} step-active{% endif %}{% endif %}">
-                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
-                          <div class="step-label">{{ label }}</div>
-                        </div>
-                        {% endwith %}
-                        <div class="stepper-connector {% if lit >= 2 %}connector-done{% endif %}"></div>
-                      {% elif forloop.counter == 2 %}
-                        {% with label="Payment Verified" icon="fa-shield-check" %}
-                        <div class="stepper-step {% if lit >= 2 %}step-done{% if lit == 2 %} step-active{% endif %}{% endif %}">
-                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
-                          <div class="step-label">{{ label }}</div>
-                        </div>
-                        {% endwith %}
-                        <div class="stepper-connector {% if lit >= 3 %}connector-done{% endif %}"></div>
-                      {% elif forloop.counter == 3 %}
-                        {% with label="Order Confirmed" icon="fa-circle-check" %}
-                        <div class="stepper-step {% if lit >= 3 %}step-done{% if lit == 3 %} step-active{% endif %}{% endif %}">
-                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
-                          <div class="step-label">{{ label }}</div>
-                        </div>
-                        {% endwith %}
-                        <div class="stepper-connector {% if lit >= 4 %}connector-done{% endif %}"></div>
-                      {% elif forloop.counter == 4 %}
-                        {% with label="Ready for Pickup" icon="fa-store" %}
-                        <div class="stepper-step {% if lit >= 4 %}step-done{% if lit == 4 %} step-active{% endif %}{% endif %}">
-                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
-                          <div class="step-label">{{ label }}</div>
-                        </div>
-                        {% endwith %}
-                        <div class="stepper-connector {% if lit >= 5 %}connector-done{% endif %}"></div>
-                      {% elif forloop.counter == 5 %}
-                        {% with label="Completed" icon="fa-bag-shopping" %}
-                        <div class="stepper-step {% if lit >= 5 %}step-done{% if lit == 5 %} step-active{% endif %}{% endif %}">
-                          <div class="step-circle"><i class="fa-solid {{ icon }}"></i></div>
-                          <div class="step-label">{{ label }}</div>
-                        </div>
-                        {% endwith %}
-                      {% endif %}
-                    {% endfor %}
+              <!-- ══ ROW 3: Stepper (online only, non-cancelled) ══ -->
+              {% if r.payment_method == "Online" and ps != "CANCELLED" %}
+                <div class="stepper-wrap mb-3">
+                  <div class="stepper-step step-done {% if ps == 'PAYMENT_PENDING' %}step-active{% endif %}">
+                    <div class="step-circle"><i class="fa-solid fa-clock"></i></div>
+                    <div class="step-label">Payment<br>Pending</div>
                   </div>
-
-                {% endwith %}
-
-              {% elif reservation.payment_method == "PayOnPickup" and ps != "CANCELLED" %}
-                {# Pay-at-store simplified stepper #}
-                <div class="stepper-wrap mb-4">
+                  <div class="stepper-connector {% if ps != 'PAYMENT_PENDING' %}connector-done{% endif %}"></div>
+                  <div class="stepper-step {% if ps != 'PAYMENT_PENDING' %}step-done{% endif %}">
+                    <div class="step-circle"><i class="fa-solid fa-shield-check"></i></div>
+                    <div class="step-label">Payment<br>Verified</div>
+                  </div>
+                  <div class="stepper-connector {% if ps == 'ORDER_CONFIRMED' or ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}connector-done{% endif %}"></div>
+                  <div class="stepper-step {% if ps == 'ORDER_CONFIRMED' or ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}step-done{% if ps == 'ORDER_CONFIRMED' %} step-active{% endif %}{% endif %}">
+                    <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="step-label">Order<br>Confirmed</div>
+                  </div>
+                  <div class="stepper-connector {% if ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}connector-done{% endif %}"></div>
+                  <div class="stepper-step {% if ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}step-done{% if ps == 'READY_FOR_PICKUP' %} step-active{% endif %}{% endif %}">
+                    <div class="step-circle"><i class="fa-solid fa-store"></i></div>
+                    <div class="step-label">Ready for<br>Pickup</div>
+                  </div>
+                  <div class="stepper-connector {% if ps == 'COMPLETED' %}connector-done{% endif %}"></div>
+                  <div class="stepper-step {% if ps == 'COMPLETED' %}step-done step-active{% endif %}">
+                    <div class="step-circle"><i class="fa-solid fa-bag-shopping"></i></div>
+                    <div class="step-label">Completed</div>
+                  </div>
+                </div>
+              {% elif r.payment_method == "PayOnPickup" and ps != "CANCELLED" %}
+                <div class="stepper-wrap mb-3">
                   <div class="stepper-step step-done">
                     <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
                     <div class="step-label">Reserved</div>
@@ -161,7 +175,7 @@
                   <div class="stepper-connector {% if ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}connector-done{% endif %}"></div>
                   <div class="stepper-step {% if ps == 'READY_FOR_PICKUP' or ps == 'COMPLETED' %}step-done{% if ps == 'READY_FOR_PICKUP' %} step-active{% endif %}{% endif %}">
                     <div class="step-circle"><i class="fa-solid fa-store"></i></div>
-                    <div class="step-label">Ready for Pickup</div>
+                    <div class="step-label">Ready for<br>Pickup</div>
                   </div>
                   <div class="stepper-connector {% if ps == 'COMPLETED' %}connector-done{% endif %}"></div>
                   <div class="stepper-step {% if ps == 'COMPLETED' %}step-done step-active{% endif %}">
@@ -171,271 +185,207 @@
                 </div>
               {% endif %}
 
-              {# ── Bottom meta row ── #}
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-3 border-top">
-                <div class="text-muted small">
-                  <i class="fa-regular fa-calendar me-1"></i> {{ reservation.requested_at|date:"d M Y, h:i A" }}
-                  {% if reservation.payment_method == "Online" %}
-                    &nbsp;&bull;&nbsp;
-                    {% if reservation.is_paid %}
-                      <span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i>Paid via Razorpay</span>
-                    {% else %}
-                      <span class="text-warning-emphasis fw-semibold"><i class="fa-solid fa-clock me-1"></i>Awaiting payment</span>
-                    {% endif %}
-                  {% else %}
-                    &nbsp;&bull;&nbsp; <span class="text-muted"><i class="fa-solid fa-store me-1"></i>Pay at store counter</span>
-                  {% endif %}
+              <!-- ══ ROW 4: Footer meta + CTA ══ -->
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3 border-top">
+                <div class="text-muted" style="font-size:0.78rem;">
+                  <i class="fa-regular fa-calendar me-1"></i>{{ r.requested_at|date:"d M Y, h:i A" }}
                 </div>
 
-                {# Pay online CTA — only for pending online reservations #}
-                {% if reservation.payment_method == "Online" and not reservation.is_paid and reservation.status != "Rejected" and reservation.status != "Cancelled" %}
-                  <button
-                    type="button"
-                    class="btn btn-success btn-sm rounded-pill px-4 fw-bold btn-pay-reservation shadow-sm"
-                    data-reservation-id="{{ reservation.id }}"
-                    data-med-name="{{ reservation.medicine.name }}"
-                    data-pharm-name="{{ reservation.pharmacy.name }}">
-                    <i class="fa-solid fa-lock me-1"></i> Complete Payment
-                  </button>
-                {% elif ps == "READY_FOR_PICKUP" %}
-                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold">
-                    <i class="fa-solid fa-location-dot me-1"></i> Head to {{ reservation.pharmacy.name }}
-                  </span>
-                {% endif %}
+                <div class="d-flex gap-2 align-items-center">
+                  <!-- Pay CTA for pending online payment -->
+                  {% if r.payment_method == "Online" and not r.is_paid and r.status != "Rejected" and r.status != "Cancelled" %}
+                    <button type="button"
+                      class="btn btn-success btn-sm rounded-pill px-4 fw-bold btn-pay-reservation shadow-sm"
+                      data-reservation-id="{{ r.id }}"
+                      data-med-name="{{ r.medicine.name }}"
+                      data-pharm-name="{{ r.pharmacy.name }}">
+                      <i class="fa-solid fa-lock me-1"></i>Complete Payment
+                    </button>
+                  {% elif r.status == "Accepted" %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-semibold small">
+                      <i class="fa-solid fa-location-dot me-1"></i>Go to {{ r.pharmacy.name }}
+                    </span>
+                  {% endif %}
+
+                  <!-- View Order button -->
+                  {% if r.orders.first %}
+                    <a href="{% url 'order_confirmed_view' r.orders.first.order_reference %}"
+                      class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold">
+                      <i class="fa-solid fa-receipt me-1"></i>View Order
+                    </a>
+                  {% endif %}
+                </div>
               </div>
 
-            </div><!-- /p-4 -->
-          </div><!-- /card -->
+            </div><!-- /flex-grow-1 -->
+          </div><!-- /d-flex accent -->
+        </div><!-- /order-card -->
 
-          {% endwith %}
+        {% endwith %}
         {% endfor %}
-      </div><!-- /flex col -->
+      </div>
 
     {% else %}
       <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
         <i class="fa-solid fa-bag-shopping fs-1 text-muted mb-3"></i>
         <h5 class="fw-bold text-dark mb-1">No orders yet</h5>
         <p class="text-muted small mb-3">Reserve a medicine from any partner pharmacy and it will appear here.</p>
-        <div>
-          <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">Search Medicines</a>
-        </div>
+        <a href="{% url 'search' %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">Search Medicines</a>
       </div>
     {% endif %}
 
   </div>
 </section>
 
-<!-- Razorpay SDK -->
+<!-- Razorpay -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  function getCsrfToken() {
-    const cookieValue = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('csrftoken='))
-      ?.split('=')[1];
-    return cookieValue || '';
+  function getCsrf() {
+    const c = document.cookie.split('; ').find(r => r.startsWith('csrftoken='));
+    return c ? c.split('=')[1] : '';
   }
 
-  document.querySelectorAll(".btn-pay-reservation").forEach(button => {
-    button.addEventListener("click", async function (e) {
-      e.preventDefault();
-      const resId = this.getAttribute("data-reservation-id");
-      const originalText = this.innerHTML;
-
+  document.querySelectorAll(".btn-pay-reservation").forEach(btn => {
+    btn.addEventListener("click", async function () {
+      const resId = this.dataset.reservationId;
+      const orig  = this.innerHTML;
       this.disabled = true;
-      this.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Preparing Payment...`;
+      this.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Preparing…`;
 
       try {
-        const response = await fetch(`/api/payments/pay-reservation/${resId}/`, {
+        const res  = await fetch(`/api/payments/pay-reservation/${resId}/`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCsrfToken()
-          }
+          headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() }
         });
+        const data = await res.json();
+        if (!data.success) { alert(data.message || "Could not initialise payment."); this.disabled=false; this.innerHTML=orig; return; }
 
-        const data = await response.json();
-
-        if (!data.success) {
-          alert(data.message || "Could not initialize payment.");
-          this.disabled = false;
-          this.innerHTML = originalText;
-          return;
-        }
-
-        if (typeof Razorpay === "undefined") {
-          alert("Razorpay SDK is loading. Please try again.");
-          this.disabled = false;
-          this.innerHTML = originalText;
-          return;
-        }
-
-        const btn = this;
-        const options = {
-          key: data.key_id,
-          amount: data.amount,
-          currency: data.currency || "INR",
+        const b = this;
+        const rzp = new Razorpay({
+          key: data.key_id, amount: data.amount, currency: data.currency || "INR",
           name: "MediAI Pharmacy Checkout",
           description: `${data.medicine_name} at ${data.pharmacy_name}`,
           order_id: data.razorpay_order_id,
           notes: { order_reference: data.order_reference, reservation_id: resId },
           theme: { color: "#10b981" },
-          handler: async function (rzpResponse) {
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Verifying...`;
-            const verifyResp = await fetch("/api/payments/verify/", {
+          handler: async function (rzpR) {
+            b.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Verifying…`;
+            const vr = await fetch("/api/payments/verify/", {
               method: "POST",
-              headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
+              headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
               body: JSON.stringify({
                 order_reference: data.order_reference,
-                razorpay_order_id: rzpResponse.razorpay_order_id,
-                razorpay_payment_id: rzpResponse.razorpay_payment_id,
-                razorpay_signature: rzpResponse.razorpay_signature
+                razorpay_order_id: rzpR.razorpay_order_id,
+                razorpay_payment_id: rzpR.razorpay_payment_id,
+                razorpay_signature: rzpR.razorpay_signature
               })
             });
-            const verifyData = await verifyResp.json();
-            if (verifyData.success) {
-              window.location.href = `/orders/confirmed/${data.order_reference}/`;
-            } else {
-              alert("Payment verification failed: " + (verifyData.message || "Invalid signature."));
-              btn.disabled = false;
-              btn.innerHTML = originalText;
-            }
+            const vd = await vr.json();
+            if (vd.success) { window.location.href = `/orders/confirmed/${data.order_reference}/`; }
+            else { alert("Verification failed: " + (vd.message||"Invalid signature.")); b.disabled=false; b.innerHTML=orig; }
           },
-          modal: {
-            ondismiss: function () {
-              btn.disabled = false;
-              btn.innerHTML = originalText;
-            }
-          }
-        };
-
-        const rzp = new Razorpay(options);
+          modal: { ondismiss: () => { b.disabled=false; b.innerHTML=orig; } }
+        });
         rzp.open();
-
-      } catch (err) {
-        console.error("Payment error:", err);
-        alert("Server connection error. Please try again.");
-        this.disabled = false;
-        this.innerHTML = originalText;
-      }
+      } catch(e) { alert("Server error. Try again."); this.disabled=false; this.innerHTML=orig; }
     });
   });
 });
 </script>
 
 <style>
-/* ── Card top stripe ── */
-.res-card { border-top: 3px solid transparent !important; }
-.stripe-completed  { height: 4px; background: #10b981; }
-.stripe-ready      { height: 4px; background: #3b82f6; }
-.stripe-confirmed  { height: 4px; background: #8b5cf6; }
-.stripe-pending    { height: 4px; background: #f59e0b; }
-.stripe-cancelled  { height: 4px; background: #ef4444; }
-.stripe-store      { height: 4px; background: #6b7280; }
+/* ── Order card ── */
+.order-card { transition: box-shadow 0.2s; }
+.order-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.09) !important; }
 
-/* ── Payment state badge ── */
-.ps-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.78rem;
-  font-weight: 700;
-  border-radius: 999px;
-  padding: 0.4rem 1rem;
-  border: 1.5px solid transparent;
+/* ── Left accent bar ── */
+.order-accent { width: 5px; border-radius: 16px 0 0 16px; }
+.accent-done      { background: #10b981; }
+.accent-ready     { background: #3b82f6; }
+.accent-confirmed { background: #8b5cf6; }
+.accent-pending   { background: #f59e0b; }
+.accent-cancelled { background: #ef4444; }
+
+/* ══ THE KEY DESIGN: Status blocks ══ */
+.status-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-height: 72px;
 }
-.ps-badge-completed  { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
-.ps-badge-ready      { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
-.ps-badge-confirmed  { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
-.ps-badge-pending    { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
-.ps-badge-cancelled  { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-.ps-badge-store      { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+.status-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+.status-value {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.status-sub {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
 
-/* ── 5-step Stepper ── */
+/* Payment status values */
+.pay-paid    { color: #065f46; }
+.pay-store   { color: #78350f; }
+.pay-pending { color: #92400e; }
+
+/* Order status values */
+.ord-pending   { color: #92400e; }
+.ord-ready     { color: #1e40af; }
+.ord-done      { color: #065f46; }
+.ord-cancelled { color: #991b1b; }
+
+/* Vertical divider between the two blocks */
+.status-divider {
+  width: 1px;
+  background: #e2e8f0;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+/* ── Stepper ── */
 .stepper-wrap {
   display: flex;
   align-items: flex-start;
-  gap: 0;
   overflow-x: auto;
   padding-bottom: 4px;
+  gap: 0;
 }
-.stepper-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  min-width: 68px;
-}
+.stepper-step { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; min-width: 62px; }
 .step-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  background: #f1f5f9;
-  color: #94a3b8;
-  border: 2px solid #e2e8f0;
-  transition: all 0.25s ease;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  background: #f1f5f9; color: #94a3b8; border: 2px solid #e2e8f0;
+  transition: all 0.2s;
 }
-.step-label {
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-align: center;
-  color: #94a3b8;
-  max-width: 64px;
-  line-height: 1.3;
-}
-.stepper-connector {
-  flex: 1;
-  height: 2px;
-  background: #e2e8f0;
-  margin-top: 17px;
-  min-width: 20px;
-  transition: background 0.25s ease;
-}
+.step-label { font-size: 0.6rem; font-weight: 600; text-align: center; color: #94a3b8; line-height: 1.3; }
+.stepper-connector { flex: 1; height: 2px; background: #e2e8f0; margin-top: 15px; min-width: 16px; transition: background 0.2s; }
 .connector-done { background: #10b981; }
-
-/* Done step */
-.stepper-step.step-done .step-circle {
-  background: #d1fae5;
-  color: #059669;
-  border-color: #6ee7b7;
-}
-.stepper-step.step-done .step-label { color: #059669; }
-
-/* Active (current) step */
-.stepper-step.step-active .step-circle {
-  background: #10b981;
-  color: #fff;
-  border-color: #10b981;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
-}
-.stepper-step.step-active .step-label {
-  color: #065f46;
-  font-weight: 700;
-}
+.stepper-step.step-done .step-circle { background: #d1fae5; color: #059669; border-color: #6ee7b7; }
+.stepper-step.step-done .step-label  { color: #059669; }
+.stepper-step.step-active .step-circle { background: #10b981; color: #fff; border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,.2); }
+.stepper-step.step-active .step-label  { color: #065f46; font-weight: 700; }
 
 /* Dark mode */
-[data-theme="dark"] .step-circle {
-  background: #1e293b;
-  border-color: #334155;
-  color: #64748b;
-}
+[data-theme="dark"] .status-block { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .status-label { color: #64748b; }
+[data-theme="dark"] .status-divider { background: #334155; }
+[data-theme="dark"] .step-circle { background: #1e293b; border-color: #334155; color: #64748b; }
 [data-theme="dark"] .stepper-connector { background: #334155; }
-[data-theme="dark"] .stepper-step.step-done .step-circle {
-  background: #064e3b;
-  color: #34d399;
-  border-color: #065f46;
-}
-[data-theme="dark"] .stepper-step.step-done .step-label { color: #34d399; }
-[data-theme="dark"] .stepper-step.step-active .step-circle {
-  background: #10b981;
-  color: #fff;
-  border-color: #10b981;
-}
+[data-theme="dark"] .stepper-step.step-done .step-circle { background: #064e3b; color: #34d399; border-color: #065f46; }
+[data-theme="dark"] .stepper-step.step-active .step-circle { background: #10b981; color: #fff; border-color: #10b981; }
 </style>
 {% endblock %}

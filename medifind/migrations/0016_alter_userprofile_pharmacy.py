@@ -7,13 +7,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0015_passwordresetotp'),
+        ('medifind', '0015_passwordresetotp'),
     ]
 
     operations = [
         migrations.AlterField(
             model_name='userprofile',
             name='pharmacy',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='user_profiles', to='MediAI.pharmacy'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='user_profiles', to='medifind.pharmacy'),
         ),
     ]

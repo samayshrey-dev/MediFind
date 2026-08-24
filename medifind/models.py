@@ -116,6 +116,35 @@ class Pharmacy(models.Model):
         help_text="Form 20/21 Drug License Number"
     )
 
+    # Real-Time Pharmacy System API Integration
+    api_endpoint_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="Direct POS/ERP API endpoint URL for real-time inventory lookup"
+    )
+    api_auth_token = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="API Secret Key or Bearer Token for POS integration"
+    )
+    api_sync_enabled = models.BooleanField(
+        default=False,
+        help_text="Enable real-time inventory checks via Pharmacy API"
+    )
+    api_last_synced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of the most recent real-time API inventory query"
+    )
+    api_sync_status = models.CharField(
+        max_length=100,
+        default="No API Configured",
+        blank=True,
+        help_text="Current health/connectivity status of pharmacy API"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     updated_at = models.DateTimeField(auto_now=True)

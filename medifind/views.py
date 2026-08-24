@@ -4,9 +4,9 @@ from django.core.paginator import Paginator
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.conf import settings
-
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Q
 from collections import Counter
 from django.utils import timezone
@@ -15,11 +15,15 @@ from datetime import datetime
 from decimal import Decimal
 import json
 import re
+import logging
 
+logger = logging.getLogger(__name__)
 
 from django.views.decorators.csrf import csrf_exempt
 from .ai_search import parse_query_with_ai, haversine_distance, SYMPTOM_MAP
 from .fuzzy_search import MedicineMatcher
+from .pharmacy_api import PharmacyAPIClient, MockPharmacyAPIService
+from .excel_service import ExcelInventoryService
 from .commerce_agent import (
 
     AICommerceAgent,
@@ -789,6 +793,13 @@ def search(request):
         except Exception:
             pass
 
+    # Direct Real-Time API Query to connected Pharmacy Systems
+    if query:
+        try:
+            PharmacyAPIClient.query_all_enabled_pharmacies(query)
+        except Exception as e:
+            logger.warning(f"Live Pharmacy API sync warning: {e}")
+
     # Base Query: Active pharmacies only
     inventory = Inventory.objects.select_related(
         "medicine",
@@ -889,6 +900,8 @@ def search(request):
             item.distance_km = round(dist, 1)
         else:
             item.distance_km = None
+
+        item.is_live_api = getattr(item, 'is_live_api', False) or bool(item.pharmacy.api_sync_enabled and item.pharmacy.api_endpoint_url)
 
     # Filter by radius if radius_km is specified and user coordinates are available
     if radius_km is not None and user_lat is not None and user_lng is not None:
@@ -1911,12 +1924,52 @@ def inventory(request):
                 ("low_stock",    "Low Stock",     low_stock_count,     "warning"),
                 ("out_of_stock", "Out of Stock",  out_of_stock_count,  "danger"),
             ],
+            "has_api_configured": bool(pharmacy and pharmacy.api_endpoint_url),
+            "api_endpoint_url": pharmacy.api_endpoint_url if pharmacy else "",
+            "api_auth_token": pharmacy.api_auth_token if pharmacy else "",
+            "api_sync_enabled": pharmacy.api_sync_enabled if pharmacy else False,
+            "api_sync_status": pharmacy.api_sync_status if pharmacy else "No API Configured",
+            "api_last_synced_at": pharmacy.api_last_synced_at if pharmacy else None,
         }
     )
 
 
+# ==========================================================
+# Excel Bulk Inventory & Real-Time API Management
+# ==========================================================
+
+@pharmacy_required
+def download_inventory_template(request):
+    """
+    GET /inventory/template/download/?format=xlsx|csv
+    Generates and downloads the standardized MediAI Excel or CSV inventory template.
+    """
+    file_format = request.GET.get("format", "xlsx").lower()
+    if file_format == "csv":
+        csv_content = ExcelInventoryService.generate_csv_template()
+        response = HttpResponse(csv_content, content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="MediAI_Inventory_Template.csv"'
+        return response
+    else:
+        excel_bytes = ExcelInventoryService.generate_excel_template()
+        response = HttpResponse(
+            excel_bytes,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="MediAI_Inventory_Template.xlsx"'
+        return response
+
+
 @verified_pharmacy_required
-def add_inventory(request):
+def upload_inventory_excel(request):
+    """
+    POST /inventory/upload/
+    Handles pharmacy Excel (.xlsx, .xls) and CSV inventory uploads.
+    Batch-validates rows, creates missing medicines, and syncs store inventory.
+    """
+    if request.method != "POST":
+        return redirect("inventory")
+
     user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
     if not user_pharmacy:
         user_pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
@@ -1924,73 +1977,178 @@ def add_inventory(request):
             request.user.userprofile.pharmacy = user_pharmacy
             request.user.userprofile.save(update_fields=["pharmacy"])
 
-    if request.method == "POST":
-        post_data = request.POST.copy()
-        if user_pharmacy and "pharmacy" not in post_data:
-            post_data["pharmacy"] = user_pharmacy.id
-        if "minimum_stock" not in post_data or not str(post_data.get("minimum_stock", "")).strip():
-            post_data["minimum_stock"] = 10
-        form = InventoryForm(post_data)
-        if form.is_valid():
-            medicine = form.cleaned_data.get("medicine")
-            quantity = form.cleaned_data.get("quantity", 0)
-            price = form.cleaned_data.get("price")
-            batch_number = form.cleaned_data.get("batch_number", "")
-            expiry_date = form.cleaned_data.get("expiry_date")
-            package_size = form.cleaned_data.get("package_size", "Strip of 15") or "Strip of 15"
-            sku_code = form.cleaned_data.get("sku_code", "")
+    if not user_pharmacy:
+        messages.error(request, "No pharmacy associated with your account.")
+        return redirect("inventory")
 
-            # Smart duplicate check: update existing item matching (pharmacy, medicine, package_size)
-            existing_item = Inventory.objects.filter(
-                pharmacy=user_pharmacy,
-                medicine=medicine,
-                package_size=package_size
-            ).first()
+    uploaded_file = request.FILES.get("excel_file") or request.FILES.get("file")
+    if not uploaded_file:
+        messages.error(request, "Please select an Excel (.xlsx, .xls) or CSV file to upload.")
+        return redirect("inventory")
 
-            if existing_item:
-                existing_item.quantity += quantity
-                if price is not None:
-                    existing_item.price = price
-                if batch_number:
-                    existing_item.batch_number = batch_number
-                if expiry_date:
-                    existing_item.expiry_date = expiry_date
-                if sku_code:
-                    existing_item.sku_code = sku_code
-                existing_item.save()
-                messages.success(
-                    request,
-                    f"Stock updated for {medicine.name} ({package_size}). New total inventory: {existing_item.quantity} units (₹{existing_item.price})."
-                )
-            else:
-                item = form.save(commit=False)
-                item.pharmacy = user_pharmacy
-                if not item.sku_code:
-                    clean_name = ''.join(c for c in medicine.name if c.isalnum())[:8].upper()
-                    item.sku_code = f"{clean_name}-{package_size[:4].replace(' ', '').upper()}"
-                item.save()
-                messages.success(
-                    request,
-                    f"Successfully added {medicine.name} · {package_size} ({item.quantity} units at ₹{item.price}) to your store inventory."
-                )
-            return redirect("inventory")
-    else:
-        initial_data = {}
-        if user_pharmacy:
-            initial_data["pharmacy"] = user_pharmacy.id
-        form = InventoryForm(initial=initial_data)
-
-    medicines = Medicine.objects.all().order_by("name")
-
-    return render(
-        request,
-        "add_inventory.html",
-        {
-            "form": form,
-            "user_pharmacy": user_pharmacy,
-            "medicines": medicines,
-        }
+    # Process uploaded inventory spreadsheet
+    result = ExcelInventoryService.import_inventory_file(
+        pharmacy=user_pharmacy,
+        file_obj=uploaded_file,
+        filename=uploaded_file.name
     )
+
+    if result.get("success"):
+        created = result.get("created_count", 0)
+        updated = result.get("updated_count", 0)
+        total = result.get("total_processed", 0)
+        err_count = result.get("error_count", 0)
+
+        msg = f"Excel Inventory Synced: {total} items successfully processed ({created} newly created, {updated} updated)."
+        if err_count > 0:
+            msg += f" Note: {err_count} row(s) had formatting errors."
+            messages.warning(request, msg)
+        else:
+            messages.success(request, msg)
+    else:
+        messages.error(request, result.get("message", "Failed to process inventory upload."))
+
+    return redirect("inventory")
+
+
+@pharmacy_required
+def export_inventory_excel(request):
+    """
+    GET /inventory/export/
+    Exports the logged-in pharmacy's active inventory into an Excel spreadsheet.
+    """
+    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+    if not user_pharmacy:
+        user_pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
+
+    if not user_pharmacy:
+        messages.error(request, "No pharmacy associated with your account.")
+        return redirect("inventory")
+
+    excel_bytes = ExcelInventoryService.export_pharmacy_inventory(user_pharmacy)
+    clean_name = re.sub(r'[^a-zA-Z0-9_]', '_', user_pharmacy.name)
+    response = HttpResponse(
+        excel_bytes,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f'attachment; filename="{clean_name}_Inventory_{timezone.now().strftime("%Y%m%d")}.xlsx"'
+    return response
+
+
+@pharmacy_required
+def pharmacy_api_settings(request):
+    """
+    GET / POST /pharmacy/api-settings/
+    Allows pharmacy owners to configure, test, and toggle real-time POS/ERP API integration.
+    """
+    user_pharmacy = getattr(request.user.userprofile, "pharmacy", None) if hasattr(request.user, "userprofile") else None
+    if not user_pharmacy:
+        user_pharmacy = Pharmacy.objects.filter(email__iexact=request.user.email).first() or Pharmacy.objects.first()
+
+    if not user_pharmacy:
+        return JsonResponse({"success": False, "message": "No pharmacy found."}, status=404)
+
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.content_type == "application/json"
+
+    if request.method == "POST":
+        action = request.POST.get("action", "save")
+
+        if action == "test":
+            # Test connectivity to pharmacy endpoint
+            test_query = request.POST.get("test_query", "Dolo 650").strip() or "Dolo 650"
+            endpoint_override = request.POST.get("api_endpoint_url", "").strip()
+            token_override = request.POST.get("api_auth_token", "").strip()
+
+            if endpoint_override:
+                user_pharmacy.api_endpoint_url = endpoint_override
+            if token_override:
+                user_pharmacy.api_auth_token = token_override
+
+            test_result = PharmacyAPIClient.test_connection(user_pharmacy, test_query=test_query)
+            return JsonResponse(test_result)
+
+        elif action == "use_mock":
+            # Set the built-in mock POS endpoint for testing
+            mock_url = request.build_absolute_uri("/api/pharmacy-system/mock-inventory/")
+            user_pharmacy.api_endpoint_url = mock_url
+            user_pharmacy.api_sync_enabled = True
+            user_pharmacy.api_sync_status = "Connected (MediAI Mock POS)"
+            user_pharmacy.save(update_fields=["api_endpoint_url", "api_sync_enabled", "api_sync_status"])
+
+            if is_ajax:
+                return JsonResponse({
+                    "success": True,
+                    "message": "Connected to MediAI Mock Pharmacy System API.",
+                    "api_endpoint_url": mock_url,
+                    "api_sync_enabled": True,
+                    "api_sync_status": user_pharmacy.api_sync_status
+                })
+            messages.success(request, "Connected to MediAI Mock Pharmacy System API for real-time inventory queries.")
+            return redirect("inventory")
+
+        else:
+            # Save API settings
+            endpoint = request.POST.get("api_endpoint_url", "").strip()
+            token = request.POST.get("api_auth_token", "").strip()
+            enabled = request.POST.get("api_sync_enabled") in ("on", "true", "1", "True")
+
+            user_pharmacy.api_endpoint_url = endpoint if endpoint else None
+            user_pharmacy.api_auth_token = token if token else None
+            user_pharmacy.api_sync_enabled = bool(enabled and endpoint)
+            user_pharmacy.api_sync_status = "Active" if user_pharmacy.api_sync_enabled else ("No API Configured" if not endpoint else "Disabled")
+            user_pharmacy.save(update_fields=["api_endpoint_url", "api_auth_token", "api_sync_enabled", "api_sync_status"])
+
+            if is_ajax:
+                return JsonResponse({
+                    "success": True,
+                    "message": "Pharmacy API integration settings saved successfully.",
+                    "api_endpoint_url": user_pharmacy.api_endpoint_url or "",
+                    "api_sync_enabled": user_pharmacy.api_sync_enabled,
+                    "api_sync_status": user_pharmacy.api_sync_status
+                })
+            messages.success(request, "Pharmacy API integration settings saved successfully.")
+            return redirect("inventory")
+
+    return JsonResponse({
+        "success": True,
+        "pharmacy_name": user_pharmacy.name,
+        "api_endpoint_url": user_pharmacy.api_endpoint_url or "",
+        "api_auth_token": user_pharmacy.api_auth_token or "",
+        "api_sync_enabled": user_pharmacy.api_sync_enabled,
+        "api_sync_status": user_pharmacy.api_sync_status,
+        "api_last_synced_at": user_pharmacy.api_last_synced_at.strftime("%Y-%m-%d %H:%M:%S") if user_pharmacy.api_last_synced_at else None
+    })
+
+
+@csrf_exempt
+def mock_pharmacy_system_api(request):
+    """
+    GET /api/pharmacy-system/mock-inventory/?q=dolo&pharmacy_id=1
+    Simulates a 3rd-party pharmacy POS/ERP REST API.
+    Returns real-time inventory quantities and prices in JSON format.
+    """
+    query = request.GET.get("q") or request.GET.get("medicine") or ""
+    results = MockPharmacyAPIService.search_mock_inventory(query)
+    return JsonResponse({
+        "status": "success",
+        "system": "MediAI POS Simulator v2.4",
+        "timestamp": timezone.now().isoformat(),
+        "query": query,
+        "count": len(results),
+        "items": results
+    })
+
+
+@verified_pharmacy_required
+def add_inventory(request):
+    """
+    Redirects legacy 'add inventory' calls to the Excel/API bulk inventory management flow.
+    """
+    messages.info(
+        request,
+        "Manual item-by-item stock addition has been replaced. Please upload your inventory using the Excel Template or connect your Pharmacy POS API."
+    )
+    return redirect("inventory")
 # ==========================================================
 # Inventory Management
 # ==========================================================

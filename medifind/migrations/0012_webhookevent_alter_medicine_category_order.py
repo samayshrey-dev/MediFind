@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0011_agentauditlog'),
+        ('medifind', '0011_agentauditlog'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -52,9 +52,9 @@ class Migration(migrations.Migration):
                 ('approved_at', models.DateTimeField(blank=True, null=True)),
                 ('paid_at', models.DateTimeField(blank=True, null=True)),
                 ('failed_at', models.DateTimeField(blank=True, null=True)),
-                ('inventory', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='MediAI.inventory')),
-                ('medicine', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='MediAI.medicine')),
-                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='MediAI.pharmacy')),
+                ('inventory', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='medifind.inventory')),
+                ('medicine', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='medifind.medicine')),
+                ('pharmacy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='medifind.pharmacy')),
                 ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to=settings.AUTH_USER_MODEL)),
             ],
             options={

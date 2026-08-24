@@ -129,6 +129,11 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                   ★ BEST MATCH
                 </span>
                 <div class="d-flex align-items-center gap-2">
+                  {% if best_match_item.is_live_api %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold">
+                      <i class="fa-solid fa-bolt me-1 text-warning"></i> Live POS Verified
+                    </span>
+                  {% endif %}
                   <span class="badge {% if best_match_item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2.5 py-1 small fw-semibold">
                     ● {% if best_match_item.is_open %}Open Now{% else %}Closed{% endif %}
                   </span>
@@ -280,9 +285,16 @@ Search Medicines & Nearby Pharmacy Availability | MediAI
                       <h6 class="med-pharmacy-title" title="{{ item.pharmacy.name }}">
                         {{ item.pharmacy.name }}
                       </h6>
-                      <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2.5 py-1" style="font-size: 0.68rem; font-weight: 600; flex-shrink: 0;">
-                        ● {% if item.is_open %}Open{% else %}Closed{% endif %}
-                      </span>
+                      <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        {% if item.is_live_api %}
+                          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-1.5 py-0.5" style="font-size: 0.62rem;" title="Verified live via Pharmacy API">
+                            <i class="fa-solid fa-bolt text-warning"></i> Live
+                          </span>
+                        {% endif %}
+                        <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.65rem; font-weight: 600;">
+                          ● {% if item.is_open %}Open{% else %}Closed{% endif %}
+                        </span>
+                      </div>
                     </div>
 
                     <!-- Price & Stock -->

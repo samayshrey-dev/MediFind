@@ -241,17 +241,17 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
     <div class="col-lg-5">
       <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 d-flex justify-content-center" style="border-color: #E2E8F0 !important;">
         <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-          <a href="{% url 'add_inventory' %}" class="btn btn-primary rounded-pill px-3.5 py-2 fw-bold shadow-xs d-flex align-items-center gap-1.5 flex-grow-1 justify-content-center btn-merchant-cta" style="font-size: 0.84rem;">
-            <i class="fa-solid fa-circle-plus"></i>
-            <span>Add Stock</span>
+          <a href="{% url 'inventory' %}" class="btn btn-primary rounded-pill px-3.5 py-2 fw-bold shadow-xs d-flex align-items-center gap-1.5 flex-grow-1 justify-content-center btn-merchant-cta" style="font-size: 0.84rem;">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Upload Excel</span>
           </a>
           <a href="{% url 'reservations' %}" class="btn btn-light border rounded-pill px-3 py-2 fw-semibold text-dark shadow-xs d-flex align-items-center gap-1.5 flex-grow-1 justify-content-center" style="border-color: #E2E8F0; font-size: 0.84rem;">
             <i class="fa-solid fa-clipboard-list text-muted"></i>
             <span>View Orders</span>
           </a>
           <a href="{% url 'inventory' %}" class="btn btn-light border rounded-pill px-3 py-2 fw-semibold text-dark shadow-xs d-flex align-items-center gap-1.5 flex-grow-1 justify-content-center" style="border-color: #E2E8F0; font-size: 0.84rem;">
-            <i class="fa-solid fa-boxes-stacked text-muted"></i>
-            <span>Inventory</span>
+            <i class="fa-solid fa-bolt text-warning"></i>
+            <span>POS API</span>
           </a>
         </div>
       </div>

@@ -7,14 +7,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0012_webhookevent_alter_medicine_category_order'),
+        ('medifind', '0012_webhookevent_alter_medicine_category_order'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='order',
             name='reservation',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='MediAI.reservation'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='medifind.reservation'),
         ),
         migrations.AddField(
             model_name='reservation',

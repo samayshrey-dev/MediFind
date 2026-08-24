@@ -87,6 +87,31 @@ path(
     views.inventory,
     name="inventory"
 ),
+path(
+    "inventory/template/download/",
+    views.download_inventory_template,
+    name="download_inventory_template"
+),
+path(
+    "inventory/upload/",
+    views.upload_inventory_excel,
+    name="upload_inventory_excel"
+),
+path(
+    "inventory/export/",
+    views.export_inventory_excel,
+    name="export_inventory_excel"
+),
+path(
+    "pharmacy/api-settings/",
+    views.pharmacy_api_settings,
+    name="pharmacy_api_settings"
+),
+path(
+    "api/pharmacy-system/mock-inventory/",
+    views.mock_pharmacy_system_api,
+    name="mock_pharmacy_system_api"
+),
 
 path(
     "inventory/add/",

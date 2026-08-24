@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0016_alter_userprofile_pharmacy'),
+        ('medifind', '0016_alter_userprofile_pharmacy'),
     ]
 
     operations = [

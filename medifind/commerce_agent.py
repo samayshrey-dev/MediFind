@@ -25,6 +25,7 @@ from django.utils import timezone
 from django.db.models import Q
 from .models import Medicine, Pharmacy, Inventory, AgentAuditLog
 from .fuzzy_search import MedicineMatcher
+from .pharmacy_api import PharmacyAPIClient
 
 
 # ============================================================================
@@ -662,6 +663,13 @@ class CommerceSearchService:
         generic_name = structured_intent.get("generic_name") or ""
         max_distance_km = structured_intent.get("max_distance_km")
         dosage_form = structured_intent.get("dosage_form")
+
+        # Direct Real-Time API Query to connected Pharmacy Systems
+        if medicine_query or generic_name:
+            try:
+                PharmacyAPIClient.query_all_enabled_pharmacies(medicine_query or generic_name)
+            except Exception:
+                pass
 
         # Base Query: active pharmacies with verified stock > 0
         qs = Inventory.objects.select_related("medicine", "pharmacy").filter(

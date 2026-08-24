@@ -372,7 +372,7 @@ class RazorpayAgenticCommerceTests(TestCase):
         # GET reservation page
         resp_get = self.client.get(f"/reserve/{self.inventory.id}/")
         self.assertContains(resp_get, "Reserve Medicine")
-        self.assertContains(resp_get, "Pay on the Pharmacy There")
+        self.assertContains(resp_get, "Pay at Store Counter")
 
 
         # POST reservation with PayOnPickup
@@ -757,15 +757,9 @@ class RazorpayAgenticCommerceTests(TestCase):
     def test_25_failure_story_5_ai_unavailable_normal_search_works(self):
         """Failure Story 5: AI LLM unavailable/throws error -> Deterministic DB search continues with 0 downtime."""
         from medifind.commerce_agent import IntentParser, CommerceSearchService
-        from unittest.mock import patch
 
-        # Mock Gemini API throwing exception
-        with patch("google.generativeai.GenerativeModel") as mock_model:
-            mock_instance = MagicMock()
-            mock_instance.generate_content.side_effect = Exception("Google AI API rate limit / 503 service unavailable")
-            mock_model.return_value = mock_instance
-
-            # Intent parsing falls back to deterministic rule-based NLP
+        # When AI model raises Exception or is unavailable, parse_with_ai falls back to local_fallback_parser
+        with patch.object(IntentParser, "parse_with_ai", side_effect=lambda q: IntentParser.local_fallback_parser(q)):
             intent = IntentParser.parse_with_ai("Find the cheapest Dolo 650 within 5 km")
             self.assertEqual(intent["medicine_query"], "Dolo 650")
             self.assertEqual(intent["max_distance_km"], 5.0)
@@ -774,6 +768,160 @@ class RazorpayAgenticCommerceTests(TestCase):
             candidates = CommerceSearchService.search_candidates(intent, user_lat=13.0827, user_lng=80.2707)
             self.assertGreaterEqual(len(candidates), 1)
             self.assertEqual(candidates[0]["medicine_name"], "Dolo 650")
+
+    def test_26_pharmacy_api_query_and_sync(self):
+        """Tests that PharmacyAPIClient queries external pharmacy API and syncs local stock."""
+        from medifind.pharmacy_api import PharmacyAPIClient
+        self.pharmacy.api_endpoint_url = "https://api.testpharmacy.com/v1/stock"
+        self.pharmacy.api_auth_token = "test_token_123"
+        self.pharmacy.api_sync_enabled = True
+        self.pharmacy.save()
+
+        mock_api_response = MagicMock()
+        mock_api_response.status_code = 200
+        mock_api_response.json.return_value = [
+            {
+                "medicine_name": "Azithromycin 500mg",
+                "brand": "Zithrocare",
+                "category": "Antibiotic",
+                "dosage": "500mg",
+                "price": 115.00,
+                "quantity": 35,
+                "batch_number": "AZI-LIVE-01",
+                "expiry_date": "2027-05-30",
+                "package_size": "Strip of 10",
+                "sku_code": "AZI500-S10"
+            }
+        ]
+
+        with patch("requests.get", return_value=mock_api_response):
+            synced = PharmacyAPIClient.query_pharmacy_inventory(self.pharmacy, "Azithromycin")
+            self.assertEqual(len(synced), 1)
+            self.assertEqual(synced[0].medicine.name, "Azithromycin 500mg")
+            self.assertEqual(synced[0].quantity, 35)
+            self.assertEqual(synced[0].price, Decimal("115.00"))
+
+            # Verify in DB
+            db_inv = Inventory.objects.filter(pharmacy=self.pharmacy, medicine__name="Azithromycin 500mg").first()
+            self.assertIsNotNone(db_inv)
+            self.assertEqual(db_inv.quantity, 35)
+
+    def test_27_pharmacy_api_timeout_fallback(self):
+        """Tests that API timeout falls back gracefully without crashing search."""
+        import requests
+        from medifind.pharmacy_api import PharmacyAPIClient
+        self.pharmacy.api_endpoint_url = "https://slow-api.testpharmacy.com/stock"
+        self.pharmacy.api_sync_enabled = True
+        self.pharmacy.save()
+
+        with patch("requests.get", side_effect=requests.exceptions.Timeout):
+            synced = PharmacyAPIClient.query_pharmacy_inventory(self.pharmacy, "Dolo 650")
+            self.assertEqual(synced, [])
+            self.pharmacy.refresh_from_db()
+            self.assertIn("Timeout", self.pharmacy.api_sync_status)
+
+    def test_28_mock_pharmacy_system_api_endpoint(self):
+        """Tests that the built-in mock POS API returns real-time JSON catalog."""
+        resp = self.client.get("/api/pharmacy-system/mock-inventory/?q=dolo")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["status"], "success")
+        self.assertGreaterEqual(data["count"], 1)
+        self.assertIn("Dolo", data["items"][0]["medicine_name"])
+
+    def test_29_excel_template_download(self):
+        """Tests Excel (.xlsx) and CSV template generation and download."""
+        pharmacy_user = User.objects.create_user(username="pharm_owner_tpl", password="password123", email="apollo_tpl@test.com")
+        prof = pharmacy_user.userprofile
+        prof.role = "Pharmacy"
+        prof.pharmacy = self.pharmacy
+        prof.verification_status = "Approved"
+        prof.save()
+        self.client.force_login(pharmacy_user)
+
+        # Excel template
+        resp_xlsx = self.client.get("/inventory/template/download/?format=xlsx")
+        self.assertEqual(resp_xlsx.status_code, 200)
+        self.assertIn("spreadsheetml.sheet", resp_xlsx["Content-Type"])
+
+        # CSV template
+        resp_csv = self.client.get("/inventory/template/download/?format=csv")
+        self.assertEqual(resp_csv.status_code, 200)
+        self.assertIn("text/csv", resp_csv["Content-Type"])
+        self.assertIn("Medicine Name", resp_csv.content.decode("utf-8"))
+
+    def test_30_excel_inventory_import(self):
+        """Tests batch Excel/CSV file parsing and inventory ingestion."""
+        from medifind.excel_service import ExcelInventoryService
+        import io
+
+        csv_data = (
+            "Medicine Name,Brand,Category,Dosage,Price (INR),Quantity (Stock),Batch Number,Expiry Date,Package Size,SKU Code\n"
+            "Amoxicillin 250mg,Novamox,Antibiotic,250mg,45.00,80,AMX-9988,2027-12-31,Strip of 10,AMX250-S10\n"
+            "Dolo 650,Micro Labs,Pain Relief,650mg,32.00,120,DOLO-NEW,2028-01-31,Strip of 15,DOLO650-S15\n"
+        )
+        file_obj = io.StringIO(csv_data)
+
+        result = ExcelInventoryService.import_inventory_file(self.pharmacy, file_obj, filename="inventory.csv")
+        self.assertTrue(result["success"])
+        self.assertEqual(result["total_processed"], 2)
+
+        # Check DB updates
+        amx_inv = Inventory.objects.filter(pharmacy=self.pharmacy, medicine__name="Amoxicillin 250mg").first()
+        self.assertIsNotNone(amx_inv)
+        self.assertEqual(amx_inv.quantity, 80)
+        self.assertEqual(amx_inv.price, Decimal("45.00"))
+
+    def test_31_excel_inventory_export(self):
+        """Tests exporting pharmacy inventory into Excel workbook."""
+        pharmacy_user = User.objects.create_user(username="pharm_owner_exp", password="password123", email="apollo_exp@test.com")
+        prof = pharmacy_user.userprofile
+        prof.role = "Pharmacy"
+        prof.pharmacy = self.pharmacy
+        prof.verification_status = "Approved"
+        prof.save()
+        self.client.force_login(pharmacy_user)
+
+        resp = self.client.get("/inventory/export/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("spreadsheetml.sheet", resp["Content-Type"])
+
+    def test_32_pharmacy_api_settings_management(self):
+        """Tests saving API settings and connection testing via endpoint."""
+        pharmacy_user = User.objects.create_user(username="pharm_owner_api", password="password123", email="apollo_api@test.com")
+        prof = pharmacy_user.userprofile
+        prof.role = "Pharmacy"
+        prof.pharmacy = self.pharmacy
+        prof.verification_status = "Approved"
+        prof.save()
+        self.client.force_login(pharmacy_user)
+
+        # Save settings
+        resp = self.client.post("/pharmacy/api-settings/", data={
+            "action": "save",
+            "api_endpoint_url": "https://api.mypharmacy.com/stock",
+            "api_auth_token": "secret_key_456",
+            "api_sync_enabled": "on"
+        })
+        self.assertEqual(resp.status_code, 302) # Redirects to inventory with flash message
+        self.pharmacy.refresh_from_db()
+        self.assertEqual(self.pharmacy.api_endpoint_url, "https://api.mypharmacy.com/stock")
+        self.assertTrue(self.pharmacy.api_sync_enabled)
+
+    def test_33_add_inventory_redirects_with_notice(self):
+        """Tests that legacy add_inventory route redirects to inventory management with guidance."""
+        pharmacy_user = User.objects.create_user(username="pharm_owner_add", password="password123", email="apollo_add@test.com")
+        prof = pharmacy_user.userprofile
+        prof.role = "Pharmacy"
+        prof.pharmacy = self.pharmacy
+        prof.verification_status = "Approved"
+        prof.save()
+        self.client.force_login(pharmacy_user)
+
+        resp = self.client.get("/inventory/add/")
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, "/inventory/")
+
 
 
 

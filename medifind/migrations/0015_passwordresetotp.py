@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('MediAI', '0014_reservation_payment_method'),
+        ('medifind', '0014_reservation_payment_method'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
