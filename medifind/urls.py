@@ -27,6 +27,13 @@ urlpatterns = [
     path("api/ai/medicine/suggest/", views.medicine_suggest_api, name="medicine_suggest_api"),
     path("admin/data-quality/", views.admin_data_quality_view, name="admin_data_quality_view"),
 
+    # Predictive Inventory & Demand Intelligence (AI #4) Endpoints
+    path("api/pharmacy/ai/inventory-insights/", views.pharmacy_inventory_insights_api, name="pharmacy_inventory_insights_api"),
+    path("api/pharmacy/ai/demand-forecast/<int:medicine_id>/", views.pharmacy_demand_forecast_api, name="pharmacy_demand_forecast_api"),
+    path("pharmacy/inventory-intelligence/", views.pharmacy_inventory_intelligence_view, name="pharmacy_inventory_intelligence_view"),
+    path("api/pharmacy/ai/retrain/", views.retrain_forecasting_model_api, name="retrain_forecasting_model_api"),
+    path("admin/ai-model-performance/", views.admin_model_performance_view, name="admin_model_performance_view"),
+
 
 
 

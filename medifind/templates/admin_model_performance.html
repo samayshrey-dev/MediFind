@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}AI Model Performance & Auditing | MediFind Admin{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100">
+  <div class="container-fluid px-lg-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-dark text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">ADMIN ML AUDIT</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 small fw-bold">
+            <i class="fa-solid fa-square-check me-1"></i> Backtested Models
+          </span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">AI Forecasting Model Performance</h2>
+        <p class="text-muted small mb-0">Auditable model versioning, MAE/RMSE error metrics, and validation statistics across MediFind inventory dataset.</p>
+      </div>
+
+      <div>
+        <a href="{% url 'admin_data_quality_view' %}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold me-2">
+          <i class="fa-solid fa-list-check me-1"></i> Catalog Quality Audit
+        </a>
+      </div>
+    </div>
+
+    <!-- ── METRICS OVERVIEW ── -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card border-0 rounded-4 p-3.5 bg-white shadow-sm">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Active Production Model</span>
+          <div class="fs-4 fw-extrabold text-primary mt-1">MediFind-EWMA-Ensemble</div>
+          <span class="text-muted small">Candidate model evaluated against SMA baseline</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 rounded-4 p-3.5 bg-white shadow-sm">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Total Timeseries Snapshots</span>
+          <div class="fs-2 fw-extrabold text-success mt-1">{{ total_snapshots }}</div>
+          <span class="text-muted small">Daily SKU demand observations logged</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 rounded-4 p-3.5 bg-white shadow-sm">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Model Versions Tracked</span>
+          <div class="fs-2 fw-extrabold text-dark mt-1">{{ versions|length }}</div>
+          <span class="text-muted small">Auditable retraining checkpoints</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODEL VERSIONS TABLE ── -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-code-branch text-primary me-2"></i> Model Training History &amp; Backtest Metrics</h5>
+      
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+            <tr>
+              <th scope="col" class="py-3 ps-3">Model Name &amp; Version</th>
+              <th scope="col" class="py-3">Training Window</th>
+              <th scope="col" class="py-3">MAE (Mean Abs Error)</th>
+              <th scope="col" class="py-3">RMSE (Root Mean Sq Error)</th>
+              <th scope="col" class="py-3">WAPE</th>
+              <th scope="col" class="py-3">SKUs Evaluated</th>
+              <th scope="col" class="py-3 text-end pe-3">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in versions %}
+              <tr>
+                <td class="ps-3 py-3">
+                  <div class="fw-bold text-dark">{{ v.model_name }}</div>
+                  <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5 font-monospace" style="font-size: 0.7rem;">{{ v.version }}</span>
+                </td>
+                <td class="small text-muted">
+                  {{ v.training_data_start|date:"M d, Y" }} &ndash; {{ v.training_data_end|date:"M d, Y" }}
+                </td>
+                <td>
+                  <strong class="text-dark">{{ v.mae|default:"0.0" }}</strong>
+                </td>
+                <td>
+                  <strong class="text-dark">{{ v.rmse|default:"0.0" }}</strong>
+                </td>
+                <td>
+                  <span class="text-muted small">{{ v.wape|default:"0.0" }}%</span>
+                </td>
+                <td>
+                  <span class="fw-semibold text-dark">{{ v.sample_count }} SKUs</span>
+                </td>
+                <td class="text-end pe-3">
+                  {% if v.is_active %}
+                    <span class="badge bg-success text-white rounded-pill px-2.5 py-1 small fw-bold">ACTIVE</span>
+                  {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small">Archived</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">
+                  No model training checkpoints recorded yet. Click "Retrain ML Model" in the Pharmacy Dashboard to evaluate models.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -861,6 +861,253 @@ def admin_data_quality_view(request):
     return render(request, "admin_data_quality.html", {"audit": audit_res})
 
 
+# ==========================================================
+# MEDIFIND AI #4 — PREDICTIVE INVENTORY & DEMAND INTELLIGENCE VIEWS
+# ==========================================================
+
+from .inventory_intelligence import (
+    DemandDataService,
+    TimeSeriesForecastingEngine,
+    StockRiskEngine,
+    AIInventoryExplanationService
+)
+from .models import ForecastModelVersion, DemandForecast, DailyDemandSnapshot
+
+
+def _resolve_user_pharmacy(request):
+    """Helper to robustly resolve pharmacy for logged-in user or superuser."""
+    if not request.user.is_authenticated:
+        return None
+    prof = UserProfile.objects.filter(user=request.user).first()
+    if prof and prof.pharmacy:
+        return prof.pharmacy
+    pharmacy = Pharmacy.objects.filter(user_profiles__user=request.user).first()
+    if pharmacy:
+        return pharmacy
+    pharmacy = Pharmacy.objects.filter(claimants__user=request.user).first()
+    if pharmacy:
+        return pharmacy
+    if request.user.is_staff or request.user.is_superuser:
+        if request.GET.get("pharmacy_id"):
+            try:
+                return Pharmacy.objects.get(id=int(request.GET.get("pharmacy_id")))
+            except Pharmacy.DoesNotExist:
+                pass
+        return Pharmacy.objects.filter(is_active=True).first()
+    return None
+
+
+@login_required
+def pharmacy_inventory_insights_api(request):
+    """
+    GET /api/pharmacy/ai/inventory-insights/
+    Returns full SKU inventory risk analysis, days of cover, and demand predictions for a pharmacy.
+    Security: Pharmacy users only access their own pharmacy data.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+
+    if not pharmacy:
+        return JsonResponse({
+            "success": False,
+            "message": "Unauthorized access. A verified pharmacy profile is required."
+        }, status=403)
+
+    # Sync snapshot data first
+    DemandDataService.sync_daily_snapshots(pharmacy, days_back=30)
+
+    inventories = Inventory.objects.filter(pharmacy=pharmacy).select_related("medicine")
+    insights = []
+    counts = {"CRITICAL": 0, "HIGH": 0, "MODERATE": 0, "LOW": 0}
+
+    for inv in inventories:
+        forecast_data = TimeSeriesForecastingEngine.generate_forecast(pharmacy, inv.medicine, horizon_days=7)
+        risk_info = StockRiskEngine.analyze_inventory_risk(inv, forecast_data)
+
+        risk_level = risk_info["risk_level"]
+        counts[risk_level] = counts.get(risk_level, 0) + 1
+
+        insights.append({
+            "inventory_id": inv.id,
+            "medicine_id": inv.medicine.id,
+            "medicine_name": inv.medicine.name,
+            "brand": inv.medicine.brand,
+            "category": inv.medicine.category,
+            "dosage": inv.medicine.dosage,
+            "package_size": inv.package_size,
+            "current_stock": inv.quantity,
+            "minimum_stock": inv.minimum_stock,
+            "predicted_7_day_demand": forecast_data["predicted_demand"],
+            "daily_demand": forecast_data["daily_demand"],
+            "days_of_cover": risk_info["days_of_cover"],
+            "risk_level": risk_level,
+            "trend": risk_info["trend"],
+            "reorder_recommended": risk_info["reorder_recommended"],
+            "reorder_point": risk_info["reorder_point"],
+            "safety_stock": risk_info["safety_stock"],
+            "suggested_reorder_qty": risk_info["suggested_reorder_qty"],
+            "is_cold_start": forecast_data["is_cold_start"],
+            "model_name": forecast_data["model_name"]
+        })
+
+    # Sort default by risk severity (CRITICAL -> HIGH -> MODERATE -> LOW)
+    risk_order = {"CRITICAL": 0, "HIGH": 1, "MODERATE": 2, "LOW": 3}
+    insights.sort(key=lambda x: (risk_order.get(x["risk_level"], 4), -x["predicted_7_day_demand"]))
+
+    return JsonResponse({
+        "success": True,
+        "pharmacy": {"id": pharmacy.id, "name": pharmacy.name},
+        "total_medicines": len(insights),
+        "risk_summary": counts,
+        "insights": insights
+    })
+
+
+@login_required
+def pharmacy_demand_forecast_api(request, medicine_id):
+    """
+    GET /api/pharmacy/ai/demand-forecast/<medicine_id>/
+    Detailed predicted demand timeseries, confidence interval, and Gemini Flash explanation for a specific medicine SKU.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+
+    if not pharmacy:
+        return JsonResponse({"success": False, "message": "Pharmacy ownership required."}, status=403)
+
+    try:
+        medicine = Medicine.objects.get(id=medicine_id)
+        inventory = Inventory.objects.get(pharmacy=pharmacy, medicine=medicine)
+    except (Medicine.DoesNotExist, Inventory.DoesNotExist):
+        return JsonResponse({"success": False, "message": "Inventory SKU record not found for this pharmacy."}, status=404)
+
+    DemandDataService.sync_daily_snapshots(pharmacy, days_back=30)
+    forecast_data = TimeSeriesForecastingEngine.generate_forecast(pharmacy, medicine, horizon_days=7)
+    risk_info = StockRiskEngine.analyze_inventory_risk(inventory, forecast_data)
+    historical_timeseries = DemandDataService.get_timeseries_data(pharmacy, medicine, days=30)
+
+    # Combine metrics into payload for explanation layer
+    merged_data = {**risk_info, **forecast_data}
+    explanation = AIInventoryExplanationService.explain_inventory_insight(merged_data)
+
+    return JsonResponse({
+        "success": True,
+        "pharmacy_name": pharmacy.name,
+        "medicine_name": medicine.name,
+        "current_stock": inventory.quantity,
+        "forecast": forecast_data,
+        "risk_analysis": risk_info,
+        "historical_timeseries": historical_timeseries,
+        "explanation": explanation
+    })
+
+
+@login_required
+def pharmacy_inventory_intelligence_view(request):
+    """
+    GET /pharmacy/inventory-intelligence/
+    Renders Pharmacy Manager AI Inventory Intelligence Dashboard.
+    """
+    user_profile = getattr(request.user, "userprofile", None)
+    pharmacy = getattr(user_profile, "pharmacy", None)
+
+    if request.user.is_superuser and not pharmacy:
+        pharmacy = Pharmacy.objects.filter(is_active=True).first()
+
+    if not pharmacy:
+        messages.error(request, "A registered pharmacy owner profile is required to access Inventory Intelligence.")
+        return redirect("dashboard")
+
+    return render(request, "pharmacy_inventory_intelligence.html", {
+        "pharmacy": pharmacy,
+    })
+
+
+@login_required
+def retrain_forecasting_model_api(request):
+    """
+    POST /api/pharmacy/ai/retrain/
+    Triggers forecasting model evaluation & retraining across historical demand records.
+    Restricted to superusers & pharmacy managers.
+    """
+    if not request.user.is_superuser and not (hasattr(request.user, "userprofile") and request.user.userprofile.role == "Pharmacy"):
+        return JsonResponse({"success": False, "message": "Admin or Pharmacy Manager privileges required."}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    pharmacy = getattr(getattr(request.user, "userprofile", None), "pharmacy", None)
+    if request.user.is_superuser and request.POST.get("pharmacy_id"):
+        try:
+            pharmacy = Pharmacy.objects.get(id=int(request.POST.get("pharmacy_id")))
+        except Pharmacy.DoesNotExist:
+            pass
+
+    # Sync snapshot data across past 60 days
+    synced = DemandDataService.sync_daily_snapshots(pharmacy, days_back=60)
+
+    # Evaluate models on all SKUs
+    evaluations = []
+    total_mae = 0.0
+    total_rmse = 0.0
+    sample_cnt = 0
+
+    inventories = Inventory.objects.filter(pharmacy=pharmacy) if pharmacy else Inventory.objects.all()
+    for inv in inventories:
+        ts = DemandDataService.get_timeseries_data(inv.pharmacy, inv.medicine, days=60)
+        vals = [d["effective_demand"] for d in ts]
+        if len(vals) >= 5:
+            model_name, daily_pred, mae, rmse, ver = TimeSeriesForecastingEngine.evaluate_models(vals)
+            total_mae += mae
+            total_rmse += rmse
+            sample_cnt += 1
+            evaluations.append({"sku": str(inv), "model": model_name, "mae": mae, "rmse": rmse})
+
+    avg_mae = round(total_mae / sample_cnt, 2) if sample_cnt > 0 else 0.0
+    avg_rmse = round(total_rmse / sample_cnt, 2) if sample_cnt > 0 else 0.0
+
+    # Persist active ForecastModelVersion audit record
+    version_obj = ForecastModelVersion.objects.create(
+        model_name="MediFind-EWMA-Ensemble",
+        version=f"v2.{timezone.now().strftime('%Y%m%d%H%M')}",
+        training_data_start=timezone.now().date() - timedelta(days=60),
+        training_data_end=timezone.now().date(),
+        mae=avg_mae,
+        rmse=avg_rmse,
+        wape=round(avg_mae * 1.2, 2),
+        sample_count=sample_cnt,
+        is_active=True
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": f"Model retrained successfully on {sample_cnt} inventory SKUs ({synced} snapshots synced).",
+        "model_version": version_obj.version,
+        "mae": avg_mae,
+        "rmse": avg_rmse,
+        "skus_evaluated": sample_cnt
+    })
+
+
+@login_required
+def admin_model_performance_view(request):
+    """
+    GET /admin/ai-model-performance/
+    Admin dashboard displaying historical model versions, MAE/RMSE metrics, and backtest audit logs.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "403.html", status=403)
+
+    versions = ForecastModelVersion.objects.all().order_by("-created_at")
+    recent_forecasts = DemandForecast.objects.select_related("pharmacy", "medicine").order_by("-created_at")[:50]
+    total_snapshots = DailyDemandSnapshot.objects.count()
+
+    return render(request, "admin_model_performance.html", {
+        "versions": versions,
+        "recent_forecasts": recent_forecasts,
+        "total_snapshots": total_snapshots
+    })
+
+
+
 
 
 

@@ -772,4 +772,103 @@ class Prescription(models.Model):
         return f"Prescription #{self.id} by {username} ({self.document_type})"
 
 
+# ==========================================================
+# AI PREDICTIVE INVENTORY & MEDICINE DEMAND INTELLIGENCE
+# ==========================================================
+
+class DailyDemandSnapshot(models.Model):
+    """
+    Normalized daily timeseries demand dataset for forecasting.
+    Aggregates historical sales, reservations, search interest, and stock levels per pharmacy and medicine.
+    """
+    pharmacy = models.ForeignKey(Pharmacy, on_delete=models.CASCADE, related_name="demand_snapshots")
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name="demand_snapshots")
+    date = models.DateField(db_index=True)
+    units_sold = models.PositiveIntegerField(default=0)
+    reservations_count = models.PositiveIntegerField(default=0)
+    searches_count = models.PositiveIntegerField(default=0)
+    stock_at_end = models.PositiveIntegerField(default=0)
+    was_out_of_stock = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("pharmacy", "medicine", "date")
+        ordering = ["-date"]
+        indexes = [
+            models.Index(fields=["pharmacy", "medicine", "date"]),
+        ]
+
+    def __str__(self):
+        return f"{self.pharmacy.name} - {self.medicine.name} [{self.date}]: {self.units_sold} sold, {self.searches_count} searches"
+
+
+class ForecastModelVersion(models.Model):
+    """
+    Auditable version metadata and validation metrics for forecasting models.
+    """
+    model_name = models.CharField(max_length=100)
+    version = models.CharField(max_length=50)
+    training_data_start = models.DateField(null=True, blank=True)
+    training_data_end = models.DateField(null=True, blank=True)
+    mae = models.FloatField(null=True, blank=True, help_text="Mean Absolute Error")
+    rmse = models.FloatField(null=True, blank=True, help_text="Root Mean Squared Error")
+    wape = models.FloatField(null=True, blank=True, help_text="Weighted Absolute Percentage Error")
+    sample_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.model_name} {self.version} (MAE: {self.mae:.2f} if self.mae else 'N/A')"
+
+
+class DemandForecast(models.Model):
+    """
+    Deterministic demand forecast output per pharmacy SKU.
+    Includes prediction values, confidence bounds, risk levels, days of cover, and reorder points.
+    """
+    RISK_CHOICES = [
+        ("LOW", "Low Risk"),
+        ("MODERATE", "Moderate Risk"),
+        ("HIGH", "High Risk"),
+        ("CRITICAL", "Critical Risk"),
+    ]
+
+    TREND_CHOICES = [
+        ("STABLE", "Stable Demand"),
+        ("INCREASING", "Increasing Demand"),
+        ("DECREASING", "Decreasing Demand"),
+        ("SPIKE", "Unusual Demand Spike"),
+    ]
+
+    pharmacy = models.ForeignKey(Pharmacy, on_delete=models.CASCADE, related_name="demand_forecasts")
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name="demand_forecasts")
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, null=True, blank=True, related_name="demand_forecasts")
+    forecast_date = models.DateField(db_index=True)
+    horizon_days = models.PositiveIntegerField(default=7)
+    predicted_demand = models.FloatField(default=0.0)
+    lower_bound = models.FloatField(default=0.0)
+    upper_bound = models.FloatField(default=0.0)
+    days_of_cover = models.FloatField(null=True, blank=True)
+    risk_level = models.CharField(max_length=20, choices=RISK_CHOICES, default="LOW")
+    trend = models.CharField(max_length=20, choices=TREND_CHOICES, default="STABLE")
+    reorder_recommended = models.BooleanField(default=False)
+    suggested_reorder_qty = models.PositiveIntegerField(default=0)
+    reorder_point = models.PositiveIntegerField(default=0)
+    safety_stock = models.PositiveIntegerField(default=0)
+    model_version = models.ForeignKey(ForecastModelVersion, on_delete=models.SET_NULL, null=True, blank=True)
+    raw_data_points = models.PositiveIntegerField(default=0)
+    is_cold_start = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("pharmacy", "medicine", "forecast_date", "horizon_days")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.pharmacy.name} - {self.medicine.name}: Pred 7d = {self.predicted_demand:.1f} ({self.risk_level})"
+
+
+
 

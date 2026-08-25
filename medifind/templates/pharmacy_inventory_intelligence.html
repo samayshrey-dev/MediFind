@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Inventory Intelligence & Demand Forecasting | MediFind{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100">
+  <div class="container-fluid px-lg-5">
+    
+    <!-- ── HEADER BANNER ── -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-primary text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem; letter-spacing: 1px;">MEDIFIND AI #4</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 small fw-bold">
+            <i class="fa-solid fa-chart-line me-1"></i> Deterministic Forecasting Active
+          </span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">Predictive Inventory &amp; Demand Intelligence</h2>
+        <p class="text-muted small mb-0">Real-time ML demand forecasting, stock-out risk assessment, and automated reorder points for <strong>{{ pharmacy.name }}</strong>.</p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold shadow-xs" id="btnRetrainModel">
+          <i class="fa-solid fa-rotate me-1.5"></i> Retrain ML Model
+        </button>
+        <a href="{% url 'manage_inventory' %}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+          <i class="fa-solid fa-boxes-stacked me-1.5"></i> Manage Inventory
+        </a>
+      </div>
+    </div>
+
+    <!-- ── METRIC CARDS ── -->
+    <div class="row g-3 mb-4" id="statsRow">
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-danger">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Critical Stock-out Risk</span>
+          <div class="d-flex align-items-baseline justify-content-between mt-1">
+            <span class="fs-2 fw-extrabold text-danger" id="statCritical">0</span>
+            <i class="fa-solid fa-circle-exclamation text-danger fs-4 opacity-50"></i>
+          </div>
+          <span class="text-muted small mt-1 d-block" style="font-size: 0.75rem;">&lt; 1 day of cover or 0 stock</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-warning">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">High Stock Risk</span>
+          <div class="d-flex align-items-baseline justify-content-between mt-1">
+            <span class="fs-2 fw-extrabold text-warning-emphasis" id="statHigh">0</span>
+            <i class="fa-solid fa-triangle-exclamation text-warning-emphasis fs-4 opacity-50"></i>
+          </div>
+          <span class="text-muted small mt-1 d-block" style="font-size: 0.75rem;">&lt; 3 days of cover / below min</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-info">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Moderate Risk</span>
+          <div class="d-flex align-items-baseline justify-content-between mt-1">
+            <span class="fs-2 fw-extrabold text-info-emphasis" id="statModerate">0</span>
+            <i class="fa-solid fa-shield-halved text-info fs-4 opacity-50"></i>
+          </div>
+          <span class="text-muted small mt-1 d-block" style="font-size: 0.75rem;">&lt; 7 days of cover</span>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-success">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Low Risk / Optimal</span>
+          <div class="d-flex align-items-baseline justify-content-between mt-1">
+            <span class="fs-2 fw-extrabold text-success" id="statLow">0</span>
+            <i class="fa-solid fa-circle-check text-success fs-4 opacity-50"></i>
+          </div>
+          <span class="text-muted small mt-1 d-block" style="font-size: 0.75rem;">&ge; 7 days of cover</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MAIN CONTENT CARD ── -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      
+      <!-- Filter and Search controls -->
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex align-items-center gap-1.5 flex-wrap" id="filterBtnGroup">
+          <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold filter-chip active" data-filter="all">All SKUs</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold filter-chip" data-filter="CRITICAL">🔴 Critical (0)</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold filter-chip" data-filter="HIGH">🟠 High Risk</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold filter-chip" data-filter="reorder">📦 Reorder Point</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold filter-chip" data-filter="INCREASING">📈 Demand Surge</button>
+        </div>
+
+        <div class="position-relative" style="min-width: 260px;">
+          <i class="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+          <input type="text" id="searchInput" class="form-control form-control-sm rounded-pill ps-5" placeholder="Filter medicine or category...">
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="insightsTable">
+          <thead class="table-light text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+            <tr>
+              <th scope="col" class="py-3 ps-3">Medicine SKU</th>
+              <th scope="col" class="py-3">Current Stock</th>
+              <th scope="col" class="py-3">7-Day Forecast</th>
+              <th scope="col" class="py-3">Days of Cover</th>
+              <th scope="col" class="py-3">Stock Risk</th>
+              <th scope="col" class="py-3">Demand Trend</th>
+              <th scope="col" class="py-3">Reorder Threshold</th>
+              <th scope="col" class="py-3 text-end pe-3">Action</th>
+            </tr>
+          </thead>
+          <tbody id="insightsTbody">
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                Evaluating historical demand dataset and forecasting SKUs...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DEMAND FORECAST & EXPLANATION MODAL ── -->
+<div class="modal fade" id="forecastModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="fw-bold text-dark mb-0" id="modalMedTitle">Demand Forecast &amp; Trend Analysis</h5>
+          <small class="text-muted" id="modalMedSub">SKU Demand Intelligence</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Gemini AI Explanation Banner -->
+        <div class="alert alert-info border-0 rounded-3 p-3 mb-4 d-flex align-items-start gap-3 shadow-xs">
+          <i class="fa-solid fa-wand-magic-sparkles text-primary fs-4 mt-0.5"></i>
+          <div>
+            <strong class="text-dark d-block mb-1" style="font-size: 0.9rem;">MediAI Executive Demand Explanation</strong>
+            <p class="text-dark small mb-0 fw-medium" id="modalExplanation">
+              Loading Gemini explanation layer...
+            </p>
+          </div>
+        </div>
+
+        <!-- Metrics Summary Grid -->
+        <div class="row g-3 mb-4 text-center">
+          <div class="col-4 col-sm-3">
+            <div class="p-2.5 bg-light rounded-3 border">
+              <span class="text-muted d-block small" style="font-size: 0.72rem;">Current Stock</span>
+              <strong class="fs-5 text-dark" id="modalCurrentStock">0</strong>
+            </div>
+          </div>
+          <div class="col-4 col-sm-3">
+            <div class="p-2.5 bg-light rounded-3 border">
+              <span class="text-muted d-block small" style="font-size: 0.72rem;">7-Day Pred Demand</span>
+              <strong class="fs-5 text-success" id="modalPredDemand">0</strong>
+            </div>
+          </div>
+          <div class="col-4 col-sm-3">
+            <div class="p-2.5 bg-light rounded-3 border">
+              <span class="text-muted d-block small" style="font-size: 0.72rem;">Days of Cover</span>
+              <strong class="fs-5 text-dark" id="modalDaysCover">0</strong>
+            </div>
+          </div>
+          <div class="col-12 col-sm-3">
+            <div class="p-2.5 bg-light rounded-3 border">
+              <span class="text-muted d-block small" style="font-size: 0.72rem;">Model Evaluated</span>
+              <strong class="small text-primary fw-bold" id="modalModelName">EWMA</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="mb-2">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold text-dark small"><i class="fa-solid fa-chart-area me-1 text-primary"></i> 30-Day Historical vs 7-Day Forecast Horizon</span>
+            <span class="badge bg-light text-muted border rounded-pill px-2" style="font-size: 0.68rem;">95% Confidence Bounds</span>
+          </div>
+          <div style="height: 260px; position: relative;">
+            <canvas id="forecastChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let allInsights = [];
+  let currentFilter = 'all';
+  let forecastChart = null;
+
+  async function fetchInsights() {
+    try {
+      const resp = await fetch('/api/pharmacy/ai/inventory-insights/');
+      const data = await resp.json();
+      if (data.success) {
+        allInsights = data.insights || [];
+        updateStats(data.risk_summary || {});
+        renderTable();
+      } else {
+        document.getElementById('insightsTbody').innerHTML = `
+          <tr><td colspan="8" class="text-center text-danger py-4">${data.message || 'Error loading inventory insights.'}</td></tr>
+        `;
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById('insightsTbody').innerHTML = `
+        <tr><td colspan="8" class="text-center text-danger py-4">Failed to connect to forecasting server.</td></tr>
+      `;
+    }
+  }
+
+  function updateStats(summary) {
+    document.getElementById('statCritical').innerText = summary.CRITICAL || 0;
+    document.getElementById('statHigh').innerText = summary.HIGH || 0;
+    document.getElementById('statModerate').innerText = summary.MODERATE || 0;
+    document.getElementById('statLow').innerText = summary.LOW || 0;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('insightsTbody');
+    const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+    const filtered = allInsights.filter(item => {
+      const matchesSearch = item.medicine_name.toLowerCase().includes(query) || (item.category || '').toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+
+      if (currentFilter === 'CRITICAL') return item.risk_level === 'CRITICAL';
+      if (currentFilter === 'HIGH') return item.risk_level === 'HIGH' || item.risk_level === 'CRITICAL';
+      if (currentFilter === 'reorder') return item.reorder_recommended;
+      if (currentFilter === 'INCREASING') return item.trend === 'INCREASING' || item.trend === 'SPIKE';
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">No SKU items match current filters.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(item => {
+      const riskBadge = {
+        'CRITICAL': '<span class="badge bg-danger text-white rounded-pill px-2.5 py-1 small fw-bold">🔴 CRITICAL</span>',
+        'HIGH': '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-bold">🟠 HIGH</span>',
+        'MODERATE': '<span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2.5 py-1 small fw-bold">🟡 MODERATE</span>',
+        'LOW': '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">🟢 LOW</span>',
+      }[item.risk_level] || item.risk_level;
+
+      const trendBadge = {
+        'SPIKE': '<span class="text-danger fw-bold small"><i class="fa-solid fa-bolt me-1"></i>Spike</span>',
+        'INCREASING': '<span class="text-success fw-bold small"><i class="fa-solid fa-arrow-trend-up me-1"></i>Increasing</span>',
+        'DECREASING': '<span class="text-secondary small"><i class="fa-solid fa-arrow-trend-down me-1"></i>Decreasing</span>',
+        'STABLE': '<span class="text-muted small"><i class="fa-solid fa-minus me-1"></i>Stable</span>'
+      }[item.trend] || item.trend;
+
+      return `
+        <tr>
+          <td class="ps-3 py-3">
+            <div class="fw-bold text-dark">${escapeHtml(item.medicine_name)}</div>
+            <div class="text-muted small" style="font-size: 0.75rem;">${escapeHtml(item.package_size)} &bull; ${escapeHtml(item.brand)}</div>
+          </td>
+          <td>
+            <span class="fw-bold ${item.current_stock <= item.minimum_stock ? 'text-danger' : 'text-dark'}">${item.current_stock} units</span>
+            <div class="text-muted" style="font-size: 0.72rem;">Min stock: ${item.minimum_stock}</div>
+          </td>
+          <td>
+            <span class="fw-extrabold text-success">${item.predicted_7_day_demand.toFixed(1)} units</span>
+            <div class="text-muted" style="font-size: 0.72rem;">${item.daily_demand.toFixed(1)} / day</div>
+          </td>
+          <td>
+            <span class="fw-bold text-dark">${item.days_of_cover} days</span>
+          </td>
+          <td>${riskBadge}</td>
+          <td>${trendBadge}</td>
+          <td>
+            ${item.reorder_recommended ? `
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 small fw-bold">
+                Reorder ${item.suggested_reorder_qty} units
+              </span>
+              <div class="text-muted" style="font-size: 0.7rem;">Point: ${item.reorder_point}</div>
+            ` : '<span class="text-muted small">Sufficient stock</span>'}
+          </td>
+          <td class="text-end pe-3">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold btn-view-forecast" data-med-id="${item.medicine_id}">
+              <i class="fa-solid fa-chart-line me-1"></i> Forecast &amp; AI
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    document.querySelectorAll('.btn-view-forecast').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const medId = btn.getAttribute('data-med-id');
+        openForecastModal(medId);
+      });
+    });
+  }
+
+  async function openForecastModal(medId) {
+    const modalEl = document.getElementById('forecastModal');
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+
+    document.getElementById('modalExplanation').innerText = 'Computing deterministic timeseries & requesting Gemini explanation...';
+
+    try {
+      const resp = await fetch(`/api/pharmacy/ai/demand-forecast/${medId}/`);
+      const data = await resp.json();
+      if (data.success) {
+        document.getElementById('modalMedTitle').innerText = data.medicine_name;
+        document.getElementById('modalCurrentStock').innerText = data.current_stock;
+        document.getElementById('modalPredDemand').innerText = data.forecast.predicted_demand.toFixed(1);
+        document.getElementById('modalDaysCover').innerText = data.risk_analysis.days_of_cover;
+        document.getElementById('modalModelName').innerText = data.forecast.model_name;
+        document.getElementById('modalExplanation').innerText = data.explanation;
+
+        renderForecastChart(data.historical_timeseries, data.forecast);
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById('modalExplanation').innerText = 'Failed to load forecast data.';
+    }
+  }
+
+  function renderForecastChart(history, forecast) {
+    const ctx = document.getElementById('forecastChartCanvas').getContext('2d');
+    if (forecastChart) forecastChart.destroy();
+
+    const labels = [];
+    const histPoints = [];
+    const predPoints = [];
+    const lowerPoints = [];
+    const upperPoints = [];
+
+    (history || []).forEach(h => {
+      labels.push(h.date.slice(5));
+      histPoints.push(h.effective_demand);
+      predPoints.push(null);
+      lowerPoints.push(null);
+      upperPoints.push(null);
+    });
+
+    const lastHistVal = histPoints[histPoints.length - 1] || 0;
+    predPoints[predPoints.length - 1] = lastHistVal;
+    lowerPoints[lowerPoints.length - 1] = lastHistVal;
+    upperPoints[upperPoints.length - 1] = lastHistVal;
+
+    (forecast.daily_breakdown || []).forEach(b => {
+      labels.push(b.date.slice(5) + ' (FC)');
+      histPoints.push(null);
+      predPoints.push(b.predicted);
+      lowerPoints.push(Math.max(0, b.predicted * 0.8));
+      upperPoints.push(b.predicted * 1.2);
+    });
+
+    forecastChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Historical Actual Demand',
+            data: histPoints,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3
+          },
+          {
+            label: '7-Day Predicted Demand',
+            data: predPoints,
+            borderColor: '#10b981',
+            borderDash: [5, 5],
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: false,
+            tension: 0.2
+          },
+          {
+            label: 'Upper 95% Bound',
+            data: upperPoints,
+            borderColor: 'rgba(239, 68, 68, 0.4)',
+            fill: false,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Units' } }
+        }
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // Bind filter chips
+  document.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(b => {
+        b.classList.remove('btn-primary', 'active');
+        b.classList.add('btn-outline-secondary');
+      });
+      btn.classList.remove('btn-outline-secondary');
+      btn.classList.add('btn-primary', 'active');
+      currentFilter = btn.getAttribute('data-filter');
+      renderTable();
+    });
+  });
+
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+
+  document.getElementById('btnRetrainModel').addEventListener('click', async () => {
+    const btn = document.getElementById('btnRetrainModel');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1.5"></i> Retraining Model...';
+
+    try {
+      const resp = await fetch('/api/pharmacy/ai/retrain/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}'
+        }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        alert(`Model retrained successfully!\nVersion: ${data.model_version}\nMAE: ${data.mae}\nRMSE: ${data.rmse}`);
+        fetchInsights();
+      } else {
+        alert(data.message || 'Retraining failed.');
+      }
+    } catch (err) {
+      alert('Error connecting to retraining service.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-rotate me-1.5"></i> Retrain ML Model';
+    }
+  });
+
+  fetchInsights();
+});
+</script>
+{% endblock %}

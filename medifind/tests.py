@@ -1235,6 +1235,141 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertIsNotNone(rx_obj)
         self.assertTrue(rx_obj.prescription_uploaded)
 
+    def test_39_predictive_inventory_and_demand_forecasting(self):
+        """
+        Comprehensive test for Medifind AI #4 — Predictive Inventory & Medicine Demand Intelligence.
+        Tests data snapshot sync, deterministic forecasting models (SMA/EWMA), backtesting metrics,
+        stock risk classification, days of cover, security data isolation, and API endpoints.
+        """
+        from .inventory_intelligence import (
+            DemandDataService,
+            TimeSeriesForecastingEngine,
+            StockRiskEngine,
+            AIInventoryExplanationService
+        )
+        from .models import Pharmacy, Medicine, Inventory, Reservation, DailyDemandSnapshot, UserProfile
+
+        # 1. Setup Pharmacy owner & test inventory
+        pharm_user = User.objects.create_user(username="pharm_manager", password="password123")
+        prof = pharm_user.userprofile
+        prof.role = "Pharmacy"
+        prof.pharmacy = self.pharmacy
+        prof.save()
+        self.client.force_login(pharm_user)
+
+        med_dolo = Medicine.objects.create(name="Dolo 650", brand="Micro Labs", category="Fever & Cold", dosage="650 mg")
+        inv_dolo = Inventory.objects.create(
+            pharmacy=self.pharmacy,
+            medicine=med_dolo,
+            quantity=15,
+            price=Decimal("30.00"),
+            minimum_stock=10,
+            batch_number="B100",
+            expiry_date=timezone.now().date() + timezone.timedelta(days=365)
+        )
+
+        # 2. Seed past reservations (actual sales history)
+        today = timezone.now().date()
+        for d_offset in range(1, 10):
+            Reservation.objects.create(
+                customer=pharm_user,
+                pharmacy=self.pharmacy,
+                medicine=med_dolo,
+                quantity=4,
+                status="Collected",
+                payment_method="Online",
+                is_paid=True,
+                requested_at=timezone.now() - timezone.timedelta(days=d_offset)
+            )
+
+        # 3. Test DemandDataService sync
+        synced_count = DemandDataService.sync_daily_snapshots(self.pharmacy, days_back=15)
+        self.assertGreater(synced_count, 0)
+        ts_data = DemandDataService.get_timeseries_data(self.pharmacy, med_dolo, days=15)
+        self.assertEqual(len(ts_data), 16)
+
+        # 4. Test TimeSeriesForecastingEngine Evaluation & Confidence Intervals
+        forecast = TimeSeriesForecastingEngine.generate_forecast(self.pharmacy, med_dolo, horizon_days=7)
+        self.assertEqual(forecast["horizon_days"], 7)
+        self.assertGreater(forecast["predicted_demand"], 0.0)
+        self.assertGreaterEqual(forecast["upper_bound"], forecast["predicted_demand"])
+        self.assertLessEqual(forecast["lower_bound"], forecast["predicted_demand"])
+
+        # 5. Test StockRiskEngine Days of Cover & Reorder Point
+        risk_info = StockRiskEngine.analyze_inventory_risk(inv_dolo, forecast)
+        self.assertIn(risk_info["risk_level"], ["CRITICAL", "HIGH", "MODERATE", "LOW"])
+        self.assertIsNotNone(risk_info["days_of_cover"])
+        self.assertIn("reorder_recommended", risk_info)
+
+        # 6. Test Cold Start Handling for New SKU
+        new_med = Medicine.objects.create(name="RareDrug 50mg", brand="PharmaCo", category="General Health", dosage="50 mg")
+        new_inv = Inventory.objects.create(
+            pharmacy=self.pharmacy,
+            medicine=new_med,
+            quantity=50,
+            price=Decimal("500.00"),
+            batch_number="B999",
+            expiry_date=timezone.now().date() + timezone.timedelta(days=365)
+        )
+        cold_forecast = TimeSeriesForecastingEngine.generate_forecast(self.pharmacy, new_med, horizon_days=7)
+        self.assertTrue(cold_forecast["is_cold_start"])
+        self.assertEqual(cold_forecast["model_name"], "ColdStart_Baseline")
+
+        # 7. Test Pharmacy Inventory Insights API Endpoint
+        resp_insights = self.client.get("/api/pharmacy/ai/inventory-insights/")
+        self.assertEqual(resp_insights.status_code, 200)
+        data_ins = resp_insights.json()
+        self.assertTrue(data_ins["success"])
+        self.assertIn("risk_summary", data_ins)
+        self.assertGreaterEqual(data_ins["total_medicines"], 2)
+
+        # 8. Test Single SKU Demand Forecast API Endpoint
+        resp_single = self.client.get(f"/api/pharmacy/ai/demand-forecast/{med_dolo.id}/")
+        self.assertEqual(resp_single.status_code, 200)
+        data_single = resp_single.json()
+        self.assertTrue(data_single["success"])
+        self.assertIn("explanation", data_single)
+        self.assertIn("historical_timeseries", data_single)
+
+        # 9. Test Security & Data Isolation (Other Pharmacy User Rejection)
+        other_pharm = Pharmacy.objects.create(
+            name="Other Pharmacy",
+            owner_name="Other",
+            phone="9998887776",
+            address="Other St",
+            city="Chennai",
+            state="TN",
+            pincode="600002",
+            latitude=Decimal("13.0800"),
+            longitude=Decimal("80.2700"),
+            opening_time=timezone.now().time(),
+            closing_time=timezone.now().time()
+        )
+        other_user = User.objects.create_user(username="other_mgr", password="password123")
+        other_prof = other_user.userprofile
+        other_prof.role = "Pharmacy"
+        other_prof.pharmacy = other_pharm
+        other_prof.save()
+        self.client.force_login(other_user)
+
+        resp_sec = self.client.get(f"/api/pharmacy/ai/demand-forecast/{med_dolo.id}/")
+        self.assertEqual(resp_sec.status_code, 404)  # SKU not found in other pharmacy inventory
+
+        # 10. Test Retraining Model API Endpoint
+        admin_user = User.objects.create_superuser(username="superadmin", password="password123")
+        self.client.force_login(admin_user)
+
+        resp_retrain = self.client.post("/api/pharmacy/ai/retrain/", {"pharmacy_id": self.pharmacy.id})
+        self.assertEqual(resp_retrain.status_code, 200)
+        data_retrain = resp_retrain.json()
+        self.assertTrue(data_retrain["success"])
+        self.assertIn("model_version", data_retrain)
+
+        # 11. Test Admin Model Performance View
+        resp_admin_perf = self.client.get("/admin/ai-model-performance/")
+        self.assertEqual(resp_admin_perf.status_code, 200)
+
+
 
 
 
