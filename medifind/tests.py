@@ -1017,7 +1017,9 @@ class RazorpayAgenticCommerceTests(TestCase):
         other_prof, _ = UserProfile.objects.get_or_create(user=other_user)
         other_prof.role = "Pharmacy"
         other_prof.pharmacy = other_pharm
+        other_prof.verification_status = "Approved"
         other_prof.save()
+
 
         self.client.force_login(other_user)
         resp_idor = self.client.get(f"/reservations/{res_test.id}/accept/", follow=True)
