@@ -1,6 +1,6 @@
 {% load static %}
 <nav class="navbar navbar-expand-lg fixed-top shadow-sm" style="background: var(--surface); border-bottom: 1px solid var(--border);">
-  <div class="container">
+  <div class="container-fluid px-lg-5 px-3">
     <!-- Brand Logo -->
     <a class="navbar-brand d-flex align-items-center brand-logo-link gap-2" href="{% url 'home' %}" aria-label="MediAI Home">
       <div class="brand-logo-icon d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #10b981; border-radius: 9px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);">
@@ -24,25 +24,24 @@
 
 
     <!-- Navigation Menu -->
-    <!-- Navigation Menu -->
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto ms-lg-4 align-items-lg-center">
         {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
           <!-- 1. Dashboard -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'pharmacy_dashboard' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'pharmacy_dashboard' %}">
+            <a class="nav-link px-3 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'pharmacy_dashboard' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'pharmacy_dashboard' %}">
               Dashboard
             </a>
           </li>
           <!-- 2. Inventory -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'inventory' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'inventory' %}">
+            <a class="nav-link px-3 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'inventory' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'inventory' %}">
               Inventory
             </a>
           </li>
           <!-- 3. Orders -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 text-nowrap fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'reservations' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservations' %}">
+            <a class="nav-link px-3 text-nowrap fw-semibold d-flex align-items-center gap-1.5 {% if request.resolver_match.url_name == 'reservations' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservations' %}">
               <span>Orders</span>
               {% if pharmacy_pending_count and pharmacy_pending_count > 0 %}
                 <span class="badge bg-warning text-dark rounded-pill px-1.5 py-0.5 small" style="font-size: 0.68rem;">{{ pharmacy_pending_count }}</span>
@@ -51,28 +50,36 @@
           </li>
           <!-- 4. History -->
           <li class="nav-item">
-            <a class="nav-link px-2.5 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'reservation_history' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservation_history' %}">
+            <a class="nav-link px-3 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'reservation_history' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'reservation_history' %}">
               History
             </a>
           </li>
-          <!-- 5. AI Inventory Intelligence -->
-          <li class="nav-item">
-            <a class="nav-link px-2 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'pharmacy_inventory_intelligence_view' %}active text-success fw-bold{% else %}text-dark{% endif %}" href="{% url 'pharmacy_inventory_intelligence_view' %}">
-              <i class="fa-solid fa-chart-line text-success me-1"></i> AI Forecasting
+          <!-- 5. AI Suite Dropdown -->
+          <li class="nav-item dropdown ms-lg-1">
+            <a class="nav-link dropdown-toggle px-3 text-nowrap fw-bold d-flex align-items-center gap-1.5 {% if 'inventory-intelligence' in request.path or 'analytics' in request.path %}active text-primary{% else %}text-dark{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
+              <span>AI Suite</span>
             </a>
-          </li>
-          <!-- 6. AI Pharmacy Analytics & BI -->
-          <li class="nav-item">
-            <a class="nav-link px-2 text-nowrap fw-semibold {% if request.resolver_match.url_name == 'pharmacy_analytics_bi_view' %}active text-primary fw-bold{% else %}text-dark{% endif %}" href="{% url 'pharmacy_analytics_bi_view' %}">
-              <i class="fa-solid fa-chart-pie text-primary me-1"></i> Business BI
-            </a>
-          </li>
-          <!-- Action Button: Upload Inventory -->
-          <li class="nav-item ms-lg-2">
-            <a class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 text-nowrap fw-bold d-flex align-items-center gap-1.5 shadow-xs" href="{% url 'inventory' %}">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-              <span>Upload Excel</span>
-            </a>
+            <ul class="dropdown-menu shadow-lg border rounded-4 py-2" style="min-width: 250px;">
+              <li>
+                <a class="dropdown-item py-2.5 px-3 d-flex align-items-center gap-2.5 {% if request.resolver_match.url_name == 'pharmacy_analytics_bi_view' %}active bg-primary-subtle text-primary fw-bold{% endif %}" href="{% url 'pharmacy_analytics_bi_view' %}">
+                  <div class="p-2 bg-primary bg-opacity-10 text-primary rounded-3"><i class="fa-solid fa-chart-pie"></i></div>
+                  <div>
+                    <div class="fw-bold small text-dark mb-0">Business Intelligence</div>
+                    <small class="text-muted" style="font-size: 0.72rem;">Sales, revenue &amp; search trends</small>
+                  </div>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item py-2.5 px-3 d-flex align-items-center gap-2.5 {% if request.resolver_match.url_name == 'pharmacy_inventory_intelligence_view' %}active bg-success-subtle text-success fw-bold{% endif %}" href="{% url 'pharmacy_inventory_intelligence_view' %}">
+                  <div class="p-2 bg-success bg-opacity-10 text-success rounded-3"><i class="fa-solid fa-chart-line"></i></div>
+                  <div>
+                    <div class="fw-bold small text-dark mb-0">Predictive Forecasting</div>
+                    <small class="text-muted" style="font-size: 0.72rem;">7-day demand ML predictions</small>
+                  </div>
+                </a>
+              </li>
+            </ul>
           </li>
         {% else %}
           <li class="nav-item">
