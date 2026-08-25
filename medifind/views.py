@@ -440,14 +440,19 @@ def commerce_create_snapshot(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "POST method required."}, status=405)
 
+    rx_file = request.FILES.get("prescription_file") or request.FILES.get("prescription")
+
     try:
-        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        body = json.loads(request.body.decode("utf-8")) if request.body and not request.POST else request.POST
     except Exception:
         body = request.POST
 
     session_id = body.get("session_id")
     inventory_id = body.get("inventory_id")
-    quantity = int(body.get("quantity", 1))
+    try:
+        quantity = int(body.get("quantity", 1))
+    except (ValueError, TypeError):
+        quantity = 1
 
     if not session_id or not inventory_id:
         return JsonResponse({"success": False, "message": "session_id and inventory_id are required."}, status=400)
@@ -460,6 +465,21 @@ def commerce_create_snapshot(request):
             quantity=quantity,
             user=user
         )
+
+        if rx_file:
+            order.prescription_uploaded = True
+            try:
+                order.prescription_image = rx_file
+            except (OSError, IOError):
+                pass
+            order.save()
+        elif order.medicine.prescription_required:
+            order.delete()
+            return JsonResponse({
+                "success": False,
+                "message": f"A valid doctor prescription upload is required before online or offline payment for {order.medicine.name}."
+            }, status=400)
+
         return JsonResponse({
             "success": True,
             "order_reference": order.order_reference,

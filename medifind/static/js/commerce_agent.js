@@ -290,15 +290,34 @@
                   <span class="fs-4 fw-extrabold text-success" id="bmTotalDisplay">₹${parseFloat(bm.price).toFixed(2)}</span>
                 </div>
 
-                <!-- Two Payment & Reservation Options -->
+                <!-- Progressive 2-Step Payment & Reservation Options -->
                 <div class="order-review-box" id="approvalGateContainer">
-                  <div class="d-flex flex-column gap-2">
-                    <button type="button" class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="bmBtnPayOnline" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
-                      <i class="fa-solid fa-credit-card"></i> Pay Online (Razorpay)
-                    </button>
-                    <button type="button" class="btn btn-outline-dark w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2" id="bmBtnPayCounter" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
-                      <i class="fa-solid fa-store text-success"></i> Pay on the Counter
-                    </button>
+                  ${bm.prescription_required ? `
+                    <div class="p-2.5 bg-warning-subtle border border-warning rounded-3 mb-2 text-start" id="bmRxContainer">
+                      <div class="d-flex align-items-center gap-2 mb-1.5">
+                        <i class="fa-solid fa-file-prescription text-warning-emphasis fs-5"></i>
+                        <span class="fw-bold text-dark small">Step 1: Upload Doctor Prescription</span>
+                      </div>
+                      <input type="file" id="bmRxFileInput" accept="image/*,.pdf" class="form-control form-control-sm border-warning rounded-3 mb-1">
+                      <div class="text-muted small" style="font-size: 0.7rem;">
+                        <i class="fa-solid fa-shield-halved text-success me-1"></i> Formats: JPG, PNG, PDF (Max 10MB)
+                      </div>
+                      <div id="bmRxSuccessAlert" class="mt-2 d-none alert alert-success p-2 small mb-0 fw-bold">
+                        <i class="fa-solid fa-circle-check me-1.5 text-success"></i> <span id="bmRxFileName">Prescription attached!</span>
+                      </div>
+                    </div>
+                  ` : ''}
+
+                  <div id="bmPaymentOptionsSection" class="${bm.prescription_required ? 'd-none' : ''}">
+                    ${bm.prescription_required ? `<div class="fw-bold text-dark small mb-2 text-start"><span class="badge bg-success-subtle text-success me-1">✓ Step 2</span> Choose Payment Method:</div>` : ''}
+                    <div class="d-flex flex-column gap-2">
+                      <button type="button" class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="bmBtnPayOnline" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
+                        <i class="fa-solid fa-credit-card"></i> Pay Online (Razorpay)
+                      </button>
+                      <button type="button" class="btn btn-outline-dark w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2" id="bmBtnPayCounter" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
+                        <i class="fa-solid fa-store text-success"></i> Pay on the Counter
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -793,12 +812,38 @@
       });
     }
 
+    // Rx File Upload listener for Step 1 -> Step 2 transition
+    const bmRxInput = document.getElementById('bmRxFileInput');
+    if (bmRxInput) {
+      bmRxInput.addEventListener('change', function () {
+        if (bmRxInput.files && bmRxInput.files.length > 0) {
+          const alert = document.getElementById('bmRxSuccessAlert');
+          const fileName = document.getElementById('bmRxFileName');
+          const paySec = document.getElementById('bmPaymentOptionsSection');
+          if (alert && fileName) {
+            fileName.innerText = 'Attached: ' + bmRxInput.files[0].name;
+            alert.classList.remove('d-none');
+          }
+          if (paySec) {
+            paySec.classList.remove('d-none');
+          }
+        }
+      });
+    }
+
     // Pay Online Button (Razorpay)
     const btnOnline = document.getElementById('bmBtnPayOnline');
     if (btnOnline) {
       btnOnline.addEventListener('click', async function () {
         const invId = this.getAttribute('data-inventory-id');
         const container = document.getElementById('approvalGateContainer');
+        const rxInput = document.getElementById('bmRxFileInput');
+
+        if (bm && bm.prescription_required && (!rxInput || !rxInput.files || rxInput.files.length === 0)) {
+          alert('A valid doctor prescription is required before proceeding to payment.');
+          return;
+        }
+
         if (container) {
           container.innerHTML = `
             <div class="text-center py-2 w-100">
@@ -809,17 +854,20 @@
         }
 
         try {
+          const formData = new FormData();
+          formData.append('session_id', currentSessionId);
+          formData.append('inventory_id', invId);
+          formData.append('quantity', selectedQuantity);
+          if (rxInput && rxInput.files && rxInput.files.length > 0) {
+            formData.append('prescription_file', rxInput.files[0]);
+          }
+
           const resp = await fetch('/api/commerce/snapshot/', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
               'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify({
-              session_id: currentSessionId,
-              inventory_id: parseInt(invId),
-              quantity: selectedQuantity
-            })
+            body: formData
           });
 
           const snapData = await resp.json();
@@ -855,6 +903,13 @@
       btnCounter.addEventListener('click', async function () {
         const invId = this.getAttribute('data-inventory-id');
         const container = document.getElementById('approvalGateContainer');
+        const rxInput = document.getElementById('bmRxFileInput');
+
+        if (bm && bm.prescription_required && (!rxInput || !rxInput.files || rxInput.files.length === 0)) {
+          alert('A valid doctor prescription is required before proceeding to store reservation.');
+          return;
+        }
+
         if (container) {
           container.innerHTML = `
             <div class="text-center py-2 w-100">
@@ -865,17 +920,20 @@
         }
 
         try {
+          const formData = new FormData();
+          formData.append('quantity', selectedQuantity);
+          formData.append('payment_method', 'PayOnPickup');
+          if (rxInput && rxInput.files && rxInput.files.length > 0) {
+            formData.append('prescription_file', rxInput.files[0]);
+          }
+
           const resp = await fetch(`/reserve/${invId}/`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
               'X-CSRFToken': getCsrfToken(),
               'X-Requested-With': 'XMLHttpRequest'
             },
-            body: new URLSearchParams({
-              quantity: selectedQuantity,
-              payment_method: 'PayOnPickup'
-            })
+            body: formData
           });
 
           if (resp.redirected || resp.status === 401 || resp.status === 403) {
