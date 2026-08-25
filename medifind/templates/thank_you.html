@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Thank You - Reservation Confirmed | MediAI{% endblock %}
+{% block meta_description %}Thank you for reserving your medicine with MediAI. Your inventory hold is verified with live navigation and pickup instructions.{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light min-vh-100" style="margin-top: 60px;">
+  <div class="container py-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-4">
+      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted"><i class="fa-solid fa-house fs-7 text-success"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'search' %}" class="text-decoration-none text-muted">Search</a></li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Confirmation</li>
+      </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+        <!-- Main Confirmation Card -->
+        <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white mb-4">
+          <!-- Animated Checkmark Header -->
+          <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success mb-3 shadow-sm" style="width: 84px; height: 84px;">
+              <i class="fa-solid fa-circle-check fa-3x text-success"></i>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold small mb-2 d-inline-block">
+              ⚡ Guaranteed 15-Min Hold Activated
+            </span>
+            <h2 class="fw-extrabold text-dark mb-2" style="letter-spacing: -0.5px;">Thank You! Your Reservation is Confirmed</h2>
+            <p class="text-muted lead fs-6 mb-0" style="max-width: 480px; margin: 0 auto;">
+              The pharmacy has been notified immediately via real-time sync. Your medicine is secured in stock.
+            </p>
+          </div>
+
+          <!-- Order Summary Badge -->
+          <div class="p-3.5 rounded-3 bg-light border mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.72rem; letter-spacing: 0.5px;">Reservation ID</span>
+              <strong class="text-dark fs-5 font-monospace" style="color: #0f172a;">#MED-{{ ref_code|default:"849204" }}</strong>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small fw-semibold text-uppercase d-block" style="font-size: 0.72rem; letter-spacing: 0.5px;">Hold Validity</span>
+              <span class="badge bg-primary text-white rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.8rem;">
+                <i class="fa-regular fa-clock me-1"></i> Active for 15 mins
+              </span>
+            </div>
+          </div>
+
+          <!-- 3-Step Pickup Timeline -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-dark mb-3 text-uppercase small" style="letter-spacing: 0.5px;">
+              <i class="fa-solid fa-timeline text-success me-1.5"></i> Pickup Progression
+            </h6>
+            <div class="d-flex justify-content-between position-relative px-2">
+              <div class="position-absolute top-50 start-0 translate-middle-y w-100 bg-secondary-subtle" style="height: 3px; z-index: 1;"></div>
+              <div class="position-absolute top-50 start-0 translate-middle-y bg-success" style="height: 3px; width: 66%; z-index: 1;"></div>
+
+              <!-- Step 1 -->
+              <div class="text-center position-relative" style="z-index: 2; width: 30%;">
+                <div class="rounded-circle bg-success text-white mx-auto d-flex align-items-center justify-content-center shadow-xs" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                  <i class="fa-solid fa-check"></i>
+                </div>
+                <small class="fw-bold text-dark d-block mt-2" style="font-size: 0.78rem;">Reserved</small>
+                <span class="text-muted" style="font-size: 0.7rem;">Stock locked</span>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="text-center position-relative" style="z-index: 2; width: 30%;">
+                <div class="rounded-circle bg-success text-white mx-auto d-flex align-items-center justify-content-center shadow-xs" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                  <i class="fa-solid fa-box-open"></i>
+                </div>
+                <small class="fw-bold text-dark d-block mt-2" style="font-size: 0.78rem;">Preparing</small>
+                <span class="text-muted" style="font-size: 0.7rem;">Counter staging</span>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="text-center position-relative" style="z-index: 2; width: 30%;">
+                <div class="rounded-circle bg-light border text-muted mx-auto d-flex align-items-center justify-content-center shadow-xs" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                  <i class="fa-solid fa-store"></i>
+                </div>
+                <small class="fw-bold text-muted d-block mt-2" style="font-size: 0.78rem;">Ready for Pickup</small>
+                <span class="text-muted" style="font-size: 0.7rem;">Show ID &amp; Collect</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Store Location & Direction Link -->
+          <div class="p-3 rounded-3 border bg-light-subtle mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+              <div>
+                <h6 class="fw-bold text-dark mb-1">{{ pharmacy_name|default:"Apollo Pharmacy Anna Nagar" }}</h6>
+                <p class="text-muted small mb-0">
+                  <i class="fa-solid fa-location-dot text-danger me-1"></i> {{ pharmacy_address|default:"14/2 2nd Avenue, Anna Nagar, Chennai, Tamil Nadu" }}
+                </p>
+                <small class="text-muted d-block mt-1">
+                  <i class="fa-solid fa-phone text-success me-1"></i> {{ pharmacy_phone|default:"+91 98765 43210" }}
+                </small>
+              </div>
+              <div>
+                <a href="https://www.google.com/maps/dir/?api=1&destination={{ pharmacy_lat|default:'13.0827' }},{{ pharmacy_lng|default:'80.2707' }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="btn btn-sm btn-primary rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-diamond-turn-right"></i>
+                  <span>Get Directions</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action CTA Group -->
+          <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 pt-2">
+            <a href="{% url 'my_reservations' %}" class="btn btn-outline-dark rounded-pill px-4 py-2.5 fw-semibold d-flex align-items-center justify-content-center gap-2">
+              <i class="fa-solid fa-clipboard-list"></i>
+              <span>View All My Orders</span>
+            </a>
+            <a href="{% url 'search' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Find Another Medicine</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Trust Note -->
+        <div class="text-center text-muted small">
+          <i class="fa-solid fa-shield-halved text-success me-1"></i>
+          <span>MediAI 100% Verified Pharmacy Guarantee &bull; Need assistance? Call 24/7 Helpline: <strong>+91 98765 43210</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

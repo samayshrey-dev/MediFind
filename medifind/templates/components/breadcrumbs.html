@@ -1,0 +1,55 @@
+{% comment %}
+Reusable Breadcrumbs Component with Schema.org Microdata
+Usage:
+  {% include 'components/breadcrumbs.html' with breadcrumbs=breadcrumb_list %}
+  Or pass items directly:
+  breadcrumb_items: list of dicts with 'name' and optional 'url'
+{% endcomment %}
+<nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-3">
+  <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="{% url 'home' %}" class="text-decoration-none text-muted d-inline-flex align-items-center gap-1" itemprop="item">
+        <i class="fa-solid fa-house fs-7 text-success"></i>
+        <span itemprop="name">Home</span>
+      </a>
+      <meta itemprop="position" content="1" />
+    </li>
+
+    {% if custom_breadcrumbs %}
+      {% for crumb in custom_breadcrumbs %}
+        {% if forloop.last %}
+          <li class="breadcrumb-item active fw-semibold text-dark text-truncate" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" style="max-width: 260px;">
+            <span itemprop="name">{{ crumb.title }}</span>
+            <meta itemprop="position" content="{{ forloop.counter|add:1 }}" />
+          </li>
+        {% else %}
+          <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <a href="{{ crumb.url }}" class="text-decoration-none text-muted" itemprop="item">
+              <span itemprop="name">{{ crumb.title }}</span>
+            </a>
+            <meta itemprop="position" content="{{ forloop.counter|add:1 }}" />
+          </li>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </ol>
+</nav>
+
+<style>
+.medi-breadcrumb-nav .breadcrumb-item + .breadcrumb-item::before {
+  content: "\f054";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  padding: 0 0.5rem;
+  vertical-align: middle;
+}
+.medi-breadcrumb-nav a {
+  color: #64748b;
+  transition: color 0.15s ease;
+}
+.medi-breadcrumb-nav a:hover {
+  color: #10b981;
+}
+</style>

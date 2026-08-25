@@ -1,14 +1,28 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}
-Medicine Catalog & Availability | MediAI
-{% endblock %}
+{% block title %}Verified Medicine Catalog & Prescription Guide | MediAI{% endblock %}
+{% block meta_description %}Explore our verified pharmaceutical catalog with over 500+ medicines, dosage forms, therapeutic uses, generic equivalents, and real-time pharmacy availability.{% endblock %}
 
 {% block content %}
 
-<section class="py-4" style="background: var(--surface-secondary); min-height: 85vh;">
+<section class="py-4" style="background: var(--surface-secondary); min-height: 85vh; margin-top: 60px;">
   <div class="container py-2">
+
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-3">
+      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope itemtype="https://schema.org/BreadcrumbList">
+        <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="{% url 'home' %}" class="text-decoration-none text-muted" itemprop="item"><i class="fa-solid fa-house fs-7 text-success me-1"></i><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <span itemprop="name">Medicine Catalog</span>
+          <meta itemprop="position" content="2" />
+        </li>
+      </ol>
+    </nav>
+
 
     <!-- ===================================== -->
     <!-- CATALOG HEADER & SEARCH BAR -->

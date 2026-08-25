@@ -23,75 +23,76 @@
 
 
 <p>
-
-Find medicines instantly from verified local pharmacies with real-time inventory tracking and GPS navigation.
-
+Find medicines instantly from verified local pharmacies with real-time inventory tracking, price comparisons, and turn-by-turn GPS navigation.
 </p>
 
+<div class="d-flex align-items-center gap-2 mb-3">
+  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold" style="font-size: 0.72rem;">
+    ⚡ 30s Real-time Stock Sync
+  </span>
+  <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2.5 py-1 small fw-bold" style="font-size: 0.72rem;">
+    🔒 DPDP &amp; HIPAA Compliant
+  </span>
+</div>
+
 <div class="socials">
-
-<a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-
-<a href="#" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
-
-<a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-
-<a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-
+  <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="MediAI on Facebook"><i class="fab fa-facebook-f"></i></a>
+  <a href="https://x.com" target="_blank" rel="noopener noreferrer" aria-label="MediAI on X (Twitter)"><i class="fab fa-x-twitter"></i></a>
+  <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="MediAI on LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+  <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="MediAI on Instagram"><i class="fab fa-instagram"></i></a>
 </div>
 
 </div>
 
 <div class="col-lg-2 offset-lg-1">
 
-<h5>Quick Links</h5>
+<h5>Explore</h5>
 <ul>
-  {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
-    <li><a href="{% url 'pharmacy_dashboard' %}">Pharmacy Dashboard</a></li>
-    <li><a href="{% url 'inventory' %}">Manage Inventory</a></li>
-    <li><a href="{% url 'download_inventory_template' %}">Excel Template</a></li>
-    <li><a href="{% url 'reservations' %}">Pending Orders</a></li>
-    <li><a href="{% url 'reservation_history' %}">Order History</a></li>
-  {% else %}
-    <li><a href="{% url 'home' %}">Home</a></li>
-    <li><a href="{% url 'search' %}">Search</a></li>
-    <li><a href="{% url 'medicines' %}">Medicines</a></li>
-    <li><a href="{% url 'pharmacies' %}">Pharmacies</a></li>
-  {% endif %}
+  <li><a href="{% url 'home' %}">Home</a></li>
+  <li><a href="{% url 'search' %}">Search Medicines</a></li>
+  <li><a href="{% url 'medicines' %}">Medicine Catalog</a></li>
+  <li><a href="{% url 'pharmacies' %}">Pharmacy Directory</a></li>
+  <li><a href="{% url 'home' %}#case-studies">Case Studies</a></li>
+  <li><a href="{% url 'home' %}#reviews">Patient Reviews</a></li>
+  <li><a href="{% url 'home' %}#faqs">Help &amp; FAQs</a></li>
+  <li><a href="{% url 'home' %}#team">Leadership Team</a></li>
 </ul>
 </div>
 
 <div class="col-lg-2">
-<h5>Account</h5>
+<h5>For Pharmacies</h5>
 <ul>
-  {% if user.is_authenticated %}
-    {% if user.userprofile.role == "Pharmacy" %}
-      <li><a href="{% url 'pharmacy_dashboard' %}">Dashboard</a></li>
-      <li><a href="{% url 'inventory' %}">Inventory</a></li>
-      <li><a href="{% url 'reservations' %}">Orders</a></li>
-    {% else %}
-      <li><a href="{% url 'my_reservations' %}">Orders</a></li>
-      <li><a href="{% url 'search_history' %}">Activity</a></li>
-    {% endif %}
-    <li><a href="{% url 'profile' %}">Profile Settings</a></li>
+  {% if user.is_authenticated and user.userprofile.role == "Pharmacy" %}
+    <li><a href="{% url 'pharmacy_dashboard' %}">Merchant Dashboard</a></li>
+    <li><a href="{% url 'inventory' %}">Manage Inventory</a></li>
+    <li><a href="{% url 'download_inventory_template' %}">Download Excel Template</a></li>
+    <li><a href="{% url 'reservations' %}">Customer Orders</a></li>
+    <li><a href="{% url 'reservation_history' %}">Order History</a></li>
   {% else %}
-    <li><a href="{% url 'login' %}">Login</a></li>
-    <li><a href="{% url 'register' %}">Get Started</a></li>
+    <li><a href="{% url 'register' %}">Partner Registration</a></li>
+    <li><a href="{% url 'login' %}">Merchant Login</a></li>
+    <li><a href="{% url 'search' %}">Check Competitor Prices</a></li>
+    <li><a href="{% url 'terms' %}">Merchant Terms</a></li>
   {% endif %}
+  <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
+  <li><a href="{% url 'terms' %}">Terms of Service</a></li>
 </ul>
-
 
 </div>
 
 <div class="col-lg-3">
 
-<h5>Contact Support</h5>
+<h5>24/7 Helpline &amp; Contact</h5>
 
-<p class="mb-2"><i class="fa-solid fa-envelope me-2 text-teal" style="color: #5eead4;"></i> support@yourdomain.com</p>
+<p class="mb-2"><i class="fa-solid fa-envelope me-2 text-teal" style="color: #5eead4;"></i> <a href="mailto:support@yourdomain.com" class="text-light text-decoration-none">support@yourdomain.com</a></p>
 
-<p class="mb-2"><i class="fa-solid fa-phone me-2 text-teal" style="color: #5eead4;"></i> +91 98765 43210</p>
+<p class="mb-2"><i class="fa-solid fa-phone me-2 text-teal" style="color: #5eead4;"></i> <a href="tel:+919876543210" class="text-light text-decoration-none">+91 98765 43210</a></p>
 
-<p class="mb-0"><i class="fa-solid fa-location-dot me-2 text-teal" style="color: #5eead4;"></i> Chennai, India</p>
+<p class="mb-2"><i class="fa-solid fa-location-dot me-2 text-teal" style="color: #5eead4;"></i> Anna Nagar, Chennai, India</p>
+
+<p class="text-muted small mt-2 mb-0" style="font-size: 0.76rem; color: #94a3b8 !important;">
+  MediAI operates 24/7 real-time pharmacy inventory discovery across Chennai metropolitan region.
+</p>
 
 </div>
 
@@ -101,13 +102,17 @@ Find medicines instantly from verified local pharmacies with real-time inventory
 
 <div class="footer-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
 
-<p class="mb-0">&copy; 2026 <strong>MediAI</strong>. Healthcare Technology Platform. All Rights Reserved.</p>
+<p class="mb-0">&copy; 2026 <strong>MediAI</strong> Healthcare Systems. All Rights Reserved.</p>
 
-<div class="small">
+<div class="small d-flex gap-3">
 
-<a href="{% url 'privacy' %}" class="me-3 text-decoration-none">Privacy Policy</a>
+<a href="{% url 'privacy' %}" class="text-decoration-none text-muted">Privacy Policy</a>
 
-<a href="{% url 'terms' %}" class="text-decoration-none">Terms of Service</a>
+<a href="{% url 'terms' %}" class="text-decoration-none text-muted">Terms of Service</a>
+
+<a href="{% url 'robots_txt' %}" class="text-decoration-none text-muted">Robots.txt</a>
+
+<a href="{% url 'sitemap_xml' %}" class="text-decoration-none text-muted">Sitemap.xml</a>
 
 </div>
 
@@ -115,4 +120,4 @@ Find medicines instantly from verified local pharmacies with real-time inventory
 
 </div>
 
-</footer>
+</footer>

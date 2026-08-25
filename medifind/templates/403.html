@@ -1,59 +1,37 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-Access Denied | MediAI
-{% endblock %}
+{% block title %}Access Denied (403) | MediAI Security{% endblock %}
+{% block meta_description %}You do not have permission to access this resource on MediAI.{% endblock %}
 
 {% block content %}
-
-<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 70px;">
-
+<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 60px;">
   <div class="container py-4">
-
     <div class="row justify-content-center">
-
-      <div class="col-md-8 col-lg-6 text-center">
-
-        <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
-
-          <div class="p-4 bg-danger-subtle text-danger rounded-circle d-inline-flex mx-auto mb-4">
-
-            <i class="fa-solid fa-user-shield fa-4x"></i>
-
+      <div class="col-lg-8 col-xl-6 text-center">
+        <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5 bg-white position-relative overflow-hidden">
+          <div class="position-absolute top-0 start-0 w-100 bg-warning" style="height: 4px;"></div>
+          <div class="p-4 bg-warning-subtle text-warning rounded-circle d-inline-flex mx-auto mb-3 shadow-xs" style="width: 88px; height: 88px; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-lock fa-3x text-warning-emphasis"></i>
           </div>
-
-          <h2 class="fw-bold text-dark mb-2">403 - Permission Required</h2>
-
-          <p class="text-muted lead mb-4">
-
-            You do not have authorization to access this page. This feature is restricted to registered Pharmacy Owners or Platform Administrators.
-
+          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-bold small mb-2 mx-auto">
+            HTTP Error 403
+          </span>
+          <h1 class="fw-extrabold text-dark mb-2" style="letter-spacing: -0.8px; font-size: 1.9rem;">Access Restricted</h1>
+          <p class="text-muted lead fs-6 mb-4" style="max-width: 480px; margin: 0 auto;">
+            You don't have authorization to view this medical portal page. Please log in with appropriate credentials or return to the main dashboard.
           </p>
-
-          <div class="d-flex justify-content-center gap-3">
-
-            <a href="{% url 'home' %}" class="btn btn-primary rounded-pill px-4 fw-bold">
-
-              <i class="fa-solid fa-house me-2"></i> Back to Home
-
+          <div class="d-flex justify-content-center flex-wrap gap-2">
+            <a href="{% url 'login' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm">
+              <i class="fa-solid fa-right-to-bracket me-1.5"></i> Merchant Login
             </a>
-
-            <a href="{% url 'login' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold">
-
-              Switch Account
-
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold">
+              <i class="fa-solid fa-house me-1.5"></i> Back to Home
             </a>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   </div>
-
 </section>
-
 {% endblock %}

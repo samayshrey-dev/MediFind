@@ -1,30 +1,58 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}
-{{ pharmacy.name }} | MediAI
-{% endblock %}
+{% block title %}{{ pharmacy.name }} - Real-time Stock, Hours & Directions in {{ pharmacy.city }} | MediAI{% endblock %}
+{% block meta_description %}Visit {{ pharmacy.name }} at {{ pharmacy.address }}, {{ pharmacy.city }}. Check live medicine inventory, open hours ({{ pharmacy.opening_time|time:"h:i A" }} - {{ pharmacy.closing_time|time:"h:i A" }}), phone contact, and get GPS directions.{% endblock %}
 
 {% block content %}
+
+<!-- Schema.org Pharmacy / LocalBusiness JSON-LD -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Pharmacy",
+  "name": "{{ pharmacy.name|escapejs }}",
+  "image": "{% if pharmacy.image %}{{ request.scheme }}://{{ request.get_host }}{{ pharmacy.image.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/medifind-og-preview.svg' %}{% endif %}",
+  "telephone": "{{ pharmacy.phone }}",
+  "email": "{{ pharmacy.email|default:'support@medifind.com' }}",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "{{ pharmacy.address|escapejs }}",
+    "addressLocality": "{{ pharmacy.city|default:'Chennai' }}",
+    "addressRegion": "{{ pharmacy.state|default:'Tamil Nadu' }}",
+    "postalCode": "{{ pharmacy.pincode|default:'600040' }}",
+    "addressCountry": "IN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "{{ pharmacy.latitude|default:'13.0827' }}",
+    "longitude": "{{ pharmacy.longitude|default:'80.2707' }}"
+  },
+  "openingHours": "Mo-Su {{ pharmacy.opening_time|time:'H:i' }}-{{ pharmacy.closing_time|time:'H:i' }}",
+  "priceRange": "₹₹"
+}
+</script>
 
 <section class="py-5 bg-light" style="margin-top: 70px;">
 
 <div class="container">
 
-<!-- Breadcrumb -->
-
-<nav aria-label="breadcrumb" class="mb-4">
-
-  <ol class="breadcrumb">
-
-    <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Home</a></li>
-
-    <li class="breadcrumb-item"><a href="{% url 'pharmacies' %}" class="text-decoration-none">Pharmacies</a></li>
-
-    <li class="breadcrumb-item active" aria-current="page">{{ pharmacy.name }}</li>
-
+<!-- Breadcrumbs with Schema.org -->
+<nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-4">
+  <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="{% url 'home' %}" class="text-decoration-none text-muted" itemprop="item"><i class="fa-solid fa-house fs-7 text-success me-1"></i><span itemprop="name">Home</span></a>
+      <meta itemprop="position" content="1" />
+    </li>
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="{% url 'pharmacies' %}" class="text-decoration-none text-muted" itemprop="item"><span itemprop="name">Pharmacies</span></a>
+      <meta itemprop="position" content="2" />
+    </li>
+    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <span itemprop="name">{{ pharmacy.name }}</span>
+      <meta itemprop="position" content="3" />
+    </li>
   </ol>
-
 </nav>
 
 <!-- Pharmacy Detail Hero Card -->
@@ -75,17 +103,20 @@
 
             <h1 class="fw-bold text-dark display-6 mb-1">{{ pharmacy.name }}</h1>
 
-            <p class="text-muted fs-5 mb-0">Managed by: <strong class="text-primary">{{ pharmacy.owner_name }}</strong></p>
+            <p class="text-muted fs-5 mb-0">Managed by: <strong class="text-primary">{{ pharmacy.owner_name|default:"Verified Pharmacist" }}</strong></p>
 
           </div>
 
-          <a href="https://maps.google.com/?q={{ pharmacy.latitude }},{{ pharmacy.longitude }}" target="_blank" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
-
-            <i class="fa-solid fa-map-location-dot me-2"></i> Get GPS Directions
-
+          <a href="https://www.google.com/maps/dir/?api=1&destination={{ pharmacy.latitude|default:'13.0827' }},{{ pharmacy.longitude|default:'80.2707' }}"
+             target="_blank" rel="noopener noreferrer"
+             class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
+             onclick="if(window.trackMediAIEvent) window.trackMediAIEvent('pharmacy_detail_directions_click', {'pharmacy_id': '{{ pharmacy.id }}'});">
+            <i class="fa-solid fa-diamond-turn-right"></i>
+            <span>Get GPS Directions</span>
           </a>
 
         </div>
+
 
         <div class="row g-3 my-3">
 

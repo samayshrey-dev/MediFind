@@ -257,4 +257,9 @@ path(
 ),
 path("privacy/", views.privacy_policy, name="privacy"),
 path("terms/", views.terms_of_service, name="terms"),
+path("thank-you/", views.thank_you_view, name="thank_you"),
+path("robots.txt", views.robots_txt, name="robots_txt"),
+path("sitemap.xml", views.sitemap_xml, name="sitemap_xml"),
+path("404/", views.custom_404_view, name="custom_404_preview"),
 ]
+

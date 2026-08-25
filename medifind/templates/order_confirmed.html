@@ -1,15 +1,34 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Order Confirmed #{{ order.order_reference }} - MediAI{% endblock %}
+{% block title %}Order Confirmed #{{ order.order_reference }} | MediAI{% endblock %}
+{% block meta_description %}Your medicine reservation #{{ order.order_reference }} is confirmed at {{ order.pharmacy.name }}. View live store directions and pickup details.{% endblock %}
 
 {% block content %}
-<div class="container py-5 my-4" style="max-width: 720px;">
+<div class="container py-5 my-4" style="max-width: 720px; margin-top: 60px;">
+
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-4">
+    <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope itemtype="https://schema.org/BreadcrumbList">
+      <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a href="{% url 'home' %}" class="text-decoration-none text-muted" itemprop="item"><i class="fa-solid fa-house fs-7 text-success me-1"></i><span itemprop="name">Home</span></a>
+        <meta itemprop="position" content="1" />
+      </li>
+      <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a href="{% url 'my_reservations' %}" class="text-decoration-none text-muted" itemprop="item"><span itemprop="name">Orders</span></a>
+        <meta itemprop="position" content="2" />
+      </li>
+      <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <span itemprop="name">#{{ order.order_reference }}</span>
+        <meta itemprop="position" content="3" />
+      </li>
+    </ol>
+  </nav>
 
   <!-- ══════════════════════════════════════════════
        SUCCESS HEADER
        ══════════════════════════════════════════════ -->
-  <div class="text-center mb-5">
+  <div class="text-center mb-4">
     <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-3 pulse-success" style="width: 80px; height: 80px;">
       <i class="fa-solid fa-circle-check" style="font-size: 2.4rem;"></i>
     </div>
@@ -19,13 +38,13 @@
       </span>
     </div>
     <h1 class="fw-bold text-dark mb-1" style="font-size: 1.8rem;">Order Confirmed!</h1>
-    <p class="text-muted">Your medicine has been reserved and the pharmacy has been notified.</p>
+    <p class="text-muted">Your medicine has been reserved and the pharmacy has been notified immediately.</p>
   </div>
 
   <!-- ══════════════════════════════════════════════
        WHAT YOU ORDERED PANEL
        ══════════════════════════════════════════════ -->
-  <div class="card border-0 rounded-4 shadow-sm mb-4 overflow-hidden">
+  <div class="card border-0 rounded-4 shadow-sm mb-4 overflow-hidden bg-white">
 
     <!-- Header bar -->
     <div class="px-4 py-3 border-bottom" style="background: linear-gradient(135deg, #f0fdf4, #f8fafc);">
@@ -58,15 +77,21 @@
         </div>
       </div>
 
-      <!-- Pharmacy row -->
-      <div class="d-flex align-items-start gap-3 mb-4 pb-3 border-bottom">
-        <div class="d-flex align-items-center justify-content-center bg-success-subtle text-success rounded-3 flex-shrink-0" style="width: 44px; height: 44px;">
-          <i class="fa-solid fa-store"></i>
-        </div>
-        <div class="flex-grow-1">
-          <div class="text-muted small mb-0">Pickup Location</div>
+      <!-- Pharmacy row with Directions CTA -->
+      <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3 pb-3 border-bottom">
+        <div>
+          <div class="text-muted small mb-0">Pickup Pharmacy</div>
           <div class="fw-bold text-dark fs-6">{{ order.pharmacy.name }}</div>
-          <div class="text-muted small">{{ order.pharmacy.address }}, {{ order.pharmacy.city }}</div>
+          <div class="text-muted small"><i class="fa-solid fa-location-dot text-danger me-1"></i>{{ order.pharmacy.address }}</div>
+        </div>
+        <div>
+          <a href="https://www.google.com/maps/dir/?api=1&destination={{ order.pharmacy.latitude|default:'13.0827' }},{{ order.pharmacy.longitude|default:'80.2707' }}"
+             target="_blank" rel="noopener noreferrer"
+             class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs"
+             onclick="if(window.trackMediAIEvent) window.trackMediAIEvent('order_directions_click', {'order_ref': '{{ order.order_reference }}'});">
+            <i class="fa-solid fa-diamond-turn-right"></i>
+            <span>Get Directions</span>
+          </a>
         </div>
       </div>
 
@@ -96,7 +121,7 @@
   <!-- ══════════════════════════════════════════════
        WHAT HAPPENS NEXT
        ══════════════════════════════════════════════ -->
-  <div class="card border-0 rounded-4 shadow-sm mb-4">
+  <div class="card border-0 rounded-4 shadow-sm mb-4 bg-white">
     <div class="p-4">
       <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-timeline me-2 text-primary"></i> What Happens Next</h6>
       <div class="list-group list-group-flush rounded-3 border">
@@ -132,10 +157,10 @@
        ACTION BUTTONS
        ══════════════════════════════════════════════ -->
   <div class="d-flex flex-wrap gap-3 justify-content-center">
-    <a href="{% url 'my_reservations' %}" class="btn btn-primary rounded-pill px-5 py-2 fw-semibold">
+    <a href="{% url 'my_reservations' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-semibold shadow-sm">
       <i class="fa-solid fa-list-check me-2"></i> View My Orders
     </a>
-    <a href="{% url 'search' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold">
+    <a href="{% url 'search' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold">
       <i class="fa-solid fa-magnifying-glass me-2"></i> Find More Medicines
     </a>
   </div>

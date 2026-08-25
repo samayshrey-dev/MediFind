@@ -1,27 +1,39 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}
-Reserve {{ medicine.name }} | MediAI
-{% endblock %}
+{% block title %}Reserve {{ medicine.name }} at {{ pharmacy.name }} | MediAI{% endblock %}
+{% block meta_description %}Reserve {{ medicine.name }} ({{ medicine.brand }}) for immediate pickup at {{ pharmacy.name }}, {{ pharmacy.city }}. Guaranteed 15-minute stock hold and secure checkout.{% endblock %}
 
 {% block content %}
-<section class="py-5" style="background: var(--surface-secondary); min-height: 90vh;">
+<section class="py-5" style="background: var(--surface-secondary); min-height: 90vh; margin-top: 60px;">
   <div class="container py-3">
 
-    <!-- Breadcrumb & Header -->
+    <!-- Breadcrumbs with Schema.org -->
     <div class="mb-4">
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-2">
-          <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
-          <li class="breadcrumb-item"><a href="{% url 'search' %}" class="text-decoration-none text-muted">Search</a></li>
-          <li class="breadcrumb-item"><a href="{% url 'medicine_detail' medicine.id %}" class="text-decoration-none text-muted">{{ medicine.name }}</a></li>
-          <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Reserve &amp; Checkout</li>
+      <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-2">
+        <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope itemtype="https://schema.org/BreadcrumbList">
+          <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <a href="{% url 'home' %}" class="text-decoration-none text-muted" itemprop="item"><i class="fa-solid fa-house fs-7 text-success me-1"></i><span itemprop="name">Home</span></a>
+            <meta itemprop="position" content="1" />
+          </li>
+          <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <a href="{% url 'search' %}" class="text-decoration-none text-muted" itemprop="item"><span itemprop="name">Search</span></a>
+            <meta itemprop="position" content="2" />
+          </li>
+          <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <a href="{% url 'medicine_detail' medicine.id %}" class="text-decoration-none text-muted" itemprop="item"><span itemprop="name">{{ medicine.name }}</span></a>
+            <meta itemprop="position" content="3" />
+          </li>
+          <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <span itemprop="name">Reserve &amp; Checkout</span>
+            <meta itemprop="position" content="4" />
+          </li>
         </ol>
       </nav>
       <h2 class="fw-bold text-dark mb-1">Reserve Medicine &amp; Select Payment</h2>
       <p class="text-muted small mb-0">Choose to complete payment online via Razorpay or pay directly upon pickup at the pharmacy counter.</p>
     </div>
+
 
     <div class="row g-4">
       <!-- ══════════════════════════════════════════════

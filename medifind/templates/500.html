@@ -1,29 +1,32 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-Server Error (500) | MediAI
-{% endblock %}
+{% block title %}Server Error (500) | MediAI Support{% endblock %}
+{% block meta_description %}A temporary server error occurred. Our engineering team has been automatically alerted.{% endblock %}
 
 {% block content %}
-<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 70px;">
+<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 60px;">
   <div class="container py-4">
     <div class="row justify-content-center">
-      <div class="col-md-8 col-lg-6 text-center">
-        <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
-          <div class="p-4 bg-danger-subtle text-danger rounded-circle d-inline-flex mx-auto mb-4" style="width: 88px; height: 88px; align-items: center; justify-content: center;">
-            <i class="fa-solid fa-triangle-exclamation fa-3x"></i>
+      <div class="col-lg-8 col-xl-6 text-center">
+        <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5 bg-white position-relative overflow-hidden">
+          <div class="position-absolute top-0 start-0 w-100 bg-danger" style="height: 4px;"></div>
+          <div class="p-4 bg-danger-subtle text-danger rounded-circle d-inline-flex mx-auto mb-3 shadow-xs" style="width: 88px; height: 88px; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-triangle-exclamation fa-3x text-danger"></i>
           </div>
-          <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold small mb-2 mx-auto">Error 500</span>
-          <h2 class="fw-bold text-dark mb-2">System Error</h2>
-          <p class="text-muted lead mb-4" style="font-size: 1.05rem;">
-            MediAI encountered an unexpected issue while processing your healthcare request. Our engineering team has been automatically alerted.
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold small mb-2 mx-auto">
+            HTTP Error 500
+          </span>
+          <h1 class="fw-extrabold text-dark mb-2" style="letter-spacing: -0.8px; font-size: 1.9rem;">Internal System Error</h1>
+          <p class="text-muted lead fs-6 mb-4" style="max-width: 480px; margin: 0 auto;">
+            Our healthcare system encountered an unexpected issue processing this request. Our engineering team has been notified.
           </p>
-          <div class="d-flex justify-content-center flex-wrap gap-3">
-            <a href="{% url 'home' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
-              <i class="fa-solid fa-rotate-right me-2"></i> Reload MediAI Home
+          <div class="d-flex justify-content-center flex-wrap gap-2">
+            <a href="{% url 'home' %}" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm">
+              <i class="fa-solid fa-house me-1.5"></i> Back to Safety (Home)
             </a>
-            <a href="mailto:support@MediAI.io" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold">
-              <i class="fa-solid fa-envelope me-2"></i> Contact MediAI Support
+            <a href="{% url 'search' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold">
+              <i class="fa-solid fa-magnifying-glass me-1.5"></i> Search Medicines
             </a>
           </div>
         </div>

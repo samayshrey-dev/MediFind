@@ -10,10 +10,81 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Primary SEO Meta Tags -->
   <title>{% block title %}MediAI - Real-time Pharmacy & Medicine Locator{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Find medicines instantly from verified local pharmacies with real-time inventory tracking, price comparison, and GPS directions on MediAI.{% endblock %}">
+  <meta name="keywords" content="{% block meta_keywords %}medicine finder, pharmacy near me, online pharmacy inventory, check medicine stock, buy medicine online, 24/7 pharmacy Chennai, prescription medicine reserve{% endblock %}">
+  <meta name="author" content="MediAI Healthcare Systems">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+  <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MediAI">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:title" content="{% block og_title %}MediAI - Real-time Pharmacy & Medicine Locator{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Scan verified real-time stock across local pharmacies, compare prices, and lock in 15-minute reservations with GPS navigation.{% endblock %}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/medifind-og-preview.svg' %}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter / X Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@MediAI_Health">
+  <meta name="twitter:creator" content="@MediAI_Health">
+  <meta name="twitter:title" content="{% block twitter_title %}MediAI - Real-time Pharmacy & Medicine Locator{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}Find medicines instantly at verified local pharmacies with live stock counts and GPS route guidance.{% endblock %}">
+  <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/medifind-og-preview.svg' %}">
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+  <link rel="apple-touch-icon" href="{% static 'images/favicon.svg' %}">
+
+  <!-- Google Analytics GA4 & Event Tracking -->
+  {% if ga_measurement_id or True %}
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_measurement_id|default:'G-MEDIFIND2026' }}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '{{ ga_measurement_id|default:"G-MEDIFIND2026" }}', {
+      'anonymize_ip': true,
+      'send_page_view': true
+    });
+
+    // Universal MediAI Custom Analytics Event Tracker
+    window.trackMediAIEvent = function(eventName, params = {}) {
+      try {
+        if (typeof gtag === 'function') {
+          gtag('event', eventName, params);
+        }
+        console.debug(`[MediAI Analytics Event] ${eventName}:`, params);
+      } catch (err) {
+        console.warn('Analytics event dispatch failed:', err);
+      }
+    };
+  </script>
+  {% endif %}
+
+  <!-- Schema.org WebSite JSON-LD Structured Data for Google Sitelinks Searchbox -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "MediAI",
+    "url": "{{ request.scheme }}://{{ request.get_host }}/",
+    "description": "Real-time medicine inventory discovery, price comparison, and pharmacy navigation platform.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}/search/?medicine={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 
   <!-- Modern Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,6 +186,30 @@
       </a>
     </div>
   </nav>
+  {% else %}
+  <!-- Sticky Mobile Action CTA Bar for Consumers/Visitors -->
+  <div class="sticky-mobile-cta-bar d-lg-none fixed-bottom p-2" style="z-index: 1030; pointer-events: none;">
+    <div class="container px-2">
+      <div class="card border-0 rounded-pill shadow-lg bg-dark text-white p-1.5 d-flex flex-row align-items-center justify-content-between gap-2"
+           style="pointer-events: auto; backdrop-filter: blur(14px); background: rgba(15, 23, 42, 0.95) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important;">
+        <a href="{% url 'search' %}" class="btn btn-sm btn-primary rounded-pill px-3.5 py-2 fw-bold d-flex align-items-center gap-2 flex-grow-1 justify-content-center text-decoration-none"
+           onclick="if(window.trackMediAIEvent) window.trackMediAIEvent('sticky_mobile_search_click', {'source': 'mobile_bottom_bar'});">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search Medicines</span>
+        </a>
+        <a href="{% url 'pharmacies' %}" class="btn btn-sm btn-outline-light rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-1.5 text-decoration-none"
+           onclick="if(window.trackMediAIEvent) window.trackMediAIEvent('sticky_mobile_pharmacies_click', {'source': 'mobile_bottom_bar'});">
+          <i class="fa-solid fa-location-dot text-success"></i>
+          <span>Nearby</span>
+        </a>
+        <a href="tel:+919876543210" class="btn btn-sm btn-light rounded-circle d-flex align-items-center justify-content-center"
+           style="width: 36px; height: 36px;" title="Call 24/7 Helpline" aria-label="Call 24/7 Healthcare Helpline"
+           onclick="if(window.trackMediAIEvent) window.trackMediAIEvent('sticky_mobile_call_click', {'source': 'mobile_bottom_bar'});">
+          <i class="fa-solid fa-phone text-success fs-7"></i>
+        </a>
+      </div>
+    </div>
+  </div>
   {% endif %}
 
   <!-- Scripts -->
@@ -133,6 +228,5 @@
   {% endif %}
 
 </body>
-
 
 </html>

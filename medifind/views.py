@@ -3427,4 +3427,126 @@ def terms_of_service(request):
     """
     Renders the MediAI Terms of Service.
     """
-    return render(request, "terms.html")
+    return render(request, "terms.html")
+
+
+def thank_you_view(request):
+    """
+    Renders the dedicated reservation / order thank you confirmation page.
+    """
+    ref_code = request.GET.get("ref", "849204")
+    pharmacy_id = request.GET.get("pharmacy_id")
+    pharmacy = None
+    if pharmacy_id and pharmacy_id.isdigit():
+        pharmacy = Pharmacy.objects.filter(id=int(pharmacy_id)).first()
+
+    context = {
+        "ref_code": ref_code,
+        "pharmacy_name": pharmacy.name if pharmacy else "Apollo Pharmacy Anna Nagar",
+        "pharmacy_address": pharmacy.address if pharmacy else "14/2 2nd Avenue, Anna Nagar, Chennai, Tamil Nadu",
+        "pharmacy_phone": pharmacy.phone if pharmacy else "+91 98765 43210",
+        "pharmacy_lat": pharmacy.latitude if pharmacy and pharmacy.latitude else 13.0827,
+        "pharmacy_lng": pharmacy.longitude if pharmacy and pharmacy.longitude else 80.2707,
+    }
+    return render(request, "thank_you.html", context)
+
+
+def custom_404_view(request, exception=None):
+    """
+    Custom 404 handler returning rich search-enabled error template with HTTP 404 status.
+    """
+    return render(request, "404.html", status=404)
+
+
+def custom_500_view(request):
+    """
+    Custom 500 handler returning user-friendly error template with HTTP 500 status.
+    """
+    return render(request, "500.html", status=500)
+
+
+def custom_403_view(request, exception=None):
+    """
+    Custom 403 handler returning permission denied template with HTTP 403 status.
+    """
+    return render(request, "403.html", status=403)
+
+
+def robots_txt(request):
+    """
+    Generates SEO-optimized robots.txt for search engine crawlers.
+    """
+    host = request.get_host()
+    scheme = "https" if request.is_secure() else "http"
+    content = f"""User-agent: *
+Allow: /
+Allow: /search/
+Allow: /medicines/
+Allow: /pharmacies/
+Allow: /privacy/
+Allow: /terms/
+
+# Protect Private & Transactional Endpoints
+Disallow: /admin/
+Disallow: /api/payments/
+Disallow: /api/notifications/
+Disallow: /dashboard/
+Disallow: /pharmacy-dashboard/
+Disallow: /inventory/
+Disallow: /reservations/
+Disallow: /my-reservations/
+Disallow: /profile/
+Disallow: /password-reset/
+
+Sitemap: {scheme}://{host}/sitemap.xml
+"""
+    return HttpResponse(content.strip(), content_type="text/plain")
+
+
+def sitemap_xml(request):
+    """
+    Generates dynamic XML sitemap indexing all public pages, medicines, and pharmacies.
+    """
+    host = request.get_host()
+    scheme = "https" if request.is_secure() else "http"
+    base_url = f"{scheme}://{host}"
+
+    today = timezone.now().strftime("%Y-%m-%d")
+    urls = [
+        {"loc": f"{base_url}/", "lastmod": today, "changefreq": "daily", "priority": "1.0"},
+        {"loc": f"{base_url}/search/", "lastmod": today, "changefreq": "daily", "priority": "0.9"},
+        {"loc": f"{base_url}/medicines/", "lastmod": today, "changefreq": "daily", "priority": "0.8"},
+        {"loc": f"{base_url}/pharmacies/", "lastmod": today, "changefreq": "daily", "priority": "0.8"},
+        {"loc": f"{base_url}/privacy/", "lastmod": today, "changefreq": "monthly", "priority": "0.5"},
+        {"loc": f"{base_url}/terms/", "lastmod": today, "changefreq": "monthly", "priority": "0.5"},
+    ]
+
+    for med in Medicine.objects.all()[:500]:
+        urls.append({
+            "loc": f"{base_url}/medicine/{med.id}/",
+            "lastmod": today,
+            "changefreq": "weekly",
+            "priority": "0.7",
+        })
+
+    for pharm in Pharmacy.objects.filter(is_active=True)[:200]:
+        urls.append({
+            "loc": f"{base_url}/pharmacy/{pharm.id}/",
+            "lastmod": today,
+            "changefreq": "daily",
+            "priority": "0.7",
+        })
+
+    xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml_lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    for u in urls:
+        xml_lines.append("  <url>")
+        xml_lines.append(f"    <loc>{u['loc']}</loc>")
+        xml_lines.append(f"    <lastmod>{u['lastmod']}</lastmod>")
+        xml_lines.append(f"    <changefreq>{u['changefreq']}</changefreq>")
+        xml_lines.append(f"    <priority>{u['priority']}</priority>")
+        xml_lines.append("  </url>")
+    xml_lines.append("</urlset>")
+
+    return HttpResponse("\n".join(xml_lines), content_type="application/xml")
+

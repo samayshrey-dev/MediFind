@@ -1,11 +1,27 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}My Orders | MediAI{% endblock %}
+{% block title %}My Medicine Orders & Reservations | MediAI{% endblock %}
+{% block meta_description %}Track your active medicine reservations, pickup codes, payment statuses, and pharmacy store navigation.{% endblock %}
 
 {% block content %}
-<section class="py-5" style="background: var(--surface-secondary); min-height: 85vh;">
+<section class="py-5" style="background: var(--surface-secondary); min-height: 85vh; margin-top: 60px;">
   <div class="container py-3" style="max-width: 820px;">
+
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-3">
+      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope itemtype="https://schema.org/BreadcrumbList">
+        <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="{% url 'home' %}" class="text-decoration-none text-muted" itemprop="item"><i class="fa-solid fa-house fs-7 text-success me-1"></i><span itemprop="name">Home</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <span itemprop="name">My Orders</span>
+          <meta itemprop="position" content="2" />
+        </li>
+      </ol>
+    </nav>
+
 
     <!-- Page header -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">

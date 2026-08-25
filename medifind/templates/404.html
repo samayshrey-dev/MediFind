@@ -1,32 +1,85 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-Page Not Found (404) | MediAI
-{% endblock %}
+{% block title %}Page Not Found (404) | MediAI Pharmacy Locator{% endblock %}
+{% block meta_description %}The page you requested could not be found on MediAI. Search our live verified medicine catalog or locate nearby 24/7 pharmacies.{% endblock %}
 
 {% block content %}
-<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 70px;">
+<section class="py-5 bg-light min-vh-100 d-flex align-items-center" style="margin-top: 60px;">
   <div class="container py-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-4">
+      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted"><i class="fa-solid fa-house fs-7 text-success"></i> Home</a></li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">404 Error</li>
+      </ol>
+    </nav>
+
     <div class="row justify-content-center">
-      <div class="col-md-8 col-lg-6 text-center">
-        <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
-          <div class="p-4 bg-warning-subtle text-warning rounded-circle d-inline-flex mx-auto mb-4" style="width: 88px; height: 88px; align-items: center; justify-content: center;">
-            <i class="fa-solid fa-compass-drafting fa-3x text-warning-emphasis"></i>
+      <div class="col-lg-8 col-xl-7 text-center">
+        <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5 bg-white position-relative overflow-hidden">
+          <!-- Decorative Top Accent -->
+          <div class="position-absolute top-0 start-0 w-100 bg-success" style="height: 4px;"></div>
+
+          <!-- Animated Icon Badge -->
+          <div class="p-4 bg-success-subtle text-success rounded-circle d-inline-flex mx-auto mb-3 shadow-xs" style="width: 88px; height: 88px; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-file-circle-question fa-3x text-success"></i>
           </div>
-          <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-3 py-1 fw-bold small mb-2 mx-auto">Error 404</span>
-          <h2 class="fw-bold text-dark mb-2">Page Not Found</h2>
-          <p class="text-muted lead mb-4" style="font-size: 1.05rem;">
-            The medicine, pharmacy, or page you are looking for might have been removed, had its name changed, or is temporarily unavailable on MediAI.
+
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold small mb-2 mx-auto">
+            HTTP Error 404
+          </span>
+          <h1 class="fw-extrabold text-dark mb-2" style="letter-spacing: -0.8px; font-size: 2rem;">Page Not Found</h1>
+          <p class="text-muted lead fs-6 mb-4" style="max-width: 520px; margin: 0 auto;">
+            We couldn't locate the medicine, pharmacy, or page you were looking for. It may have been moved, renamed, or is temporarily out of service.
           </p>
-          <div class="d-flex justify-content-center flex-wrap gap-3">
-            <a href="{% url 'home' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
-              <i class="fa-solid fa-house me-2"></i> Back to MediAI Home
+
+          <!-- Direct Medicine Search Bar -->
+          <div class="p-3 bg-light rounded-4 border mb-4 text-start">
+            <label class="form-label small fw-bold text-muted text-uppercase mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+              <i class="fa-solid fa-magnifying-glass text-success me-1"></i> Search Verified Inventory Directly
+            </label>
+            <form action="{% url 'search' %}" method="GET" class="d-flex gap-2">
+              <input type="text" name="medicine" class="form-control rounded-pill border-0 shadow-none px-3.5 py-2.5 bg-white" placeholder="Search medicine (e.g., Dolo 650, Azithromycin)..." required>
+              <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm text-nowrap">
+                Search
+              </button>
+            </form>
+          </div>
+
+          <!-- Popular Medicine Tags -->
+          <div class="mb-4 text-start">
+            <span class="small fw-bold text-muted me-2">Popular searches:</span>
+            <div class="d-inline-flex flex-wrap gap-1.5 mt-1">
+              <a href="{% url 'search' %}?medicine=Dolo+650" class="btn btn-sm btn-outline-secondary rounded-pill py-0.5 px-2.5" style="font-size: 0.75rem;">Dolo 650</a>
+              <a href="{% url 'search' %}?medicine=Paracetamol" class="btn btn-sm btn-outline-secondary rounded-pill py-0.5 px-2.5" style="font-size: 0.75rem;">Paracetamol</a>
+              <a href="{% url 'search' %}?medicine=Augmentin" class="btn btn-sm btn-outline-secondary rounded-pill py-0.5 px-2.5" style="font-size: 0.75rem;">Augmentin</a>
+              <a href="{% url 'search' %}?medicine=Insulin" class="btn btn-sm btn-outline-secondary rounded-pill py-0.5 px-2.5" style="font-size: 0.75rem;">Insulin</a>
+              <a href="{% url 'search' %}?medicine=Cetirizine" class="btn btn-sm btn-outline-secondary rounded-pill py-0.5 px-2.5" style="font-size: 0.75rem;">Cetirizine</a>
+            </div>
+          </div>
+
+          <!-- Quick Navigation Actions -->
+          <div class="d-flex justify-content-center flex-wrap gap-2 pt-2 border-top">
+            <a href="{% url 'home' %}" class="btn btn-outline-dark rounded-pill px-3.5 py-2 fw-semibold small">
+              <i class="fa-solid fa-house me-1.5 text-success"></i> MediAI Home
             </a>
-            <a href="{% url 'search' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold">
-              <i class="fa-solid fa-magnifying-glass me-2"></i> Search Medicines
+            <a href="{% url 'medicines' %}" class="btn btn-outline-dark rounded-pill px-3.5 py-2 fw-semibold small">
+              <i class="fa-solid fa-pills me-1.5 text-primary"></i> Browse Catalog
+            </a>
+            <a href="{% url 'pharmacies' %}" class="btn btn-outline-dark rounded-pill px-3.5 py-2 fw-semibold small">
+              <i class="fa-solid fa-location-dot me-1.5 text-danger"></i> Nearby Stores
+            </a>
+            <a href="{% url 'privacy' %}" class="btn btn-outline-dark rounded-pill px-3.5 py-2 fw-semibold small">
+              <i class="fa-solid fa-shield-halved me-1.5 text-info"></i> Privacy &amp; Trust
             </a>
           </div>
         </div>
+
+        <!-- 24/7 Helpline -->
+        <p class="text-muted small mt-3">
+          Need urgent prescription assistance? Call 24/7 Helpline: <a href="tel:+919876543210" class="text-success fw-bold text-decoration-none">+91 98765 43210</a>
+        </p>
       </div>
     </div>
   </div>

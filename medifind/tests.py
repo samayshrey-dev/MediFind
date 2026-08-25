@@ -922,6 +922,43 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, "/inventory/")
 
+    def test_34_seo_and_conversion_features(self):
+        """Tests that robots.txt, sitemap.xml, thank-you, 404, and schema render properly."""
+        # 1. robots.txt
+        resp_robots = self.client.get("/robots.txt")
+        self.assertEqual(resp_robots.status_code, 200)
+        self.assertIn("User-agent: *", resp_robots.content.decode())
+        self.assertIn("Sitemap:", resp_robots.content.decode())
+
+        # 2. sitemap.xml
+        resp_sitemap = self.client.get("/sitemap.xml")
+        self.assertEqual(resp_sitemap.status_code, 200)
+        self.assertEqual(resp_sitemap["Content-Type"], "application/xml")
+        self.assertIn("<urlset", resp_sitemap.content.decode())
+        self.assertIn("/medicines/", resp_sitemap.content.decode())
+
+        # 3. thank-you page
+        resp_thanks = self.client.get(f"/thank-you/?ref=TEST999&pharmacy_id={self.pharmacy.id}")
+        self.assertEqual(resp_thanks.status_code, 200)
+        self.assertContains(resp_thanks, "TEST999")
+        self.assertContains(resp_thanks, self.pharmacy.name)
+
+        # 4. 404 page
+        resp_404 = self.client.get("/404/")
+        self.assertEqual(resp_404.status_code, 404)
+        self.assertContains(resp_404, "Page Not Found", status_code=404)
+
+        # 5. Homepage FAQs & Schema
+        resp_home = self.client.get("/")
+        self.assertEqual(resp_home.status_code, 200)
+        self.assertContains(resp_home, "Frequently Asked Questions")
+        self.assertContains(resp_home, "Healthcare Impact &amp; Case Studies")
+        self.assertContains(resp_home, "Real Reviews from Real Users")
+        self.assertContains(resp_home, "Leadership &amp; Clinical Advisory")
+        self.assertContains(resp_home, "application/ld+json")
+
+
+
 
 
 
