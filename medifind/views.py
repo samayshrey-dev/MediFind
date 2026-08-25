@@ -780,6 +780,213 @@ def ai_search_api(request):
     return JsonResponse(result)
 
 
+# ==========================================================
+# Prescription OCR + Medicine Extraction Views & APIs
+# ==========================================================
+from .models import Prescription
+from .prescription_ocr import (
+    validate_prescription_file,
+    extract_prescription_data_with_gemini,
+    match_extracted_medicines_with_db,
+    find_pharmacies_for_confirmed_medicines
+)
+
+def prescription_scanner_view(request):
+    """
+    GET /prescriptions/scanner/
+    Renders the interactive Prescription Scanner web UI.
+    """
+    return render(request, "prescription_scanner.html")
+
+
+@csrf_exempt
+@rate_limit(max_requests=20, window_seconds=60, key_prefix="prescription_analyze", is_json=True)
+def prescription_analyze_api(request):
+    """
+    POST /api/ai/prescription/analyze/
+    Analyzes uploaded prescription image/PDF, extracts visible medicines via Gemini Vision,
+    matches with database catalog, and returns confirmation schema.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    file_obj = request.FILES.get("prescription_file") or request.FILES.get("file")
+    if not file_obj:
+        return JsonResponse({"success": False, "message": "Please upload a prescription image or PDF file."}, status=400)
+
+    # 1. Secure Validation
+    val_res = validate_prescription_file(file_obj)
+    if not val_res["valid"]:
+        return JsonResponse({"success": False, "message": val_res["error"]}, status=400)
+
+    # Read bytes for Vision API
+    file_bytes = file_obj.read()
+
+    # 2. Extract Data via Gemini Vision OCR
+    ocr_res = extract_prescription_data_with_gemini(file_bytes, val_res["mime_type"])
+
+    # 3. Match Extracted Medicines against Database Catalog
+    matched_meds = match_extracted_medicines_with_db(ocr_res.get("medicines", []))
+
+    requires_confirmation = any(m["requires_confirmation"] for m in matched_meds) or bool(ocr_res.get("uncertain_fields"))
+
+    # 4. Save Record in Database
+    prescription = Prescription.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        image=file_obj,
+        document_type=ocr_res.get("document_type", "prescription"),
+        doctor_name=ocr_res.get("doctor_name"),
+        patient_name=ocr_res.get("patient_name"),
+        prescription_date=ocr_res.get("prescription_date"),
+        extracted_data={
+            "ocr_raw": ocr_res,
+            "matched_medicines": matched_meds
+        },
+        confirmed_medicines=[{
+            "medicine_id": m["best_match"]["id"] if m.get("best_match") else None,
+            "name": m["best_match"]["name"] if m.get("best_match") else m["extracted_name"],
+            "strength": m["strength"],
+            "frequency": m["frequency"],
+            "duration": m["duration"]
+        } for m in matched_meds if m.get("best_match") or m.get("extracted_name")],
+        overall_confidence=ocr_res.get("overall_confidence", 0.85),
+        requires_confirmation=requires_confirmation
+    )
+
+    return JsonResponse({
+        "success": True,
+        "prescription_id": prescription.id,
+        "document_type": prescription.document_type,
+        "doctor_name": prescription.doctor_name,
+        "patient_name": prescription.patient_name,
+        "prescription_date": prescription.prescription_date,
+        "extracted_medicines": matched_meds,
+        "overall_confidence": prescription.overall_confidence,
+        "requires_confirmation": requires_confirmation
+    })
+
+
+@csrf_exempt
+@rate_limit(max_requests=30, window_seconds=60, key_prefix="prescription_confirm", is_json=True)
+def prescription_confirm_api(request):
+    """
+    POST /api/ai/prescription/confirm/
+    User confirms or edits the extracted medicines list.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        return JsonResponse({"success": False, "message": "Invalid JSON body."}, status=400)
+
+    prescription_id = body.get("prescription_id")
+    confirmed_medicines = body.get("confirmed_medicines", [])
+
+    if not prescription_id:
+        return JsonResponse({"success": False, "message": "prescription_id is required."}, status=400)
+
+    try:
+        prescription = Prescription.objects.get(id=prescription_id)
+    except Prescription.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Prescription not found."}, status=404)
+
+    # Authorization Check: if logged in, must belong to user or anonymous session
+    if prescription.user and request.user.is_authenticated and prescription.user != request.user:
+        return JsonResponse({"success": False, "message": "Unauthorized access to prescription."}, status=403)
+
+    prescription.confirmed_medicines = confirmed_medicines
+    prescription.requires_confirmation = False
+    prescription.save()
+
+    return JsonResponse({
+        "success": True,
+        "prescription_id": prescription.id,
+        "confirmed_count": len(confirmed_medicines),
+        "confirmed_medicines": confirmed_medicines
+    })
+
+
+@csrf_exempt
+@rate_limit(max_requests=30, window_seconds=60, key_prefix="prescription_find", is_json=True)
+def prescription_find_medicines_api(request):
+    """
+    POST /api/ai/prescription/find-medicines/
+    Searches inventory for confirmed prescription medicines and ranks pharmacies.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        return JsonResponse({"success": False, "message": "Invalid JSON body."}, status=400)
+
+    prescription_id = body.get("prescription_id")
+    confirmed_medicines = body.get("confirmed_medicines")
+    user_lat = body.get("latitude") or body.get("lat")
+    user_lng = body.get("longitude") or body.get("lng")
+    radius_km = body.get("radius_km") or body.get("radius", 5.0)
+
+    if prescription_id and not confirmed_medicines:
+        try:
+            p = Prescription.objects.get(id=prescription_id)
+            confirmed_medicines = p.confirmed_medicines
+        except Prescription.DoesNotExist:
+            return JsonResponse({"success": False, "message": "Prescription not found."}, status=404)
+
+    if not confirmed_medicines:
+        return JsonResponse({"success": False, "message": "No confirmed medicines provided for lookup."}, status=400)
+
+    try:
+        user_lat = float(user_lat) if user_lat is not None else 13.0827
+        user_lng = float(user_lng) if user_lng is not None else 80.2707
+        radius_km = float(radius_km) if radius_km is not None else 5.0
+    except (ValueError, TypeError):
+        user_lat = 13.0827
+        user_lng = 80.2707
+        radius_km = 5.0
+
+    res = find_pharmacies_for_confirmed_medicines(
+        confirmed_medicines=confirmed_medicines,
+        user_lat=user_lat,
+        user_lng=user_lng,
+        radius_km=radius_km
+    )
+
+    return JsonResponse({
+        "success": True,
+        "pharmacies": res["pharmacies"],
+        "total_medicines": res["total_medicines"],
+        "total_pharmacies": len(res["pharmacies"]),
+        "ai_explanation": res["ai_explanation"]
+    })
+
+
+@login_required
+def prescription_history_view(request):
+    """
+    GET /prescriptions/history/
+    Lists authenticated user's private saved prescriptions.
+    """
+    prescriptions = Prescription.objects.filter(user=request.user)
+    return render(request, "prescription_history.html", {"prescriptions": prescriptions})
+
+
+@csrf_exempt
+@login_required
+def prescription_delete_api(request, prescription_id):
+    """
+    POST /api/ai/prescription/delete/<id>/
+    Deletes user-owned prescription record.
+    """
+    prescription = get_object_or_404(Prescription, id=prescription_id, user=request.user)
+    prescription.delete()
+    return JsonResponse({"success": True, "message": "Prescription deleted."})
+
+
+
 
 
 # ==========================================================

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Prescription OCR & AI Extraction | MediAI{% endblock %}
+{% block meta_description %}Upload or take a photo of your doctor prescription to automatically extract medicines, verify live availability across nearby Chennai pharmacies, and reserve for pickup.{% endblock %}
+
+{% block content %}
+<section class="py-4" style="background: var(--surface-secondary); min-height: 88vh; margin-top: 60px;">
+  <div class="container-fluid px-3 px-lg-4 px-xl-5 py-2">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-3">
+      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted"><i class="fa-solid fa-house text-success me-1"></i>Home</a></li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Scan Prescription</li>
+      </ol>
+    </nav>
+
+    <!-- Header Banner -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+      <div>
+        <h3 class="fw-extrabold text-dark mb-1">
+          <i class="fa-solid fa-file-prescription text-primary me-2"></i> Prescription Scanner & AI Matcher
+        </h3>
+        <p class="text-muted small mb-0">
+          Upload a paper prescription image or PDF to extract medicines, review matched items, and search live inventory.
+        </p>
+      </div>
+      <div class="d-flex gap-2">
+        {% if user.is_authenticated %}
+          <a href="{% url 'prescription_history' %}" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 small fw-semibold">
+            <i class="fa-solid fa-clock-rotate-left me-1.5"></i> My Prescriptions
+          </a>
+        {% endif %}
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 small fw-semibold d-flex align-items-center">
+          <i class="fa-solid fa-shield-halved me-1.5"></i> HIPAA Privacy Protected
+        </span>
+      </div>
+    </div>
+
+    <!-- MAIN INTERACTIVE CONTAINER -->
+    <div class="row g-4">
+      <!-- Left Column: Upload & Confirmation Editor -->
+      <div class="col-lg-7 col-xl-8">
+
+        <!-- STEP 1: Upload Card -->
+        <div id="stepUploadCard" class="card border-0 rounded-4 shadow-sm bg-white p-4 p-md-5 mb-4">
+          <div class="text-center py-3">
+            <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+              <i class="fa-solid fa-cloud-arrow-up fs-2"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-2">Upload Doctor Prescription</h4>
+            <p class="text-muted small mb-4" style="max-width: 480px; margin: 0 auto;">
+              Supported formats: <strong>JPG, PNG, WEBP, PDF</strong> (Max size: 10 MB). Make sure medicine names and dosages are clearly visible.
+            </p>
+
+            <div id="dropZone" class="border-2 border-dashed rounded-4 p-4 p-md-5 mb-3 bg-light text-center cursor-pointer transition-all position-relative hover-border-primary" style="border-color: #cbd5e1 !important;">
+              <input type="file" id="prescriptionFileInput" accept="image/jpeg,image/png,image/webp,application/pdf" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer">
+              <i class="fa-solid fa-camera-retro text-muted fs-1 mb-2"></i>
+              <div class="fw-bold text-dark mb-1">Drag & Drop prescription here or <span class="text-primary">Browse Files</span></div>
+              <small class="text-muted d-block">Take a photo using mobile camera or upload document</small>
+            </div>
+
+            <div id="uploadErrorMsg" class="alert alert-danger rounded-3 small py-2.5 d-none mb-3"></div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Actual Processing Indicator (No Fake Progress) -->
+        <div id="stepProcessingCard" class="card border-0 rounded-4 shadow-sm bg-white p-5 mb-4 text-center d-none">
+          <div class="spinner-border text-primary mx-auto mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+          <h5 class="fw-bold text-dark mb-2" id="ocrStepStatus">Analyzing prescription image...</h5>
+          <p class="text-muted small mb-3" id="ocrStepDetail">Extracting written medicine names, dosage strengths, and instructions using Gemini Flash Vision OCR.</p>
+          <div class="progress rounded-pill mx-auto" style="height: 6px; max-width: 360px;">
+            <div id="ocrProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 45%;"></div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Mandatory User Confirmation & Edit Matrix -->
+        <div id="stepConfirmationCard" class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-4 d-none">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 small fw-bold mb-1">
+                Step 2 of 3: User Confirmation
+              </span>
+              <h5 class="fw-bold text-dark mb-0">Verify Extracted Medicines</h5>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="btnAddManualMedicineBtn">
+              <i class="fa-solid fa-plus me-1"></i> Add Medicine
+            </button>
+          </div>
+
+          <div class="alert alert-warning border-0 rounded-3 py-2.5 px-3 small mb-3 d-flex align-items-start gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-warning mt-0.5"></i>
+            <div>
+              <strong>Please review extracted items:</strong> AI extracts text automatically. Please verify medicine names and strengths before searching inventory.
+            </div>
+          </div>
+
+          <!-- Table of extracted items -->
+          <div class="table-responsive mb-3">
+            <table class="table align-middle table-hover border rounded-3 mb-0" id="confirmationTable">
+              <thead class="table-light small text-muted">
+                <tr>
+                  <th style="width: 35%;">Detected Text / Medicine</th>
+                  <th style="width: 20%;">Strength</th>
+                  <th style="width: 20%;">Frequency</th>
+                  <th style="width: 15%;">Status</th>
+                  <th style="width: 10%; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="confirmationTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top">
+            <button type="button" class="btn btn-light border rounded-pill px-4" id="btnRestartUpload">
+              <i class="fa-solid fa-rotate-left me-1.5"></i> Re-upload
+            </button>
+            <button type="button" class="btn btn-success btn-lg rounded-pill px-5 fw-bold shadow-sm" id="btnConfirmAndSearch">
+              <i class="fa-solid fa-magnifying-glass-location me-2"></i> Confirm & Search Inventory
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 4: Pharmacy Availability Results Container -->
+        <div id="stepResultsContainer" class="d-none">
+          <div id="aiGroundedNotice" class="alert alert-info border-0 rounded-4 p-3.5 shadow-sm mb-3">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge bg-info text-dark rounded-pill px-2.5 py-0.5 small fw-bold">Grounded Response</span>
+              <small class="text-muted" id="prescriptionFulfillmentSummary"></small>
+            </div>
+            <p class="mb-0 text-dark fw-medium" id="prescriptionAiText"></p>
+          </div>
+
+          <div id="prescriptionPharmacyList">
+            <!-- Dynamically populated pharmacy result cards -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Leaflet Map & Preview -->
+      <div class="col-lg-5 col-xl-4">
+        <!-- Interactive Leaflet Map Card -->
+        <div class="card border-0 rounded-4 shadow-sm bg-white p-3 mb-4 sticky-top" style="top: 80px; z-index: 20;">
+          <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <h6 class="fw-bold text-dark mb-0">
+              <i class="fa-solid fa-map-location-dot text-primary me-1.5"></i> Pharmacy Map
+            </h6>
+            <button type="button" class="btn btn-sm btn-light border rounded-circle" id="locateMeBtn" title="My Location">
+              <i class="fa-solid fa-crosshairs text-success"></i>
+            </button>
+          </div>
+          <div id="map" class="rounded-3 shadow-inner" style="height: 380px; width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Include Prescription Scanner JavaScript -->
+<script src="{% static 'js/map.js' %}"></script>
+<script src="{% static 'js/prescription_scanner.js' %}"></script>
+{% endblock %}

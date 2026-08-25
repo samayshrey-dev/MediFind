@@ -23,6 +23,16 @@ urlpatterns = [
     path("api/notifications/stock-alert/", views.subscribe_stock_alert, name="subscribe_stock_alert"),
 
 
+    # Prescription OCR + Vision APIs
+    path("prescriptions/scanner/", views.prescription_scanner_view, name="prescription_scanner"),
+    path("prescriptions/history/", views.prescription_history_view, name="prescription_history"),
+    path("api/ai/prescription/analyze/", views.prescription_analyze_api, name="prescription_analyze_api"),
+    path("api/ai/prescription/confirm/", views.prescription_confirm_api, name="prescription_confirm_api"),
+    path("api/ai/prescription/find-medicines/", views.prescription_find_medicines_api, name="prescription_find_medicines_api"),
+    path("api/ai/prescription/delete/<int:prescription_id>/", views.prescription_delete_api, name="prescription_delete_api"),
+
+
+
     path(
         "medicine/<int:id>/",
         views.medicine_detail,

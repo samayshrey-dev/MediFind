@@ -707,4 +707,56 @@ class PasswordResetOTP(models.Model):
     def __str__(self):
         return f"OTP for {self.user.username} ({self.target}) - Valid: {self.is_valid()}"
 
+
+class Prescription(models.Model):
+    """
+    Secure User Prescription record.
+    Tracks extracted OCR data, confirmed medicine lists, fulfillment state, and private file storage.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="prescriptions",
+        null=True,
+        blank=True
+    )
+    image = models.FileField(
+        upload_to="prescriptions/",
+        blank=True,
+        null=True
+    )
+    document_type = models.CharField(
+        max_length=50,
+        default="prescription"
+    )
+    doctor_name = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True
+    )
+    patient_name = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True
+    )
+    prescription_date = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True
+    )
+    extracted_data = models.JSONField(default=dict)
+    confirmed_medicines = models.JSONField(default=list)
+    overall_confidence = models.FloatField(default=0.0)
+    requires_confirmation = models.BooleanField(default=True)
+    is_saved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        username = self.user.username if self.user else "Anonymous"
+        return f"Prescription #{self.id} by {username} ({self.document_type})"
+
+
 
