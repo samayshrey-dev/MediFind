@@ -1662,6 +1662,136 @@ def pharmacy_security_alerts_view(request):
     })
 
 
+# ==========================================================
+# MEDIFIND AI #10 — PRICE INTELLIGENCE & BEST VALUE FINDER
+# ==========================================================
+
+from django.db.models import Avg, Count, Sum, Q
+
+from .price_intelligence import (
+    UnitPriceNormalizer,
+    ValueScoreEngine,
+    PriceCategoryClassifier,
+    AIPriceExplanationService
+)
+
+
+@csrf_exempt
+def ai_price_comparison_api(request):
+    """
+    POST /api/ai/price-comparison/
+    Calculates deterministic price comparison, unit prices, value scores, and category badges.
+    Supports user ranking preferences: 'BALANCED', 'PRICE_FIRST', 'DISTANCE_FIRST', 'AVAILABILITY_FIRST'.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        data = request.POST.dict()
+
+    query = sanitize_plain_text(data.get("query", ""))
+    medicine_id = data.get("medicine_id")
+    mode = data.get("mode", "BALANCED").upper()
+    user_lat = data.get("lat")
+    user_lng = data.get("lng")
+
+    try:
+        user_lat = float(user_lat) if user_lat is not None else 13.0827
+        user_lng = float(user_lng) if user_lng is not None else 80.2707
+    except (ValueError, TypeError):
+        user_lat, user_lng = 13.0827, 80.2707
+
+    # Resolve target medicines
+    if medicine_id:
+        med_qs = Medicine.objects.filter(id=medicine_id)
+    elif query:
+        med_qs = Medicine.objects.filter(
+            Q(name__icontains=query) | Q(brand__icontains=query) | Q(category__icontains=query)
+        )
+    else:
+        return JsonResponse({"success": False, "message": "Query or medicine_id parameter required."}, status=400)
+
+    if not med_qs.exists():
+        return JsonResponse({"success": False, "message": "No matching medicines found for price comparison."}, status=404)
+
+    # Query active pharmacy inventories
+    inv_qs = Inventory.objects.select_related("pharmacy", "medicine").filter(
+        medicine__in=med_qs,
+        pharmacy__is_active=True
+    )
+
+    now_time = timezone.now().time()
+    candidates = []
+    for inv in inv_qs:
+        pharm = inv.pharmacy
+        dist_km = round(haversine_distance(user_lat, user_lng, float(pharm.latitude), float(pharm.longitude)), 1)
+        is_open = pharm.is_open and (pharm.opening_time <= now_time <= pharm.closing_time)
+
+        candidates.append({
+            "inventory_id": inv.id,
+            "pharmacy_id": pharm.id,
+            "pharmacy_name": pharm.name,
+            "medicine_id": inv.medicine.id,
+            "medicine_name": inv.medicine.name,
+            "brand": inv.medicine.brand,
+            "package_size": inv.package_size or "Standard Pack",
+            "price": float(inv.price),
+            "quantity": inv.quantity,
+            "distance_km": dist_km,
+            "is_open": is_open,
+            "address": pharm.address,
+            "phone": pharm.phone
+        })
+
+    if not candidates:
+        return JsonResponse({"success": False, "message": "No active pharmacy listings available for this medicine."}, status=404)
+
+    # Calculate deterministic value score & category badges
+    ranked_candidates = PriceCategoryClassifier.rank_candidates(candidates, mode=mode)
+
+    cheapest_cand = min(ranked_candidates, key=lambda x: x["price"])
+    best_value_cand = ranked_candidates[0]
+
+    # Generate grounded Gemini explanation
+    explanation = AIPriceExplanationService.generate_explanation(
+        winning_candidate=best_value_cand,
+        cheapest_candidate=cheapest_cand,
+        mode=mode
+    )
+
+    return JsonResponse({
+        "success": True,
+        "mode": mode,
+        "total_listings": len(ranked_candidates),
+        "explanation": explanation,
+        "best_value": best_value_cand,
+        "cheapest": cheapest_cand,
+        "results": ranked_candidates
+    })
+
+
+@login_required
+def admin_price_intelligence_view(request):
+    """
+    GET /admin/price-intelligence/
+    Market Price Intelligence & Price Position Analytics for admins and merchants.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "403.html", status=403)
+
+    # Calculate market price statistics per category
+    price_stats = Inventory.objects.values("medicine__category").annotate(
+        avg_price=Avg("price"),
+        total_skus=Count("id")
+    ).order_by("-total_skus")[:10]
+
+    return render(request, "admin_price_intelligence.html", {
+        "price_stats": price_stats
+    })
+
+
 
 
 
@@ -1928,17 +2058,46 @@ def search(request):
     for item in pharmacy_grouped.values():
         item.available_skus.sort(key=lambda s: float(s["price"]))
 
-    inventory_items = list(pharmacy_grouped.values())
+    # ==========================================================
+    # MEDIFIND AI #10 — PRICE INTELLIGENCE & VALUE SCORE RANKING
+    # ==========================================================
+    mode = request.GET.get("mode", "BALANCED").upper()
 
-    if sort == "cheapest":
+    candidates_payload = []
+    for item in inventory_items:
+        candidates_payload.append({
+            "inventory_id": item.id,
+            "pharmacy_id": item.pharmacy.id,
+            "pharmacy_name": item.pharmacy.name,
+            "medicine_id": item.medicine.id,
+            "medicine_name": item.medicine.name,
+            "package_size": item.package_size or "Standard Pack",
+            "price": float(item.price) if item.price is not None else 9999.0,
+            "quantity": item.quantity,
+            "distance_km": item.distance_km,
+            "is_open": getattr(item, "is_open", True)
+        })
+
+    if candidates_payload:
+        ranked_payload = PriceCategoryClassifier.rank_candidates(candidates_payload, mode=mode)
+        payload_map = {r["inventory_id"]: r for r in ranked_payload}
+
+        for item in inventory_items:
+            r = payload_map.get(item.id, {})
+            item.value_score = r.get("value_score", 50.0)
+            item.unit_price_info = r.get("unit_price_info", {})
+            item.badges = r.get("badges", [])
+            item.price_diff_note = r.get("price_diff_note", "")
+
+    if mode == "PRICE_FIRST" or sort == "cheapest":
         inventory_items.sort(key=lambda x: (x.in_stock_tier, x.sku_score, x.price_sort, x.dist_sort, x.open_tier))
-    elif sort == "nearest":
+    elif mode == "DISTANCE_FIRST" or sort == "nearest":
         inventory_items.sort(key=lambda x: (x.in_stock_tier, x.sku_score, x.dist_sort, x.price_sort, x.open_tier))
-    elif sort == "open":
-        inventory_items.sort(key=lambda x: (x.in_stock_tier, x.open_tier, x.sku_score, x.dist_sort, x.price_sort))
+    elif mode == "AVAILABILITY_FIRST":
+        inventory_items.sort(key=lambda x: (x.in_stock_tier, -x.quantity, x.sku_score, x.dist_sort, x.price_sort))
     else:
-        # Default Ranking: 1. In-Stock -> 2. SKU Exactness -> 3. Distance -> 4. Price -> 5. Open Status
-        inventory_items.sort(key=lambda x: (x.in_stock_tier, x.sku_score, x.dist_sort, x.price_sort, x.open_tier))
+        # Default BALANCED mode: rank by Value Score descending
+        inventory_items.sort(key=lambda x: (x.in_stock_tier, -getattr(x, "value_score", 0.0), x.dist_sort, x.price_sort))
 
     # Partition available in-stock items and out-of-stock items
     # Guarantee: Top match is NEVER out of stock if any in-stock store exists
@@ -2014,6 +2173,7 @@ def search(request):
             "query": query,
             "category": category,
             "sort": sort,
+            "mode": mode,
             "radius": radius_param,
             "ai_result": ai_result,
             "ai_interpreted": ai_interpreted,

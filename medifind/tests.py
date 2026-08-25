@@ -1735,6 +1735,69 @@ class RazorpayAgenticCommerceTests(TestCase):
         resp_pharm_alerts = self.client.get("/pharmacy/security-alerts/")
         self.assertEqual(resp_pharm_alerts.status_code, 200)
 
+    def test_44_price_intelligence_and_best_value_finder(self):
+        """
+        Comprehensive test suite for Medifind AI #10 — Price Intelligence & Best Value Finder.
+        Tests Unit Price Normalizer, Value Score Engine, Category Classifier,
+        Price Comparison REST API, and Admin Market Price Analytics View.
+        """
+        from .price_intelligence import (
+            UnitPriceNormalizer,
+            ValueScoreEngine,
+            PriceCategoryClassifier,
+            AIPriceExplanationService
+        )
+        from .models import Pharmacy, Medicine, Inventory
+
+        # 1. Test UnitPriceNormalizer
+        norm = UnitPriceNormalizer.compute_unit_price(25.00, "Strip of 10")
+        self.assertEqual(norm["unit_qty"], 10)
+        self.assertEqual(norm["unit_price"], 2.50)
+
+        # 2. Test ValueScoreEngine
+        score_bal = ValueScoreEngine.calculate_value_score(
+            price=25.0, distance_km=1.2, quantity=50, is_open=True,
+            min_price=20.0, max_price=40.0, min_dist=0.5, max_dist=5.0, mode="BALANCED"
+        )
+        self.assertGreater(score_bal, 0.0)
+
+        # 3. Test PriceCategoryClassifier
+        candidates = [
+            {"inventory_id": 1, "pharmacy_id": 101, "pharmacy_name": "Pharm A", "price": 28.0, "quantity": 50, "distance_km": 1.2, "package_size": "Strip of 10", "is_open": True},
+            {"inventory_id": 2, "pharmacy_id": 102, "pharmacy_name": "Pharm B", "price": 22.0, "quantity": 10, "distance_km": 4.8, "package_size": "Strip of 10", "is_open": True},
+            {"inventory_id": 3, "pharmacy_id": 103, "pharmacy_name": "Pharm C", "price": 31.0, "quantity": 30, "distance_km": 0.5, "package_size": "Strip of 10", "is_open": True},
+        ]
+        ranked = PriceCategoryClassifier.rank_candidates(candidates, mode="BALANCED")
+        self.assertEqual(len(ranked), 3)
+        self.assertTrue(any(b["type"] == "CHEAPEST" for b in ranked[0]["badges"] + ranked[1]["badges"] + ranked[2]["badges"]))
+
+        # 4. Test Price Comparison API (POST /api/ai/price-comparison/)
+        p1 = Pharmacy.objects.create(
+            name="Price Test Store A", owner_name="Tester", phone="9990001111", address="St 1",
+            city="Chennai", state="TN", pincode="600001", latitude=13.0827, longitude=80.2707,
+            opening_time="08:00", closing_time="22:00"
+        )
+        m1 = Medicine.objects.create(name="Price Test Dolo 650", brand="Micro", category="Fever", dosage="Tablet", description="Fever", uses="Fever", side_effects="None")
+        inv1 = Inventory.objects.create(medicine=m1, pharmacy=p1, quantity=20, price=28.00, package_size="Strip of 15", batch_number="B1", expiry_date="2027-12-31")
+
+        resp_api = self.client.post("/api/ai/price-comparison/", data=json.dumps({
+            "query": "Price Test Dolo 650",
+            "mode": "BALANCED",
+            "lat": 13.0827,
+            "lng": 80.2707
+        }), content_type="application/json")
+        self.assertEqual(resp_api.status_code, 200)
+        data_api = resp_api.json()
+        self.assertTrue(data_api["success"])
+        self.assertIn("explanation", data_api)
+
+        # 5. Test Admin Price Intelligence View
+        admin_user = User.objects.create_superuser(username="price_admin", password="password123")
+        self.client.force_login(admin_user)
+        resp_admin_price = self.client.get("/admin/price-intelligence/")
+        self.assertEqual(resp_admin_price.status_code, 200)
+
+
 
 
 

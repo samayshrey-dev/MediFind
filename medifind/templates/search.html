@@ -146,8 +146,32 @@
         <ul class="dropdown-menu dropdown-menu-end shadow border rounded-3">
           <li><a class="dropdown-item py-2" href="{% url 'search' %}?sort=cheapest{% if query %}&medicine={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}"><i class="fa-solid fa-tag text-success me-2"></i> Cheapest</a></li>
           <li><a class="dropdown-item py-2" href="{% url 'search' %}?sort=nearest{% if query %}&medicine={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}"><i class="fa-solid fa-location-dot text-primary me-2"></i> Nearest</a></li>
-          <li><a class="dropdown-item py-2" href="{% url 'search' %}?sort=open{% if query %}&medicine={{ query }}{% endif %}{% if category %}&category={{ category }}{% endif %}"><i class="fa-solid fa-circle-check text-info me-2"></i> Open Now</a></li>
-        </ul>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- MEDIFIND AI #10 — RANKING PREFERENCE BAR -->
+    <!-- ========================================================== -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-3 mb-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-dark text-white rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.7rem;">MEDIFIND AI #10</span>
+          <span class="fw-bold text-dark small"><i class="fa-solid fa-sliders text-primary me-1"></i> Ranking Preference:</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap gap-1.5" id="prefBarContainer">
+          <a href="{% url 'search' %}?mode=BALANCED{% if query %}&medicine={{ query }}{% endif %}" class="btn btn-sm {% if not mode or mode == 'BALANCED' %}btn-primary fw-bold{% else %}btn-light border text-muted{% endif %} rounded-pill px-3 py-1">
+            <i class="fa-solid fa-star text-warning me-1"></i> Best Value (Balanced)
+          </a>
+          <a href="{% url 'search' %}?mode=PRICE_FIRST{% if query %}&medicine={{ query }}{% endif %}" class="btn btn-sm {% if mode == 'PRICE_FIRST' %}btn-success fw-bold{% else %}btn-light border text-muted{% endif %} rounded-pill px-3 py-1">
+            <i class="fa-solid fa-tag text-success me-1"></i> Lowest Price First
+          </a>
+          <a href="{% url 'search' %}?mode=DISTANCE_FIRST{% if query %}&medicine={{ query }}{% endif %}" class="btn btn-sm {% if mode == 'DISTANCE_FIRST' %}btn-info text-dark fw-bold{% else %}btn-light border text-muted{% endif %} rounded-pill px-3 py-1">
+            <i class="fa-solid fa-location-dot me-1"></i> Closest Pharmacy First
+          </a>
+          <a href="{% url 'search' %}?mode=AVAILABILITY_FIRST{% if query %}&medicine={{ query }}{% endif %}" class="btn btn-sm {% if mode == 'AVAILABILITY_FIRST' %}btn-warning text-dark fw-bold{% else %}btn-light border text-muted{% endif %} rounded-pill px-3 py-1">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> Best Stock First
+          </a>
+        </div>
       </div>
     </div>
 
@@ -194,14 +218,20 @@
               </div>
 
 
-              <div class="row align-items-center g-4">
+              <div class="row g-4 align-items-center">
                 <div class="col-lg-7">
-                  <div class="d-flex align-items-baseline gap-2 mb-1">
-                    <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹{{ best_match_item.price }}</span>
-                    <span class="text-muted small">/ {{ best_match_item.package_size|default:"unit" }}</span>
-                    {% if best_match_item.medicine.prescription_required %}
-                      <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0.5 ms-2" style="font-size: 0.72rem;">
-                        Prescription Required
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                    <span class="badge bg-primary text-white px-3 py-1 rounded-pill font-monospace" style="font-size: 0.75rem;">
+                      <i class="fa-solid fa-crown me-1"></i> TOP RECOMMENDED PHARMACY
+                    </span>
+                    {% if best_match_item.badges %}
+                      {% for b in best_match_item.badges %}
+                        <span class="badge {{ b.class }} rounded-pill px-2.5 py-1 small fw-bold">{{ b.label }}</span>
+                      {% endfor %}
+                    {% endif %}
+                    {% if best_match_item.is_open %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                        <i class="fa-solid fa-clock me-1"></i> Open Now
                       </span>
                     {% endif %}
                   </div>
@@ -212,6 +242,16 @@
                     {% if best_match_item.distance_km %}<strong>{{ best_match_item.distance_km }} km away</strong> &bull; {% endif %}
                     {{ best_match_item.pharmacy.address }}, {{ best_match_item.pharmacy.city }}
                   </p>
+
+                  <div class="d-flex align-items-baseline gap-2 mb-1">
+                    <span class="fs-1 fw-extrabold text-dark" style="letter-spacing: -0.5px;">₹{{ best_match_item.price }}</span>
+                    <span class="text-muted small">/ {{ best_match_item.package_size|default:"unit" }}</span>
+                    {% if best_match_item.medicine.prescription_required %}
+                      <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-0.5 ms-2" style="font-size: 0.72rem;">
+                        Prescription Required
+                      </span>
+                    {% endif %}
+                  </div>
 
                   <!-- Available SKU Pack Sizes Breakdown -->
                   {% if best_match_item.available_skus and best_match_item.available_skus|length > 1 %}

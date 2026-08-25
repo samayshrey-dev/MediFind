@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Price Intelligence & Best Value Analytics | MediFind AI #10{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100">
+  <div class="container-fluid px-lg-5">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-dark text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">MEDIFIND AI #10</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 small fw-bold">
+            <i class="fa-solid fa-tag me-1"></i> Price Intelligence Active
+          </span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">Price Intelligence &amp; Market Position</h2>
+        <p class="text-muted small mb-0">Cross-pharmacy retail pricing metrics, category averages, and best-value optimization.</p>
+      </div>
+    </div>
+
+    <!-- Category Average Prices Table -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-layer-group text-primary me-2"></i> Category Market Pricing Averages</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+            <tr>
+              <th scope="col" class="py-3 ps-3">Therapeutic Category</th>
+              <th scope="col" class="py-3">Tracked SKUs</th>
+              <th scope="col" class="py-3">Average Retail Price</th>
+              <th scope="col" class="py-3 text-end pe-3">Market Position Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in price_stats %}
+              <tr>
+                <td class="ps-3 py-3">
+                  <span class="fw-bold text-dark">{{ item.medicine__category|default:"General Health" }}</span>
+                </td>
+                <td><span class="badge bg-light text-dark border rounded-pill px-3 py-1 fw-bold">{{ item.total_skus }} SKUs</span></td>
+                <td><span class="fw-extrabold text-success font-monospace fs-6">₹{{ item.avg_price|floatformat:2 }}</span></td>
+                <td class="text-end pe-3">
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 small fw-bold">
+                    Fair Market Range
+                  </span>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">No pricing telemetry available.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

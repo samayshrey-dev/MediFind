@@ -82,6 +82,15 @@
               {% if user.is_staff or user.is_superuser %}
               <li><hr class="dropdown-divider"></li>
               <li>
+                <a class="dropdown-item py-2.5 px-3 d-flex align-items-center gap-2.5 {% if request.resolver_match.url_name == 'admin_price_intelligence_view' %}active bg-warning-subtle text-warning-emphasis fw-bold{% endif %}" href="{% url 'admin_price_intelligence_view' %}">
+                  <div class="p-2 bg-warning bg-opacity-10 text-warning-emphasis rounded-3"><i class="fa-solid fa-tags"></i></div>
+                  <div>
+                    <div class="fw-bold small text-dark mb-0">Price Intelligence &amp; Best Value</div>
+                    <small class="text-muted" style="font-size: 0.72rem;">Market position &amp; price optimization</small>
+                  </div>
+                </a>
+              </li>
+              <li>
                 <a class="dropdown-item py-2.5 px-3 d-flex align-items-center gap-2.5 {% if request.resolver_match.url_name == 'admin_security_dashboard_view' %}active bg-danger-subtle text-danger fw-bold{% endif %}" href="{% url 'admin_security_dashboard_view' %}">
                   <div class="p-2 bg-danger bg-opacity-10 text-danger rounded-3"><i class="fa-solid fa-shield-virus"></i></div>
                   <div>

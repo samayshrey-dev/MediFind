@@ -58,6 +58,10 @@ urlpatterns = [
     path("admin/security-trust-center/", views.admin_security_dashboard_view, name="admin_security_dashboard_view"),
     path("pharmacy/security-alerts/", views.pharmacy_security_alerts_view, name="pharmacy_security_alerts_view"),
 
+    # Price Intelligence & Best Value Finder (AI #10) Endpoints
+    path("api/ai/price-comparison/", views.ai_price_comparison_api, name="ai_price_comparison_api"),
+    path("admin/price-intelligence/", views.admin_price_intelligence_view, name="admin_price_intelligence_view"),
+
 
 
 
