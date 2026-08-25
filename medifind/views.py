@@ -20,7 +20,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from django.views.decorators.csrf import csrf_exempt
+from .security import rate_limit, sanitize_plain_text, is_safe_external_url
 from .ai_search import parse_query_with_ai, haversine_distance, SYMPTOM_MAP
+
 from .fuzzy_search import MedicineMatcher
 from .pharmacy_api import PharmacyAPIClient, MockPharmacyAPIService
 from .excel_service import ExcelInventoryService
@@ -78,8 +80,8 @@ def pharmacy_required(view_func):
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         if profile.role != "Pharmacy":
-            profile.role = "Pharmacy"
-            profile.save(update_fields=["role"])
+            messages.error(request, "Access denied. Pharmacy merchant account required.")
+            return redirect("home")
 
         # Link fallback only if user has no assigned pharmacy AND no pending claimed pharmacy
         if not profile.pharmacy and not profile.claimed_pharmacy:
@@ -92,6 +94,7 @@ def pharmacy_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return wrapper
+
 
 
 def verified_pharmacy_required(view_func):
@@ -2315,7 +2318,9 @@ def inventory_history(request, pk):
 # Authentication
 # ==========================================================
 
+@rate_limit(max_requests=10, window_seconds=60, key_prefix="register")
 def register(request):
+
 
     if request.method == "POST":
 
@@ -2620,7 +2625,9 @@ def notify_reservation_update(reservation, action, actor_user):
 # ==========================================================
 
 @login_required
+@rate_limit(max_requests=20, window_seconds=60, key_prefix="reserve")
 def reserve_medicine(request, inventory_id):
+
     """
     Renders reservation checkout page and processes medicine reservations
     with choice of Pay Online (Razorpay) or Pay at Pharmacy on Pickup.
@@ -2938,6 +2945,13 @@ def accept_reservation(request, id):
         id=id
     )
 
+    # Horizontal Access Control: Only store owner or superuser can accept
+    if not request.user.is_superuser:
+        user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+        if not user_pharmacy or reservation.pharmacy != user_pharmacy:
+            messages.error(request, "Unauthorized. You cannot modify reservations for other pharmacies.")
+            return redirect("reservations")
+
     reservation.status = "Accepted"
     reservation.save()
 
@@ -2966,6 +2980,14 @@ def accept_reservation(request, id):
 @pharmacy_required
 def complete_reservation(request, id):
     reservation = get_object_or_404(Reservation, id=id)
+
+    # Horizontal Access Control: Only store owner or superuser can complete
+    if not request.user.is_superuser:
+        user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+        if not user_pharmacy or reservation.pharmacy != user_pharmacy:
+            messages.error(request, "Unauthorized. You cannot modify reservations for other pharmacies.")
+            return redirect("reservations")
+
     reservation.status = "Collected"
     reservation.save()
     notify_reservation_update(reservation, "COLLECTED", request.user)
@@ -2980,6 +3002,13 @@ def reject_reservation(request, id):
         id=id
     )
 
+    # Horizontal Access Control: Only store owner or superuser can reject
+    if not request.user.is_superuser:
+        user_pharmacy = getattr(request.user.userprofile, "pharmacy", None)
+        if not user_pharmacy or reservation.pharmacy != user_pharmacy:
+            messages.error(request, "Unauthorized. You cannot modify reservations for other pharmacies.")
+            return redirect("reservations")
+
     reservation.status = "Rejected"
     reservation.save()
 
@@ -2990,6 +3019,7 @@ def reject_reservation(request, id):
         f"Order #MF-{reservation.id:04d} rejected."
     )
     return redirect("reservations")
+
 
 
 @login_required
@@ -3285,6 +3315,7 @@ def notifications_api(request):
 # ==========================================================
 from .otp_service import send_password_reset_otp, verify_and_consume_otp, mask_target_contact
 
+@rate_limit(max_requests=5, window_seconds=60, key_prefix="pwd_reset_req")
 def forgot_password_request(request):
     """
     Step 1: User enters their email, username, or registered phone number.
@@ -3324,6 +3355,7 @@ def forgot_password_request(request):
     return render(request, "password_reset.html")
 
 
+@rate_limit(max_requests=8, window_seconds=60, key_prefix="pwd_reset_verify")
 def forgot_password_verify(request):
     """
     Step 2: User enters the 6-digit OTP received via email/phone along with their new password.
@@ -3381,7 +3413,9 @@ def forgot_password_verify(request):
     })
 
 
+@rate_limit(max_requests=5, window_seconds=60, key_prefix="pwd_reset_resend", is_json=True)
 def forgot_password_resend_api(request):
+
     """
     API endpoint to resend a fresh 6-digit OTP code with rate-limiting.
     """

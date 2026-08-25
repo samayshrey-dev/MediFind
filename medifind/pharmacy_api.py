@@ -28,10 +28,20 @@ class PharmacyAPIClient:
             return []
 
         endpoint = pharmacy.api_endpoint_url.strip()
+
+        # SSRF Protection: Ensure endpoint is a safe external HTTP/HTTPS address
+        from .security import is_safe_external_url
+        if not is_safe_external_url(endpoint):
+            logger.warning(f"Blocked unsafe/internal pharmacy API endpoint for {pharmacy.name}: {endpoint}")
+            pharmacy.api_sync_status = "Invalid / Disallowed Endpoint"
+            pharmacy.save(update_fields=["api_sync_status"])
+            return []
+
         headers = {
             "Accept": "application/json",
             "User-Agent": "MediAI-Pharmacy-Sync/2.0",
         }
+
         if pharmacy.api_auth_token:
             token = pharmacy.api_auth_token.strip()
             headers["Authorization"] = f"Bearer {token}"

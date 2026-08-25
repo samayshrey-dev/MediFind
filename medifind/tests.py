@@ -957,6 +957,67 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertContains(resp_home, "Leadership &amp; Clinical Advisory")
         self.assertContains(resp_home, "application/ld+json")
 
+    def test_35_security_and_access_control(self):
+        """
+        Validates security checklist implementations:
+        - Security Headers & Clickjacking defense
+        - SSRF protection & Disallowed IPs
+        - IDOR / Horizontal Access Control on reservations
+        - File upload security validation
+        - In-memory / cache sliding window rate limiting
+        """
+        from .security import is_safe_external_url, is_rate_limited
+        from .excel_service import ExcelInventoryService
+        import io
+
+        # 1. Security Headers on HTTP response
+        resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Content-Security-Policy", resp.headers)
+        self.assertIn("Permissions-Policy", resp.headers)
+        self.assertEqual(resp.headers.get("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(resp.headers.get("X-Frame-Options"), "DENY")
+        self.assertEqual(resp.headers.get("Referrer-Policy"), "strict-origin-when-cross-origin")
+
+        # 2. SSRF Protection
+        self.assertFalse(is_safe_external_url("http://127.0.0.1:8000/api"))
+        self.assertFalse(is_safe_external_url("http://localhost:5000"))
+        self.assertFalse(is_safe_external_url("http://169.254.169.254/latest/meta-data/"))
+        self.assertFalse(is_safe_external_url("http://10.0.0.1/api"))
+        self.assertFalse(is_safe_external_url("http://192.168.1.1/admin"))
+        self.assertFalse(is_safe_external_url("file:///etc/passwd"))
+        self.assertTrue(is_safe_external_url("https://api.verifiedpharmacy.com/stock"))
+        self.assertTrue(is_safe_external_url("https://pos.apollohospitals.com/v1/inventory"))
+
+        # 3. IDOR / Horizontal Access Control on Reservations
+        # Pharmacy User 2 attempts to accept a reservation placed for Pharmacy 1
+        other_user = User.objects.create_user(username="other_pharm_user", password="Password123!")
+        other_prof, _ = UserProfile.objects.get_or_create(user=other_user)
+        other_prof.role = "Pharmacy"
+        other_prof.pharmacy = self.pharmacy2
+        other_prof.save()
+
+
+        self.client.force_login(other_user)
+        resp_idor = self.client.get(f"/reservations/{self.reservation.id}/accept/", follow=True)
+        # Should be redirected with error message and NOT accepted
+        self.reservation.refresh_from_db()
+        self.assertNotEqual(self.reservation.status, "Accepted")
+        self.assertContains(resp_idor, "Unauthorized")
+
+        # 4. File Upload Security
+        fake_exe = io.BytesIO(b"MZ executable contents")
+        res = ExcelInventoryService.import_inventory_file(self.pharmacy, fake_exe, filename="payload.exe")
+        self.assertFalse(res["success"])
+        self.assertIn("Invalid file format", res["message"])
+
+        # 5. Sliding window rate limiter
+        key = "test_rate_limit_user"
+        for _ in range(5):
+            is_rate_limited(key, max_requests=5, window_seconds=10)
+        self.assertTrue(is_rate_limited(key, max_requests=5, window_seconds=10))
+
+
 
 
 

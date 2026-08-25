@@ -258,13 +258,26 @@ class ExcelInventoryService:
         output.seek(0)
         return output.getvalue()
 
+    MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB limit
+    MAX_ROWS_LIMIT = 5000  # Prevent memory exhaustion / decompression bombs
+    ALLOWED_EXTENSIONS = ('.xlsx', '.xls', '.csv')
+
     @classmethod
     def import_inventory_file(cls, pharmacy, file_obj, filename=""):
         """
         Parses an uploaded Excel (.xlsx, .xls) or CSV file and batch-syncs medicines and inventory.
-        Returns a dict with detailed metrics and errors.
+        Enforces file size limit, allowed extensions, and maximum row count.
         """
         filename_lower = (filename or getattr(file_obj, "name", "")).lower()
+
+        # 1. Extension validation
+        if not any(filename_lower.endswith(ext) for ext in cls.ALLOWED_EXTENSIONS):
+            return {"success": False, "message": "Invalid file format. Only .xlsx, .xls, and .csv files are supported."}
+
+        # 2. File size validation
+        size = getattr(file_obj, "size", None)
+        if size and size > cls.MAX_UPLOAD_SIZE_BYTES:
+            return {"success": False, "message": f"File exceeds maximum allowed upload size of 5 MB."}
 
         if filename_lower.endswith(".csv"):
             return cls._import_from_csv(pharmacy, file_obj)
@@ -274,7 +287,7 @@ class ExcelInventoryService:
     @classmethod
     def _import_from_excel(cls, pharmacy, file_obj):
         try:
-            wb = openpyxl.load_workbook(file_obj, data_only=True)
+            wb = openpyxl.load_workbook(file_obj, data_only=True, read_only=False)
             # Pick first non-instruction sheet
             ws = wb.active
             for sheet in wb.worksheets:
@@ -282,7 +295,13 @@ class ExcelInventoryService:
                     ws = sheet
                     break
 
-            rows = list(ws.iter_rows(values_only=True))
+            rows = []
+            for idx, row in enumerate(ws.iter_rows(values_only=True)):
+                if idx >= cls.MAX_ROWS_LIMIT:
+                    logger.warning(f"Excel import exceeded maximum {cls.MAX_ROWS_LIMIT} rows limit.")
+                    break
+                rows.append(row)
+
             if not rows:
                 return {"success": False, "message": "The uploaded spreadsheet is empty."}
 
@@ -290,6 +309,7 @@ class ExcelInventoryService:
         except Exception as e:
             logger.error(f"Excel import parsing error: {e}", exc_info=True)
             return {"success": False, "message": f"Failed to parse Excel file: {str(e)}"}
+
 
     @classmethod
     def _import_from_csv(cls, pharmacy, file_obj):
