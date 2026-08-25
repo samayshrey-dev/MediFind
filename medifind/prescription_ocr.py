@@ -91,12 +91,10 @@ def validate_prescription_file(file_obj) -> dict:
 def local_rule_based_prescription_ocr(raw_text: str = "") -> dict:
     """
     Fallback extraction parser when Gemini Flash Vision is offline or key missing.
-    Matches known medicine names, strengths, and dosages.
+    Matches known medicine names, strengths, and dosages from extracted text.
+    Never invents fake hardcoded medicines.
     """
-    lines = [l.strip() for l in raw_text.split('\n') if l.strip()] if raw_text else []
     extracted_meds = []
-
-    # Check known medicines in raw text
     text_lower = raw_text.lower() if raw_text else ""
 
     found_meds = set()
@@ -125,41 +123,14 @@ def local_rule_based_prescription_ocr(raw_text: str = "") -> dict:
             "confidence": 0.88
         })
 
-    if not extracted_meds:
-        # Default mock fallback for test demonstration
-        extracted_meds = [
-            {
-                "raw_text": "Dolo 650 mg",
-                "medicine_name": "Dolo",
-                "strength": "650 mg",
-                "dosage_form": "tablet",
-                "frequency": "1-0-1",
-                "duration": "5 days",
-                "quantity": 10,
-                "instructions": "Take after meals",
-                "confidence": 0.94
-            },
-            {
-                "raw_text": "Cetirizine 10 mg",
-                "medicine_name": "Cetirizine",
-                "strength": "10 mg",
-                "dosage_form": "tablet",
-                "frequency": "0-0-1",
-                "duration": "5 days",
-                "quantity": 5,
-                "instructions": "Take at night",
-                "confidence": 0.91
-            }
-        ]
-
     return {
-        "document_type": "prescription",
+        "document_type": "prescription" if extracted_meds else "unknown",
         "doctor_name": None,
         "patient_name": None,
         "prescription_date": None,
         "medicines": extracted_meds,
-        "overall_confidence": 0.89,
-        "uncertain_fields": [],
+        "overall_confidence": 0.89 if extracted_meds else 0.0,
+        "uncertain_fields": [] if extracted_meds else ["Unreadable document. Please enter medicines manually."],
         "fallback": True
     }
 
@@ -170,6 +141,7 @@ def local_rule_based_prescription_ocr(raw_text: str = "") -> dict:
 def extract_prescription_data_with_gemini(file_bytes: bytes, mime_type: str) -> dict:
     """
     Calls Google Gemini Flash Vision API to analyze prescription image/PDF.
+    Supports multi-model endpoints (gemini-1.5-flash, gemini-2.0-flash, gemini-1.5-pro).
     Strictest Safety Rules:
     - ONLY extract visibly written text.
     - NEVER diagnose, prescribe, or recommend medicines.
@@ -217,44 +189,57 @@ Return ONLY a JSON object matching this exact schema:
 }
 """
 
-    try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-        payload = json.dumps({
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt},
-                        {
-                            "inline_data": {
-                                "mime_type": mime_type,
-                                "data": base64_data
+    models_to_try = [
+        "gemini-1.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-pro"
+    ]
+
+    last_error = None
+    for model_name in models_to_try:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            payload = json.dumps({
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": prompt},
+                            {
+                                "inline_data": {
+                                    "mime_type": mime_type,
+                                    "data": base64_data
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.05,
+                    "responseMimeType": "application/json"
                 }
-            ],
-            "generationConfig": {
-                "temperature": 0.05,
-                "responseMimeType": "application/json"
-            }
-        }).encode('utf-8')
+            }).encode('utf-8')
 
-        req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
-        with urllib.request.urlopen(req, timeout=8.0) as response:
-            res_data = json.loads(response.read().decode('utf-8'))
-            text_content = res_data['candidates'][0]['content']['parts'][0]['text']
+            req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
+            with urllib.request.urlopen(req, timeout=8.0) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+                text_content = res_data['candidates'][0]['content']['parts'][0]['text']
 
-            if "```" in text_content:
-                text_content = re.sub(r'```json\s*', '', text_content)
-                text_content = re.sub(r'```\s*$', '', text_content)
+                if "```" in text_content:
+                    text_content = re.sub(r'```json\s*', '', text_content)
+                    text_content = re.sub(r'```\s*$', '', text_content)
 
-            parsed = json.loads(text_content.strip())
-            parsed["fallback"] = False
-            return parsed
+                parsed = json.loads(text_content.strip())
+                parsed["fallback"] = False
+                return parsed
 
-    except Exception as e:
-        logger.warning(f"Gemini prescription OCR fallback: {e}")
-        return local_rule_based_prescription_ocr()
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Gemini Vision model {model_name} failed: {e}")
+            continue
+
+    logger.warning(f"All Gemini Vision model endpoints failed: {last_error}")
+    return local_rule_based_prescription_ocr()
+
 
 
 # ==========================================================
