@@ -832,28 +832,54 @@ def prescription_analyze_api(request):
 
         requires_confirmation = any(m.get("requires_confirmation", True) for m in matched_meds) or bool(ocr_res.get("uncertain_fields"))
 
-        # 4. Save Record in Database
-        prescription = Prescription.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            image=file_obj,
-            document_type=ocr_res.get("document_type", "prescription"),
-            doctor_name=ocr_res.get("doctor_name"),
-            patient_name=ocr_res.get("patient_name"),
-            prescription_date=ocr_res.get("prescription_date"),
-            extracted_data={
-                "ocr_raw": ocr_res,
-                "matched_medicines": matched_meds
-            },
-            confirmed_medicines=[{
-                "medicine_id": m["best_match"]["id"] if m.get("best_match") else None,
-                "name": m["best_match"]["name"] if m.get("best_match") else m["extracted_name"],
-                "strength": m["strength"],
-                "frequency": m["frequency"],
-                "duration": m["duration"]
-            } for m in matched_meds if m.get("best_match") or m.get("extracted_name")],
-            overall_confidence=ocr_res.get("overall_confidence", 0.85),
-            requires_confirmation=requires_confirmation
-        )
+        # 4. Save Record in Database (handling read-only filesystems like Vercel gracefully)
+        try:
+            prescription = Prescription.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                image=file_obj,
+                document_type=ocr_res.get("document_type", "prescription"),
+                doctor_name=ocr_res.get("doctor_name"),
+                patient_name=ocr_res.get("patient_name"),
+                prescription_date=ocr_res.get("prescription_date"),
+                extracted_data={
+                    "ocr_raw": ocr_res,
+                    "matched_medicines": matched_meds,
+                    "filename": file_obj.name
+                },
+                confirmed_medicines=[{
+                    "medicine_id": m["best_match"]["id"] if m.get("best_match") else None,
+                    "name": m["best_match"]["name"] if m.get("best_match") else m["extracted_name"],
+                    "strength": m["strength"],
+                    "frequency": m["frequency"],
+                    "duration": m["duration"]
+                } for m in matched_meds if m.get("best_match") or m.get("extracted_name")],
+                overall_confidence=ocr_res.get("overall_confidence", 0.85),
+                requires_confirmation=requires_confirmation
+            )
+        except (OSError, IOError):
+            # Fallback for serverless environments with read-only filesystems (Vercel)
+            prescription = Prescription.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                image=None,
+                document_type=ocr_res.get("document_type", "prescription"),
+                doctor_name=ocr_res.get("doctor_name"),
+                patient_name=ocr_res.get("patient_name"),
+                prescription_date=ocr_res.get("prescription_date"),
+                extracted_data={
+                    "ocr_raw": ocr_res,
+                    "matched_medicines": matched_meds,
+                    "filename": file_obj.name
+                },
+                confirmed_medicines=[{
+                    "medicine_id": m["best_match"]["id"] if m.get("best_match") else None,
+                    "name": m["best_match"]["name"] if m.get("best_match") else m["extracted_name"],
+                    "strength": m["strength"],
+                    "frequency": m["frequency"],
+                    "duration": m["duration"]
+                } for m in matched_meds if m.get("best_match") or m.get("extracted_name")],
+                overall_confidence=ocr_res.get("overall_confidence", 0.85),
+                requires_confirmation=requires_confirmation
+            )
 
         return JsonResponse({
             "success": True,
