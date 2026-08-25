@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Pharmacy Analytics & Business Intelligence | MediFind{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100">
+  <div class="container-fluid px-lg-5">
+
+    <!-- ── HEADER & PERIOD SELECTOR ── -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-success text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem; letter-spacing: 1px;">MEDIFIND AI #5</span>
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-0.5 small fw-bold">
+            <i class="fa-solid fa-chart-pie me-1"></i> Business &amp; Operations BI Active
+          </span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">Pharmacy Analytics &amp; Business Intelligence</h2>
+        <p class="text-muted small mb-0">Deterministic sales, demand trends, search-to-availability analysis, and AI operational insights for <strong>{{ pharmacy.name }}</strong>.</p>
+      </div>
+
+      <!-- Controls & Time Period Selector -->
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="btn-group rounded-pill shadow-xs p-1 bg-white border" id="periodButtonGroup">
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold period-btn" data-period="today">Today</button>
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold period-btn" data-period="yesterday">Yesterday</button>
+          <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold period-btn active" data-period="7d">Last 7 Days</button>
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold period-btn" data-period="30d">Last 30 Days</button>
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold period-btn" data-period="90d">Last 90 Days</button>
+        </div>
+
+        <button type="button" class="btn btn-dark rounded-pill px-3 py-2 fw-semibold shadow-sm" id="btnAskAI">
+          <i class="fa-solid fa-wand-magic-sparkles text-warning me-1.5"></i> Ask Analytics AI
+        </button>
+      </div>
+    </div>
+
+    <!-- ── AI DAILY EXECUTIVE SUMMARY BANNER ── -->
+    <div class="card border-0 rounded-4 shadow-sm bg-gradient p-3.5 mb-4 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+      <div class="d-flex align-items-start gap-3">
+        <div class="p-2.5 bg-primary bg-opacity-25 rounded-3 border border-primary-subtle mt-0.5">
+          <i class="fa-solid fa-brain fs-4 text-info"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <h6 class="fw-bold mb-0 text-white"><i class="fa-solid fa-sparkles me-1 text-warning"></i> Gemini Executive Analytics Summary</h6>
+            <span class="badge bg-secondary bg-opacity-50 text-light border rounded-pill px-2.5 py-0.5 small" id="lblPeriodRange">Last 7 Days</span>
+          </div>
+          <p class="mb-0 text-light small fw-medium" id="txtExecutiveSummary">
+            Analyzing database sales transactions, search interest velocity, and inventory stock...
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── KPI COMPARISON METRIC CARDS ── -->
+    <div class="row g-3 mb-4" id="kpiCardsRow">
+      <!-- Revenue KPI -->
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-primary">
+          <div class="d-flex justify-content-between align-items-start">
+            <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Total Revenue</span>
+            <span class="badge rounded-pill px-2 py-0.5 small fw-bold" id="badgeRevChange">+0.0%</span>
+          </div>
+          <div class="fs-3 fw-extrabold text-dark mt-1" id="kpiRevenue">₹0.00</div>
+          <div class="text-muted small mt-1" style="font-size: 0.72rem;" id="subRevenue">vs previous period</div>
+        </div>
+      </div>
+
+      <!-- Total Orders KPI -->
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-success">
+          <div class="d-flex justify-content-between align-items-start">
+            <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Orders &amp; Reservations</span>
+            <span class="badge rounded-pill px-2 py-0.5 small fw-bold" id="badgeOrdersChange">+0.0%</span>
+          </div>
+          <div class="fs-3 fw-extrabold text-dark mt-1" id="kpiOrders">0</div>
+          <div class="text-muted small mt-1" style="font-size: 0.72rem;" id="subOrders">completed transactions</div>
+        </div>
+      </div>
+
+      <!-- Medicine Search Volume KPI -->
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-info">
+          <div class="d-flex justify-content-between align-items-start">
+            <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Medicine Search Interest</span>
+            <span class="badge rounded-pill px-2 py-0.5 small fw-bold" id="badgeSearchesChange">+0.0%</span>
+          </div>
+          <div class="fs-3 fw-extrabold text-dark mt-1" id="kpiSearches">0</div>
+          <div class="text-muted small mt-1" style="font-size: 0.72rem;" id="subSearches">total medicine queries</div>
+        </div>
+      </div>
+
+      <!-- Availability Rate KPI -->
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-warning">
+          <div class="d-flex justify-content-between align-items-start">
+            <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Availability Match Score</span>
+            <span class="badge rounded-pill px-2 py-0.5 small fw-bold" id="badgeAvailChange">+0.0%</span>
+          </div>
+          <div class="fs-3 fw-extrabold text-dark mt-1" id="kpiAvailability">0.0%</div>
+          <div class="text-muted small mt-1" style="font-size: 0.72rem;" id="subAvailability">search-to-stock match</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CHARTS ROW ── -->
+    <div class="row g-3 mb-4">
+      <!-- Line Chart: Revenue & Transaction Trends -->
+      <div class="col-12 col-lg-8">
+        <div class="card border-0 rounded-4 shadow-sm bg-white p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-chart-line me-2 text-primary"></i> Revenue &amp; Transaction Velocity</h5>
+              <small class="text-muted">Daily breakdown over selected period</small>
+            </div>
+          </div>
+          <div style="height: 280px; position: relative;">
+            <canvas id="trendChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority Insights Alert Box -->
+      <div class="col-12 col-lg-4">
+        <div class="card border-0 rounded-4 shadow-sm bg-white p-4 h-100">
+          <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i> Priority Operational Insights</h5>
+          <div id="insightsContainer" class="d-flex flex-column gap-2.5 overflow-auto" style="max-height: 280px;">
+            <div class="text-center py-4 text-muted small">Loading AI insights...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MEDICINE ANALYTICS & UNMET DEMAND TABLE ── -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div>
+          <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-table-list text-success me-2"></i> Medicine Search &amp; Availability Performance</h5>
+          <small class="text-muted">Medicine-level search demand, conversion rates, and stock-out risk from AI #4</small>
+        </div>
+
+        <div class="position-relative" style="min-width: 250px;">
+          <i class="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+          <input type="text" id="tblSearchInput" class="form-control form-control-sm rounded-pill ps-5" placeholder="Search medicine name...">
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="medicineAnalyticsTable">
+          <thead class="table-light text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+            <tr>
+              <th scope="col" class="py-3 ps-3">Medicine</th>
+              <th scope="col" class="py-3">Current Stock</th>
+              <th scope="col" class="py-3">Search Queries</th>
+              <th scope="col" class="py-3">Units Sold</th>
+              <th scope="col" class="py-3">Availability Score</th>
+              <th scope="col" class="py-3">Forecast Risk (AI #4)</th>
+              <th scope="col" class="py-3 text-end pe-3">Demand Status</th>
+            </tr>
+          </thead>
+          <tbody id="medicineAnalyticsTbody">
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                Computing medicine-level business analytics...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── ASK ANALYTICS AI DRAWER / MODAL ── -->
+<div class="modal fade" id="askAIModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <div class="d-flex align-items-center gap-2">
+          <div class="p-2 bg-dark rounded-3 text-warning"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <h5 class="fw-bold text-dark mb-0">Ask Analytics AI</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-3">Ask any natural language question about your pharmacy's sales, search trends, or inventory risk.</p>
+        
+        <div class="input-group mb-3 shadow-xs rounded-pill overflow-hidden border">
+          <input type="text" id="aiQueryInput" class="form-control border-0 ps-3" placeholder="e.g., Which medicine had the highest search growth?">
+          <button class="btn btn-dark px-4 fw-bold" id="btnSubmitQuery"><i class="fa-solid fa-paper-plane me-1"></i> Ask</button>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 border d-none" id="aiAnswerBox">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="badge bg-primary text-white rounded-pill px-2 py-0.5 font-monospace" style="font-size: 0.68rem;" id="lblToolUsed">TOOL: get_top_medicines</span>
+            <span class="text-muted small" style="font-size: 0.7rem;">Validated DB Execution</span>
+          </div>
+          <p class="text-dark small mb-0 fw-medium" id="txtAIAnswer">Answer will appear here...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let currentPeriod = '7d';
+  let trendChart = null;
+  let allMedicinesData = [];
+
+  async function fetchOverview() {
+    try {
+      const resp = await fetch(`/api/pharmacy/analytics/overview/?period=${currentPeriod}`);
+      const data = await resp.json();
+      if (data.success) {
+        renderKPIs(data.comparison);
+        document.getElementById('txtExecutiveSummary').innerText = data.executive_summary;
+        document.getElementById('lblPeriodRange').innerText = data.comparison.current_range;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderKPIs(comp) {
+    const curr = comp.current;
+    const chg = comp.changes;
+
+    document.getElementById('kpiRevenue').innerText = `₹${curr.revenue.toFixed(2)}`;
+    document.getElementById('kpiOrders').innerText = curr.total_transactions;
+    document.getElementById('kpiSearches').innerText = curr.search_volume;
+    document.getElementById('kpiAvailability').innerText = `${curr.availability_rate.toFixed(1)}%`;
+
+    setupBadge('badgeRevChange', chg.revenue);
+    setupBadge('badgeOrdersChange', chg.transactions);
+    setupBadge('badgeSearchesChange', chg.searches);
+    setupBadge('badgeAvailChange', chg.availability_rate);
+  }
+
+  function setupBadge(badgeId, changeObj) {
+    const el = document.getElementById(badgeId);
+    el.innerText = changeObj.formatted;
+    if (changeObj.percent > 0) {
+      el.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 small fw-bold';
+    } else if (changeObj.percent < 0) {
+      el.className = 'badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5 small fw-bold';
+    } else {
+      el.className = 'badge bg-secondary-subtle text-secondary rounded-pill px-2 py-0.5 small fw-bold';
+    }
+  }
+
+  async function fetchTrends() {
+    try {
+      const resp = await fetch(`/api/pharmacy/analytics/trends/?period=${currentPeriod}`);
+      const data = await resp.json();
+      if (data.success) {
+        renderTrendChart(data.dates, data.revenue, data.orders, data.searches);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderTrendChart(dates, revenue, orders, searches) {
+    const ctx = document.getElementById('trendChartCanvas').getContext('2d');
+    if (trendChart) trendChart.destroy();
+
+    trendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [
+          {
+            label: 'Revenue (₹)',
+            data: revenue,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            yAxisID: 'y',
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Transactions',
+            data: orders,
+            borderColor: '#10b981',
+            yAxisID: 'y1',
+            tension: 0.3,
+            fill: false
+          },
+          {
+            label: 'Searches',
+            data: searches,
+            borderColor: '#f59e0b',
+            borderDash: [4, 4],
+            yAxisID: 'y1',
+            tension: 0.3,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+          y: { type: 'linear', position: 'left', title: { display: true, text: 'Revenue (₹)' } },
+          y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Count' } }
+        }
+      }
+    });
+  }
+
+  async function fetchInsights() {
+    try {
+      const resp = await fetch(`/api/pharmacy/analytics/insights/?period=${currentPeriod}`);
+      const data = await resp.json();
+      if (data.success) {
+        renderInsights(data.insights);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderInsights(insights) {
+    const container = document.getElementById('insightsContainer');
+    if (!insights || insights.length === 0) {
+      container.innerHTML = `<div class="text-center text-muted small py-4">No critical inventory or sales risk alerts detected.</div>`;
+      return;
+    }
+
+    container.innerHTML = insights.map(item => `
+      <div class="p-2.5 bg-light rounded-3 border border-1 border-light-subtle">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <strong class="text-dark small" style="font-size: 0.82rem;">${escapeHtml(item.title)}</strong>
+          <span class="badge ${item.priority === 'CRITICAL' ? 'bg-danger text-white' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'} rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">${item.badge}</span>
+        </div>
+        <p class="text-muted mb-1" style="font-size: 0.75rem;">${escapeHtml(item.description)}</p>
+      </div>
+    `).join('');
+  }
+
+  async function fetchMedicineAnalytics() {
+    try {
+      const resp = await fetch('/api/pharmacy/analytics/medicines/?days=30');
+      const data = await resp.json();
+      if (data.success) {
+        allMedicinesData = data.medicines || [];
+        renderMedicineTable();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderMedicineTable() {
+    const tbody = document.getElementById('medicineAnalyticsTbody');
+    const query = (document.getElementById('tblSearchInput').value || '').toLowerCase().trim();
+
+    const filtered = allMedicinesData.filter(m => m.medicine_name.toLowerCase().includes(query) || (m.brand || '').toLowerCase().includes(query));
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No matching medicine records found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(m => `
+      <tr>
+        <td class="ps-3 py-3">
+          <div class="fw-bold text-dark">${escapeHtml(m.medicine_name)}</div>
+          <div class="text-muted small" style="font-size: 0.74rem;">${escapeHtml(m.category || 'General')} &bull; ${escapeHtml(m.brand)}</div>
+        </td>
+        <td><span class="fw-bold ${m.current_stock == 0 ? 'text-danger' : 'text-dark'}">${m.current_stock} units</span></td>
+        <td><span class="fw-bold text-primary">${m.searches_count} queries</span></td>
+        <td><span class="fw-bold text-success">${m.units_sold} units</span></td>
+        <td>
+          <div class="d-flex align-items-center gap-2">
+            <div class="progress flex-grow-1" style="height: 6px;">
+              <div class="progress-bar ${m.availability_match_pct > 70 ? 'bg-success' : 'bg-warning'}" style="width: ${m.availability_match_pct}%;"></div>
+            </div>
+            <span class="small text-muted fw-bold" style="font-size: 0.72rem;">${m.availability_match_pct}%</span>
+          </div>
+        </td>
+        <td>
+          <span class="badge ${m.forecast_risk === 'CRITICAL' ? 'bg-danger text-white' : (m.forecast_risk === 'HIGH' ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' : 'bg-light text-muted border')} rounded-pill px-2.5 py-1 small fw-bold">
+            ${m.forecast_risk}
+          </span>
+        </td>
+        <td class="text-end pe-3">
+          ${m.unmet_demand ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-bold">🔴 Unmet Demand</span>' : '<span class="text-muted small">Matched</span>'}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // Bind time period buttons
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.period-btn').forEach(b => {
+        b.classList.remove('btn-primary', 'active');
+        b.classList.add('btn-outline-primary');
+      });
+      btn.classList.remove('btn-outline-primary');
+      btn.classList.add('btn-primary', 'active');
+      currentPeriod = btn.getAttribute('data-period');
+
+      fetchOverview();
+      fetchTrends();
+      fetchInsights();
+    });
+  });
+
+  document.getElementById('tblSearchInput').addEventListener('input', renderMedicineTable);
+
+  // Ask Analytics AI Drawer logic
+  document.getElementById('btnAskAI').addEventListener('click', () => {
+    const modal = new bootstrap.Modal(document.getElementById('askAIModal'));
+    modal.show();
+  });
+
+  document.getElementById('btnSubmitQuery').addEventListener('click', async () => {
+    const query = document.getElementById('aiQueryInput').value.trim();
+    if (!query) return;
+
+    const btn = document.getElementById('btnSubmitQuery');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+      const resp = await fetch('/api/pharmacy/analytics/ask/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ query: query })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        document.getElementById('lblToolUsed').innerText = `TOOL: ${data.tool_used}`;
+        document.getElementById('txtAIAnswer').innerText = data.answer;
+        document.getElementById('aiAnswerBox').classList.remove('d-none');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Ask';
+    }
+  });
+
+  // Initial Load
+  fetchOverview();
+  fetchTrends();
+  fetchInsights();
+  fetchMedicineAnalytics();
+});
+</script>
+{% endblock %}

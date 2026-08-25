@@ -7,6 +7,7 @@ import medifind.views as medifind_views
 urlpatterns = [
     path("admin/data-quality/", medifind_views.admin_data_quality_view, name="admin_data_quality_view"),
     path("admin/ai-model-performance/", medifind_views.admin_model_performance_view, name="admin_model_performance_view"),
+    path("admin/pharmacy-benchmarking/", medifind_views.admin_pharmacy_benchmarking_view, name="admin_pharmacy_benchmarking_view"),
     path("admin/", admin.site.urls),
     path("robots.txt", medifind_views.robots_txt, name="root_robots_txt"),
     path("sitemap.xml", medifind_views.sitemap_xml, name="root_sitemap_xml"),

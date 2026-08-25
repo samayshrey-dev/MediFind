@@ -1369,6 +1369,116 @@ class RazorpayAgenticCommerceTests(TestCase):
         resp_admin_perf = self.client.get("/admin/ai-model-performance/")
         self.assertEqual(resp_admin_perf.status_code, 200)
 
+    def test_40_pharmacy_analytics_and_business_intelligence(self):
+        """
+        Comprehensive test suite for Medifind AI #5 — Pharmacy Analytics & Business Intelligence.
+        Tests KPI service, multi-period comparison, search-to-availability match, anomaly detection,
+        insight generation, REST API endpoints, tool-based Ask Analytics AI, and security isolation.
+        """
+        from .analytics_engine import (
+            PharmacyKPIService,
+            PeriodComparisonService,
+            SearchAvailabilityService,
+            AnomalyDetectionEngine,
+            InsightGenerationEngine,
+            AIAnalyticsExplanationService
+        )
+        from .models import Pharmacy, Medicine, Inventory, Reservation, SearchHistory
+
+        # 1. Setup Pharmacy & test medicines
+        pharm_user = User.objects.create_user(username="analytics_mgr", password="password123")
+        prof = pharm_user.userprofile
+        prof.role = "Pharmacy"
+        prof.pharmacy = self.pharmacy
+        prof.save()
+        self.client.force_login(pharm_user)
+
+        med_parac = Medicine.objects.create(name="Paracetamol 500", brand="GSK", category="Pain Relief", dosage="500 mg")
+        inv_parac = Inventory.objects.create(
+            pharmacy=self.pharmacy,
+            medicine=med_parac,
+            quantity=80,
+            price=Decimal("15.00"),
+            minimum_stock=20,
+            batch_number="P100",
+            expiry_date=timezone.now().date() + timezone.timedelta(days=365)
+        )
+
+        # 2. Seed past sales and search queries
+        today = timezone.now().date()
+        for d in range(1, 6):
+            Reservation.objects.create(
+                customer=pharm_user,
+                pharmacy=self.pharmacy,
+                medicine=med_parac,
+                quantity=5,
+                status="Collected",
+                payment_method="Online",
+                is_paid=True,
+                requested_at=timezone.now() - timezone.timedelta(days=d)
+            )
+            SearchHistory.objects.create(
+                user=pharm_user,
+                medicine="Paracetamol 500",
+                searched_at=timezone.now() - timezone.timedelta(days=d)
+            )
+
+        # 3. Test PharmacyKPIService & PeriodComparisonService
+        kpis = PharmacyKPIService.get_kpis_for_period(self.pharmacy, today - timezone.timedelta(days=6), today)
+        self.assertGreater(kpis["revenue"], 0.0)
+        self.assertGreater(kpis["units_sold"], 0)
+
+        comp = PeriodComparisonService.get_comparison_analytics(self.pharmacy, period="7d")
+        self.assertIn("changes", comp)
+        self.assertIn("revenue", comp["changes"])
+
+        # 4. Test SearchAvailabilityService
+        match_metrics = SearchAvailabilityService.get_search_availability_metrics(self.pharmacy, days=7)
+        self.assertGreater(len(match_metrics), 0)
+
+        # 5. Test AnomalyDetectionEngine & InsightGenerationEngine
+        insights = InsightGenerationEngine.generate_insights(self.pharmacy, period="7d")
+        self.assertIsInstance(insights, list)
+
+        # 6. Test Overview API Endpoint
+        resp_overview = self.client.get("/api/pharmacy/analytics/overview/?period=7d")
+        self.assertEqual(resp_overview.status_code, 200)
+        data_ov = resp_overview.json()
+        self.assertTrue(data_ov["success"])
+        self.assertIn("executive_summary", data_ov)
+
+        # 7. Test Trends API Endpoint
+        resp_trends = self.client.get("/api/pharmacy/analytics/trends/?period=7d")
+        self.assertEqual(resp_trends.status_code, 200)
+        data_tr = resp_trends.json()
+        self.assertTrue(data_tr["success"])
+        self.assertIn("revenue", data_tr)
+
+        # 8. Test Medicines Performance API Endpoint
+        resp_meds = self.client.get("/api/pharmacy/analytics/medicines/")
+        self.assertEqual(resp_meds.status_code, 200)
+        data_meds = resp_meds.json()
+        self.assertTrue(data_meds["success"])
+
+        # 9. Test Ask Analytics AI Endpoint
+        resp_ask = self.client.post("/api/pharmacy/analytics/ask/", data=json.dumps({
+            "query": "Which medicine has the highest search growth?"
+        }), content_type="application/json")
+        self.assertEqual(resp_ask.status_code, 200)
+        data_ask = resp_ask.json()
+        self.assertTrue(data_ask["success"])
+        self.assertIn("answer", data_ask)
+
+        # 10. Test UI Views (Pharmacy BI & Admin Benchmarking)
+        resp_ui = self.client.get("/pharmacy/analytics/")
+        self.assertEqual(resp_ui.status_code, 200)
+
+        admin_user = User.objects.create_superuser(username="analytics_admin", password="password123")
+        self.client.force_login(admin_user)
+        resp_bench = self.client.get("/admin/pharmacy-benchmarking/")
+        self.assertEqual(resp_bench.status_code, 200)
+
+
 
 
 

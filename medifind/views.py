@@ -1107,6 +1107,241 @@ def admin_model_performance_view(request):
     })
 
 
+# ==========================================================
+# MEDIFIND AI #5 — PHARMACY ANALYTICS & BUSINESS INTELLIGENCE
+# ==========================================================
+
+from .analytics_engine import (
+    PharmacyKPIService,
+    PeriodComparisonService,
+    SearchAvailabilityService,
+    CategoryAnalyticsService,
+    AnomalyDetectionEngine,
+    InsightGenerationEngine,
+    AIAnalyticsExplanationService
+)
+
+
+@login_required
+def pharmacy_analytics_overview_api(request):
+    """
+    GET /api/pharmacy/analytics/overview/
+    Returns comparative KPIs, percentage changes (Δ%), and Gemini Flash executive summary.
+    Security: Pharmacy users only access their own pharmacy data.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy:
+        return JsonResponse({"success": False, "message": "Unauthorized access. Verified pharmacy required."}, status=403)
+
+    period = request.GET.get("period", "7d")
+    custom_start = request.GET.get("start")
+    custom_end = request.GET.get("end")
+
+    comp_analytics = PeriodComparisonService.get_comparison_analytics(pharmacy, period, custom_start, custom_end)
+    daily_summary = AIAnalyticsExplanationService.generate_daily_executive_summary(pharmacy, period)
+
+    return JsonResponse({
+        "success": True,
+        "pharmacy": {"id": pharmacy.id, "name": pharmacy.name},
+        "period": period,
+        "comparison": comp_analytics,
+        "executive_summary": daily_summary
+    })
+
+
+@login_required
+def pharmacy_analytics_trends_api(request):
+    """
+    GET /api/pharmacy/analytics/trends/
+    Returns continuous daily timeseries arrays for revenue, orders, and search interest over selected period.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy:
+        return JsonResponse({"success": False, "message": "Pharmacy access required."}, status=403)
+
+    period = request.GET.get("period", "7d")
+    c_start, c_end, _, _ = PharmacyKPIService.parse_date_range(period)
+
+    # Sync demand snapshots
+    DemandDataService.sync_daily_snapshots(pharmacy, days_back=30)
+
+    dates = []
+    revenue_points = []
+    order_points = []
+    search_points = []
+
+    curr_d = c_start
+    while curr_d <= c_end:
+        dates.append(curr_d.strftime("%b %d"))
+        
+        # Calculate daily revenue and orders
+        daily_kpis = PharmacyKPIService.get_kpis_for_period(pharmacy, curr_d, curr_d)
+        revenue_points.append(daily_kpis["revenue"])
+        order_points.append(daily_kpis["total_transactions"])
+        search_points.append(daily_kpis["search_volume"])
+        curr_d += timedelta(days=1)
+
+    return JsonResponse({
+        "success": True,
+        "pharmacy_name": pharmacy.name,
+        "dates": dates,
+        "revenue": revenue_points,
+        "orders": order_points,
+        "searches": search_points
+    })
+
+
+@login_required
+def pharmacy_analytics_medicines_api(request):
+    """
+    GET /api/pharmacy/analytics/medicines/
+    Medicine performance breakdown combining search volume, units sold, availability match %, conversion %, and AI #4 forecast risk.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy:
+        return JsonResponse({"success": False, "message": "Pharmacy access required."}, status=403)
+
+    days = int(request.GET.get("days", 30))
+    search_metrics = SearchAvailabilityService.get_search_availability_metrics(pharmacy, days=days)
+
+    # Enrich with AI #4 Forecast Risk & Days of Cover
+    for item in search_metrics:
+        inv = Inventory.objects.filter(pharmacy=pharmacy, medicine_id=item["medicine_id"]).first()
+        if inv:
+            fc = TimeSeriesForecastingEngine.generate_forecast(pharmacy, inv.medicine, horizon_days=7)
+            risk = StockRiskEngine.analyze_inventory_risk(inv, fc)
+            item["forecast_risk"] = risk["risk_level"]
+            item["days_of_cover"] = risk["days_of_cover"]
+            item["predicted_7_day_demand"] = fc["predicted_demand"]
+        else:
+            item["forecast_risk"] = "LOW"
+            item["days_of_cover"] = "N/A"
+            item["predicted_7_day_demand"] = 0.0
+
+    return JsonResponse({
+        "success": True,
+        "pharmacy_name": pharmacy.name,
+        "count": len(search_metrics),
+        "medicines": search_metrics
+    })
+
+
+@login_required
+def pharmacy_analytics_insights_api(request):
+    """
+    GET /api/pharmacy/analytics/insights/
+    Returns prioritized operational insights (CRITICAL, HIGH, MEDIUM, LOW).
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy:
+        return JsonResponse({"success": False, "message": "Pharmacy access required."}, status=403)
+
+    period = request.GET.get("period", "7d")
+    insights = InsightGenerationEngine.generate_insights(pharmacy, period=period)
+
+    return JsonResponse({
+        "success": True,
+        "pharmacy_name": pharmacy.name,
+        "count": len(insights),
+        "insights": insights
+    })
+
+
+@login_required
+def pharmacy_analytics_anomalies_api(request):
+    """
+    GET /api/pharmacy/analytics/anomalies/
+    Returns detected statistical anomalies (sales spikes, search volume surges, stock drops).
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy:
+        return JsonResponse({"success": False, "message": "Pharmacy access required."}, status=403)
+
+    anomalies = AnomalyDetectionEngine.detect_anomalies(pharmacy, days=30)
+    return JsonResponse({
+        "success": True,
+        "pharmacy_name": pharmacy.name,
+        "count": len(anomalies),
+        "anomalies": anomalies
+    })
+
+
+@login_required
+def pharmacy_analytics_ask_api(request):
+    """
+    POST /api/pharmacy/analytics/ask/
+    Natural-Language "Ask Analytics AI" endpoint executing approved backend tool functions.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy:
+        return JsonResponse({"success": False, "message": "Pharmacy access required."}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        data = {}
+
+    query = data.get("query") or request.POST.get("query", "").strip()
+    if not query:
+        return JsonResponse({"success": False, "message": "Please provide an analytics question."}, status=400)
+
+    result = AIAnalyticsExplanationService.answer_analytics_question(pharmacy, query)
+    return JsonResponse(result)
+
+
+@login_required
+def pharmacy_analytics_bi_view(request):
+    """
+    GET /pharmacy/analytics/
+    Renders Pharmacy Business Intelligence Dashboard UI.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy:
+        messages.error(request, "A registered pharmacy owner profile is required to access Business Analytics.")
+        return redirect("dashboard")
+
+    return render(request, "pharmacy_analytics_bi.html", {
+        "pharmacy": pharmacy,
+    })
+
+
+@login_required
+def admin_pharmacy_benchmarking_view(request):
+    """
+    GET /admin/pharmacy-benchmarking/
+    Admin view displaying cross-pharmacy performance metrics and benchmarking.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "403.html", status=403)
+
+    pharmacies = Pharmacy.objects.filter(is_active=True)
+    benchmarks = []
+
+    c_start, c_end, _, _ = PharmacyKPIService.parse_date_range("30d")
+    for p in pharmacies:
+        kpis = PharmacyKPIService.get_kpis_for_period(p, c_start, c_end)
+        benchmarks.append({
+            "pharmacy_id": p.id,
+            "name": p.name,
+            "city": p.city,
+            "revenue": kpis["revenue"],
+            "orders": kpis["total_transactions"],
+            "search_volume": kpis["search_volume"],
+            "availability_rate": kpis["availability_rate"],
+            "total_skus": kpis["total_skus"]
+        })
+
+    benchmarks.sort(key=lambda x: -x["revenue"])
+
+    return render(request, "admin_pharmacy_benchmarking.html", {
+        "benchmarks": benchmarks,
+        "period_label": "Last 30 Days"
+    })
+
+
 
 
 

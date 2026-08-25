@@ -61,6 +61,12 @@
               <i class="fa-solid fa-chart-line text-success me-1"></i> AI Forecasting
             </a>
           </li>
+          <!-- 6. AI Pharmacy Analytics & BI -->
+          <li class="nav-item">
+            <a class="nav-link px-3 fw-semibold {% if request.resolver_match.url_name == 'pharmacy_analytics_bi_view' %}active text-primary fw-bold{% else %}text-dark{% endif %}" href="{% url 'pharmacy_analytics_bi_view' %}">
+              <i class="fa-solid fa-chart-pie text-primary me-1"></i> Business BI
+            </a>
+          </li>
           <!-- Action Button: Upload Inventory -->
           <li class="nav-item ms-lg-2">
             <a class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5 shadow-xs" href="{% url 'inventory' %}">

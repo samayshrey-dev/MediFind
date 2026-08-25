@@ -34,6 +34,16 @@ urlpatterns = [
     path("api/pharmacy/ai/retrain/", views.retrain_forecasting_model_api, name="retrain_forecasting_model_api"),
     path("admin/ai-model-performance/", views.admin_model_performance_view, name="admin_model_performance_view"),
 
+    # Pharmacy Analytics & Business Intelligence (AI #5) Endpoints
+    path("pharmacy/analytics/", views.pharmacy_analytics_bi_view, name="pharmacy_analytics_bi_view"),
+    path("api/pharmacy/analytics/overview/", views.pharmacy_analytics_overview_api, name="pharmacy_analytics_overview_api"),
+    path("api/pharmacy/analytics/trends/", views.pharmacy_analytics_trends_api, name="pharmacy_analytics_trends_api"),
+    path("api/pharmacy/analytics/medicines/", views.pharmacy_analytics_medicines_api, name="pharmacy_analytics_medicines_api"),
+    path("api/pharmacy/analytics/insights/", views.pharmacy_analytics_insights_api, name="pharmacy_analytics_insights_api"),
+    path("api/pharmacy/analytics/anomalies/", views.pharmacy_analytics_anomalies_api, name="pharmacy_analytics_anomalies_api"),
+    path("api/pharmacy/analytics/ask/", views.pharmacy_analytics_ask_api, name="pharmacy_analytics_ask_api"),
+    path("admin/pharmacy-benchmarking/", views.admin_pharmacy_benchmarking_view, name="admin_pharmacy_benchmarking_view"),
+
 
 
 

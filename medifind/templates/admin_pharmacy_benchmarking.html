@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Pharmacy Benchmarking | MediFind{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100">
+  <div class="container-fluid px-lg-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-dark text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">ADMIN BENCHMARKING</span>
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-0.5 small fw-bold">
+            <i class="fa-solid fa-chart-simple me-1"></i> Multi-Pharmacy BI Comparison
+          </span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">Pharmacy Performance Benchmarking</h2>
+        <p class="text-muted small mb-0">Cross-pharmacy revenue, search-to-stock availability scores, and order volume comparisons ({{ period_label }}).</p>
+      </div>
+
+      <div>
+        <a href="{% url 'admin_model_performance_view' %}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold me-2">
+          <i class="fa-solid fa-code-branch me-1"></i> ML Models
+        </a>
+      </div>
+    </div>
+
+    <!-- ── BENCHMARKING TABLE ── -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+            <tr>
+              <th scope="col" class="py-3 ps-3">Pharmacy Name</th>
+              <th scope="col" class="py-3">City</th>
+              <th scope="col" class="py-3">Revenue (30d)</th>
+              <th scope="col" class="py-3">Orders &amp; Reservations</th>
+              <th scope="col" class="py-3">Search Volume</th>
+              <th scope="col" class="py-3">Availability Score</th>
+              <th scope="col" class="py-3 text-end pe-3">Catalog SKUs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in benchmarks %}
+              <tr>
+                <td class="ps-3 py-3">
+                  <div class="fw-bold text-dark">{{ b.name }}</div>
+                  <span class="text-muted small" style="font-size: 0.75rem;">ID: #{{ b.pharmacy_id }}</span>
+                </td>
+                <td class="small text-muted">{{ b.city }}</td>
+                <td><strong class="text-success">₹{{ b.revenue|floatformat:2 }}</strong></td>
+                <td><span class="fw-bold text-dark">{{ b.orders }}</span></td>
+                <td><span class="fw-bold text-primary">{{ b.search_volume }} queries</span></td>
+                <td>
+                  <div class="d-flex align-items-center gap-2" style="max-width: 140px;">
+                    <div class="progress flex-grow-1" style="height: 6px;">
+                      <div class="progress-bar {% if b.availability_rate > 80 %}bg-success{% else %}bg-warning{% endif %}" style="width: {{ b.availability_rate }}%;"></div>
+                    </div>
+                    <span class="small text-muted fw-bold" style="font-size: 0.72rem;">{{ b.availability_rate }}%</span>
+                  </div>
+                </td>
+                <td class="text-end pe-3">
+                  <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">{{ b.total_skus }} SKUs</span>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No active pharmacy records found for benchmarking.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
