@@ -1179,6 +1179,63 @@ class RazorpayAgenticCommerceTests(TestCase):
         audit_res = DataQualityService.analyze_catalog_quality()
         self.assertIn("total_medicines", audit_res)
 
+    def test_38_mandatory_prescription_upload_enforcement(self):
+        """
+        Verifies that prescription-required medicines force the user to upload a valid doctor prescription
+        before allowing online payment or store reservation.
+        """
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import Medicine, Inventory, Reservation
+
+        # Create prescription-required medicine & inventory
+        rx_med = Medicine.objects.create(
+            name="Augmentin 625 Duo",
+            brand="GSK",
+            dosage="625 mg",
+            category="Antibiotic",
+            prescription_required=True
+        )
+        rx_inv = Inventory.objects.create(
+            medicine=rx_med,
+            pharmacy=self.pharmacy,
+            quantity=20,
+            price=Decimal("150.00"),
+            batch_number="BATCH123",
+            expiry_date=timezone.now().date() + timezone.timedelta(days=365)
+        )
+
+        user = User.objects.create_user(username="rx_patient", password="password123")
+        self.client.force_login(user)
+
+        # 1. Attempt reservation WITHOUT uploading prescription -> Expect HTTP 400 rejection
+        resp_reject = self.client.post(f"/reserve/{rx_inv.id}/", {
+            "quantity": 1,
+            "payment_method": "Online",
+            "notes": "Test without prescription"
+        }, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(resp_reject.status_code, 400)
+        data_rej = resp_reject.json()
+        self.assertFalse(data_rej["success"])
+        self.assertIn("prescription", data_rej["message"].lower())
+
+        # 2. Attempt reservation WITH valid prescription image -> Expect HTTP 200 success
+        fake_rx_file = SimpleUploadedFile("rx_doctor_note.png", b"\x89PNG\r\n\x1a\nvalid png bytes", content_type="image/png")
+        resp_success = self.client.post(f"/reserve/{rx_inv.id}/", {
+            "quantity": 1,
+            "payment_method": "Online",
+            "notes": "Test with prescription",
+            "prescription_file": fake_rx_file
+        }, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(resp_success.status_code, 200)
+        data_succ = resp_success.json()
+        self.assertTrue(data_succ["success"])
+
+        # 3. Verify Database state
+        rx_obj = Reservation.objects.filter(customer=user, medicine=rx_med).first()
+        self.assertIsNotNone(rx_obj)
+        self.assertTrue(rx_obj.prescription_uploaded)
+
+
 
 
 

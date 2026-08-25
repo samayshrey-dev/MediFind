@@ -231,6 +231,34 @@
               </div>
             </div>
 
+            <!-- ── Mandatory Prescription Upload Section (For Rx Required Medicines) ── -->
+            {% if medicine.prescription_required %}
+              <div class="card border border-warning rounded-4 p-3 mb-4 bg-warning-subtle shadow-sm" id="rxUploadContainer">
+                <div class="d-flex align-items-center gap-2.5 mb-2">
+                  <div class="d-flex align-items-center justify-content-center bg-warning text-dark rounded-circle flex-shrink-0" style="width: 36px; height: 36px;">
+                    <i class="fa-solid fa-file-prescription"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold text-dark mb-0" style="font-size: 0.9rem;">Doctor Prescription Required</h6>
+                    <small class="text-muted" style="font-size: 0.75rem;">Upload a valid doctor prescription before proceeding to payment or store pickup.</small>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <label for="prescriptionFileInput" class="form-label text-dark fw-bold small mb-1">Attach Doctor Prescription <span class="text-danger">*</span></label>
+                  <input type="file" id="prescriptionFileInput" name="prescription_file" accept="image/*,.pdf" class="form-control form-control-sm border-warning rounded-3" required>
+                  <div class="form-text text-muted small mt-1" style="font-size: 0.72rem;">
+                    <i class="fa-solid fa-shield-halved me-1 text-success"></i> Accepted formats: JPG, PNG, WEBP, PDF (Max 10MB). Encrypted &amp; private.
+                  </div>
+                  <div id="rxFilePreview" class="mt-2 d-none alert alert-success p-2 small mb-0 fw-semibold">
+                    <i class="fa-solid fa-circle-check me-1"></i> <span id="rxFileName">Prescription attached!</span>
+                  </div>
+                </div>
+                <div id="rxUploadAlert" class="alert alert-danger p-2 small fw-bold mt-2 mb-0 d-none">
+                  <i class="fa-solid fa-triangle-exclamation me-1"></i> Please attach your prescription file before proceeding.
+                </div>
+              </div>
+            {% endif %}
+
             <!-- ── Notes ── -->
             <div class="mb-4">
               <label for="reservationNotes" class="form-label text-dark fw-semibold small mb-1">Notes for Pharmacy <span class="text-muted fw-normal">(Optional)</span></label>
@@ -287,12 +315,12 @@
             </div>
 
             <div id="btnAreaStore" style="display: none;">
-              <form method="POST" action="{% url 'reserve_medicine' inventory.id %}">
+              <form method="POST" action="{% url 'reserve_medicine' inventory.id %}" enctype="multipart/form-data" id="storePayForm">
                 {% csrf_token %}
                 <input type="hidden" name="quantity" id="formQtyStore" value="1">
                 <input type="hidden" name="payment_method" value="PayOnPickup">
                 <input type="hidden" name="notes" id="formNotesStore" value="">
-                <button type="submit" class="btn btn-cta-store w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow-sm">
+                <button type="submit" id="btnPayStoreSubmit" class="btn btn-cta-store w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow-sm">
                   <i class="fa-solid fa-store"></i>
                   <span>Reserve &amp; Pay at Store</span>
                 </button>
@@ -417,29 +445,91 @@ document.addEventListener('DOMContentLoaded', () => {
   cardOnline.addEventListener('click', () => { optOnline.checked = true; syncPaymentMode(); });
   cardStore.addEventListener('click',  () => { optStore.checked  = true; syncPaymentMode(); });
 
+  // Prescription Required Validation Guard
+  const rxRequired = {{ medicine.prescription_required|yesno:"true,false" }};
+  const rxInput = document.getElementById('prescriptionFileInput');
+  const rxAlert = document.getElementById('rxUploadAlert');
+
+  if (rxInput) {
+    rxInput.addEventListener('change', () => {
+      if (rxInput.files && rxInput.files.length > 0) {
+        if (rxAlert) rxAlert.classList.add('d-none');
+        const preview = document.getElementById('rxFilePreview');
+        const fileNameSpan = document.getElementById('rxFileName');
+        if (preview && fileNameSpan) {
+          fileNameSpan.innerText = 'Attached: ' + rxInput.files[0].name;
+          preview.classList.remove('d-none');
+        }
+      }
+    });
+  }
+
+  function validatePrescriptionUpload() {
+    if (!rxRequired) return true;
+    if (!rxInput || !rxInput.files || rxInput.files.length === 0) {
+      if (rxAlert) {
+        rxAlert.classList.remove('d-none');
+        rxAlert.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> A valid doctor prescription is required for this medicine before proceeding.';
+      }
+      const rxContainer = document.getElementById('rxUploadContainer');
+      if (rxContainer) {
+        rxContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return false;
+    }
+    if (rxAlert) rxAlert.classList.add('d-none');
+    return true;
+  }
+
+  // Store Reservation Form Submission Guard
+  const storeForm = document.getElementById('storePayForm');
+  if (storeForm) {
+    storeForm.addEventListener('submit', (e) => {
+      if (!validatePrescriptionUpload()) {
+        e.preventDefault();
+        return false;
+      }
+      if (rxInput && rxInput.files.length > 0) {
+        let clonedRx = document.getElementById('storeClonedRx');
+        if (!clonedRx) {
+          clonedRx = rxInput.cloneNode(true);
+          clonedRx.id = 'storeClonedRx';
+          clonedRx.name = 'prescription_file';
+          clonedRx.style.display = 'none';
+          storeForm.appendChild(clonedRx);
+        }
+      }
+    });
+  }
+
   // Razorpay Online Payment
   btnPayOnlineNow.addEventListener('click', async () => {
+    if (!validatePrescriptionUpload()) return;
+
     const qty   = parseInt(inputQty.value) || 1;
     const notes = notesText ? notesText.value.trim() : '';
 
     btnPayOnlineNow.disabled  = true;
-    btnPayOnlineNow.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Initializing Secure Payment...';
+    btnPayOnlineNow.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Uploading &amp; Initializing Payment...';
 
     try {
       const csrfToken = getCsrfToken();
+      const formData = new FormData();
+      formData.append('quantity', qty);
+      formData.append('payment_method', 'Online');
+      formData.append('notes', notes);
+      formData.append('csrfmiddlewaretoken', csrfToken);
+      if (rxInput && rxInput.files && rxInput.files.length > 0) {
+        formData.append('prescription_file', rxInput.files[0]);
+      }
+
       const resp = await fetch(`{% url 'reserve_medicine' inventory.id %}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
           'X-Requested-With': 'XMLHttpRequest',
           'X-CSRFToken': csrfToken
         },
-        body: new URLSearchParams({
-          'quantity': qty,
-          'payment_method': 'Online',
-          'notes': notes,
-          'csrfmiddlewaretoken': csrfToken
-        })
+        body: formData
       });
 
       const contentType = resp.headers.get("content-type") || "";

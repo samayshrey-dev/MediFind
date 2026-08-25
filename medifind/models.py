@@ -398,6 +398,17 @@ class Reservation(models.Model):
 
     is_paid = models.BooleanField(default=False)
 
+    prescription_image = models.ImageField(
+        upload_to="prescriptions/",
+        blank=True,
+        null=True,
+        help_text="Uploaded doctor prescription file for prescription-required medicines"
+    )
+
+    prescription_uploaded = models.BooleanField(
+        default=False,
+        help_text="True if a valid doctor prescription has been uploaded for this reservation"
+    )
 
     requested_at = models.DateTimeField(auto_now_add=True)
 
@@ -653,6 +664,8 @@ class Order(models.Model):
     razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
     snapshot_data = models.JSONField(default=dict, blank=True)
+    prescription_image = models.ImageField(upload_to="prescriptions/", blank=True, null=True)
+    prescription_uploaded = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     approved_at = models.DateTimeField(null=True, blank=True)

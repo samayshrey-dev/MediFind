@@ -128,9 +128,13 @@ class AgenticCommerceService:
         Amount is converted to the smallest currency unit (paise: ₹22 -> 2200).
         """
         try:
-            order = Order.objects.select_related("medicine", "pharmacy", "inventory").get(order_reference=order_reference)
+            order = Order.objects.select_related("medicine", "pharmacy", "inventory", "reservation").get(order_reference=order_reference)
         except Order.DoesNotExist:
             raise CommerceError("Order reference not found.")
+
+        # Prescription Required Enforcement Gate
+        if order.medicine.prescription_required and not order.prescription_uploaded and not (order.reservation and order.reservation.prescription_uploaded):
+            raise CommerceError(f"A valid doctor prescription upload is required before online or offline payment for {order.medicine.name}.")
 
         # Revalidation Gate: Recheck Medicine, Pharmacy, Price, and Stock
         try:
@@ -268,6 +272,10 @@ class AgenticCommerceService:
 
         if reservation.is_paid:
             raise CommerceError("This reservation has already been paid.")
+
+        # Prescription Required Enforcement Gate
+        if reservation.medicine.prescription_required and not reservation.prescription_uploaded:
+            raise CommerceError(f"A valid doctor prescription upload is required before online or offline payment for {reservation.medicine.name}.")
 
         # Find corresponding inventory
         inv = Inventory.objects.filter(medicine=reservation.medicine, pharmacy=reservation.pharmacy).first()

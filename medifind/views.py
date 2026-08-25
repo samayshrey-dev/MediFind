@@ -2844,24 +2844,59 @@ def reserve_medicine(request, inventory_id):
         status="Pending"
     ).first()
 
+    # Mandatory Prescription Upload Guard
+    rx_file = request.FILES.get("prescription_file") or request.FILES.get("prescription")
+    if inventory.medicine.prescription_required:
+        has_existing_rx = bool(existing and existing.prescription_uploaded)
+        if not rx_file and not has_existing_rx:
+            err_msg = f"A valid doctor prescription upload is required before reserving or paying for {inventory.medicine.name}."
+            if is_ajax:
+                return JsonResponse({"success": False, "message": err_msg}, status=400)
+            messages.error(request, err_msg)
+            return redirect("reserve_medicine", inventory_id=inventory.id)
+
+    rx_uploaded = bool(rx_file) or bool(existing and existing.prescription_uploaded)
+
     if payment_choice == "Online":
         if existing:
             reservation = existing
             reservation.quantity = quantity
             reservation.notes = notes
             reservation.payment_method = "Online"
-            reservation.save(update_fields=["quantity", "notes", "payment_method"])
+            reservation.prescription_uploaded = rx_uploaded
+            if rx_file:
+                try:
+                    reservation.prescription_image = rx_file
+                except (OSError, IOError):
+                    pass
+            reservation.save()
         else:
-            reservation = Reservation.objects.create(
-                customer=request.user,
-                pharmacy=inventory.pharmacy,
-                medicine=inventory.medicine,
-                quantity=quantity,
-                status="Pending",
-                payment_method="Online",
-                is_paid=False,
-                notes=notes
-            )
+            try:
+                reservation = Reservation.objects.create(
+                    customer=request.user,
+                    pharmacy=inventory.pharmacy,
+                    medicine=inventory.medicine,
+                    quantity=quantity,
+                    status="Pending",
+                    payment_method="Online",
+                    is_paid=False,
+                    notes=notes,
+                    prescription_image=rx_file,
+                    prescription_uploaded=rx_uploaded
+                )
+            except (OSError, IOError):
+                reservation = Reservation.objects.create(
+                    customer=request.user,
+                    pharmacy=inventory.pharmacy,
+                    medicine=inventory.medicine,
+                    quantity=quantity,
+                    status="Pending",
+                    payment_method="Online",
+                    is_paid=False,
+                    notes=notes,
+                    prescription_image=None,
+                    prescription_uploaded=rx_uploaded
+                )
             notify_reservation_update(reservation, "NEW_RESERVATION", request.user)
 
         try:
@@ -2902,16 +2937,32 @@ def reserve_medicine(request, inventory_id):
             )
             return redirect("my_reservations")
 
-        reservation = Reservation.objects.create(
-            customer=request.user,
-            pharmacy=inventory.pharmacy,
-            medicine=inventory.medicine,
-            quantity=quantity,
-            status="Pending",
-            payment_method="PayOnPickup",
-            is_paid=False,
-            notes=notes
-        )
+        try:
+            reservation = Reservation.objects.create(
+                customer=request.user,
+                pharmacy=inventory.pharmacy,
+                medicine=inventory.medicine,
+                quantity=quantity,
+                status="Pending",
+                payment_method="PayOnPickup",
+                is_paid=False,
+                notes=notes,
+                prescription_image=rx_file,
+                prescription_uploaded=rx_uploaded
+            )
+        except (OSError, IOError):
+            reservation = Reservation.objects.create(
+                customer=request.user,
+                pharmacy=inventory.pharmacy,
+                medicine=inventory.medicine,
+                quantity=quantity,
+                status="Pending",
+                payment_method="PayOnPickup",
+                is_paid=False,
+                notes=notes,
+                prescription_image=None,
+                prescription_uploaded=rx_uploaded
+            )
 
         # Send notifications
         notify_reservation_update(reservation, "NEW_RESERVATION", request.user)
