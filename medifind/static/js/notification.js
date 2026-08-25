@@ -178,8 +178,8 @@ function playNotificationSound() {
     } catch (e) {}
 }
 
-// Initial Fetch and Background Polling every 15s
+// Initial Fetch and Background Polling every 5s
 document.addEventListener("DOMContentLoaded", () => {
     fetchNotifications();
-    setInterval(fetchNotifications, 15000);
+    setInterval(fetchNotifications, 5000);
 });

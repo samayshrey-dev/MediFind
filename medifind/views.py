@@ -3179,51 +3179,59 @@ def notify_reservation_update(reservation, action, actor_user):
         medicine = reservation.medicine
         customer = reservation.customer
 
-        # Find pharmacy owner profiles
-        pharmacy_profiles = UserProfile.objects.filter(pharmacy=pharmacy)
-        pharmacy_users = [p.user for p in pharmacy_profiles if p.user]
+        valid_actor = actor_user if (actor_user and getattr(actor_user, "is_authenticated", False)) else None
 
-        # ACTION 1: New Reservation Created
+        # Robust resolution of pharmacy owner users
+        pharmacy_users = list(User.objects.filter(userprofile__pharmacy=pharmacy))
+        if not pharmacy_users and pharmacy.email:
+            pharmacy_users = list(User.objects.filter(email__iexact=pharmacy.email))
+        if not pharmacy_users:
+            pharmacy_users = list(User.objects.filter(is_staff=True))
+
+        # Exclude customer from receiving pharmacy-side duplicate notification
+        pharmacy_users = list(set([u for u in pharmacy_users if u and u.id != getattr(customer, "id", None)]))
+
+        # ACTION 1: New Reservation / Order Created
         if action == "NEW_RESERVATION":
             # 1. Notify Customer (Confirmation)
             Notification.objects.create(
                 recipient=customer,
-                sender=actor_user,
+                sender=valid_actor,
                 reservation=reservation,
-                title="Reservation Sent",
-                message=f"Your reservation request for {medicine.name} at {pharmacy.name} was successfully submitted.",
+                title="Order & Reservation Sent",
+                message=f"Your order #{reservation.id:04d} for {reservation.quantity} unit(s) of {medicine.name} at {pharmacy.name} was successfully submitted.",
                 notification_type="Reservation"
             )
             # 2. Notify Pharmacy Owner(s)
             for owner in pharmacy_users:
                 Notification.objects.create(
                     recipient=owner,
-                    sender=actor_user,
+                    sender=valid_actor,
                     reservation=reservation,
-                    title="New Reservation Request",
-                    message=f"Customer {customer.first_name or customer.username} requested {reservation.quantity} unit(s) of {medicine.name}.",
+                    title="New Customer Order Received",
+                    message=f"Customer {customer.first_name or customer.username} ordered and reserved {reservation.quantity} unit(s) of {medicine.name} (Order #{reservation.id:04d}).",
                     notification_type="Reservation"
                 )
 
-        # ACTION 2: Reservation Accepted
+        # ACTION 2: Reservation Accepted by Pharmacy
         elif action == "ACCEPTED":
             # 1. Notify Customer
             Notification.objects.create(
                 recipient=customer,
-                sender=actor_user,
+                sender=valid_actor,
                 reservation=reservation,
-                title="Reservation Accepted",
-                message=f"Good news! {pharmacy.name} accepted your reservation for {medicine.name}.",
+                title="Order Accepted!",
+                message=f"Good news! {pharmacy.name} accepted your reservation for {medicine.name}. Order #{reservation.id:04d} is ready for pickup.",
                 notification_type="Accepted"
             )
             # 2. Notify Pharmacy Owner(s)
             for owner in pharmacy_users:
                 Notification.objects.create(
                     recipient=owner,
-                    sender=actor_user,
+                    sender=valid_actor,
                     reservation=reservation,
-                    title="Reservation Accepted",
-                    message=f"Reservation #{reservation.id} for {medicine.name} was marked as Accepted.",
+                    title="Order Accepted",
+                    message=f"Order #{reservation.id:04d} for {medicine.name} was marked as Accepted.",
                     notification_type="Accepted"
                 )
 
@@ -3232,46 +3240,68 @@ def notify_reservation_update(reservation, action, actor_user):
             # 1. Notify Customer
             Notification.objects.create(
                 recipient=customer,
-                sender=actor_user,
+                sender=valid_actor,
                 reservation=reservation,
-                title="Reservation Rejected",
-                message=f"{pharmacy.name} was unable to fulfill your reservation for {medicine.name}.",
+                title="Order Rejected",
+                message=f"{pharmacy.name} was unable to fulfill your order #{reservation.id:04d} for {medicine.name}.",
                 notification_type="Rejected"
             )
             # 2. Notify Pharmacy Owner(s)
             for owner in pharmacy_users:
                 Notification.objects.create(
                     recipient=owner,
-                    sender=actor_user,
+                    sender=valid_actor,
                     reservation=reservation,
-                    title="Reservation Rejected",
-                    message=f"Reservation #{reservation.id} for {medicine.name} was marked as Rejected.",
+                    title="Order Rejected",
+                    message=f"Order #{reservation.id:04d} for {medicine.name} was marked as Rejected.",
                     notification_type="Rejected"
                 )
 
-        # ACTION 4: Payment Verified (Razorpay)
-        elif action == "PAID":
+        # ACTION 4: Reservation Collected / Completed
+        elif action == "COLLECTED":
             # 1. Notify Customer
             Notification.objects.create(
                 recipient=customer,
-                sender=actor_user,
+                sender=valid_actor,
                 reservation=reservation,
-                title="Payment Verified",
-                message=f"Your Razorpay payment for {medicine.name} at {pharmacy.name} was successfully verified.",
+                title="Order Completed",
+                message=f"Your order #{reservation.id:04d} for {medicine.name} at {pharmacy.name} has been marked as Completed / Collected.",
                 notification_type="Accepted"
             )
             # 2. Notify Pharmacy Owner(s)
             for owner in pharmacy_users:
                 Notification.objects.create(
                     recipient=owner,
-                    sender=actor_user,
+                    sender=valid_actor,
                     reservation=reservation,
-                    title="Payment Received (Verified)",
-                    message=f"Customer {customer.first_name or customer.username} completed online payment for order #{reservation.id} ({medicine.name}).",
+                    title="Order Collected",
+                    message=f"Order #{reservation.id:04d} ({medicine.name}) was successfully collected by customer {customer.first_name or customer.username}.",
+                    notification_type="Accepted"
+                )
+
+        # ACTION 5: Payment Verified (Razorpay)
+        elif action == "PAID":
+            # 1. Notify Customer
+            Notification.objects.create(
+                recipient=customer,
+                sender=valid_actor,
+                reservation=reservation,
+                title="Payment Verified",
+                message=f"Your Razorpay payment for {medicine.name} at {pharmacy.name} (Order #{reservation.id:04d}) was successfully verified.",
+                notification_type="Accepted"
+            )
+            # 2. Notify Pharmacy Owner(s)
+            for owner in pharmacy_users:
+                Notification.objects.create(
+                    recipient=owner,
+                    sender=valid_actor,
+                    reservation=reservation,
+                    title="Payment Received",
+                    message=f"Customer {customer.first_name or customer.username} completed online payment for Order #{reservation.id:04d} ({medicine.name}).",
                     notification_type="Reservation"
                 )
     except Exception as e:
-        print("NOTIFICATION CREATION WARNING:", e)
+        logger.warning(f"NOTIFICATION CREATION ERROR: {str(e)}")
 
 
 # ==========================================================
