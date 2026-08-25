@@ -999,8 +999,11 @@ class RazorpayAgenticCommerceTests(TestCase):
             address="45 Mount Road",
             city="Chennai",
             latitude=13.0827,
-            longitude=80.2707
+            longitude=80.2707,
+            opening_time="08:00",
+            closing_time="22:00"
         )
+
         cust = User.objects.create_user(username="test_customer_sec", password="Password123!")
         res_test = Reservation.objects.create(
             customer=cust,
