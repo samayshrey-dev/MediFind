@@ -270,6 +270,7 @@ def home(request):
 # ==========================================================
 
 @csrf_exempt
+@rate_limit(max_requests=40, window_seconds=60, key_prefix="ai_agent_interpret", is_json=True)
 def ai_commerce_agent_interpret(request):
     """
     POST /api/ai/interpret/
@@ -285,11 +286,13 @@ def ai_commerce_agent_interpret(request):
     else:
         query = request.GET.get("query", "")
 
+    query = sanitize_plain_text(query, max_length=150)
     intent = IntentParser.parse_with_ai(query)
     return JsonResponse(intent)
 
 
 @csrf_exempt
+@rate_limit(max_requests=40, window_seconds=60, key_prefix="ai_agent_search", is_json=True)
 def ai_commerce_agent_search(request):
     """
     POST /api/ai/agent/search/
@@ -317,6 +320,10 @@ def ai_commerce_agent_search(request):
         user_lat = request.GET.get("lat")
         user_lng = request.GET.get("lng")
         session_id = request.GET.get("session_id")
+
+    query = sanitize_plain_text(query, max_length=150)
+    if session_id:
+        session_id = sanitize_plain_text(str(session_id), max_length=64)
 
     try:
         if user_lat is not None:
@@ -348,6 +355,7 @@ def ai_commerce_agent_search(request):
 
 
 @csrf_exempt
+@rate_limit(max_requests=30, window_seconds=60, key_prefix="ai_agent_approve", is_json=True)
 def ai_commerce_agent_approve(request):
     """
     POST /api/ai/agent/approve/
@@ -372,6 +380,8 @@ def ai_commerce_agent_approve(request):
             "message": "session_id and inventory_id are required."
         }, status=400)
 
+    session_id = sanitize_plain_text(str(session_id), max_length=64)
+
     try:
         inventory_id = int(inventory_id)
     except (ValueError, TypeError):
@@ -391,7 +401,9 @@ def ai_commerce_agent_approve(request):
 
 
 @csrf_exempt
+@rate_limit(max_requests=60, window_seconds=60, key_prefix="ai_agent_audit", is_json=True)
 def ai_commerce_agent_audit(request, session_id):
+
     """
     GET /api/ai/agent/audit/<session_id>/
     Returns internal audit trail logs for an agent session.
@@ -688,6 +700,7 @@ def order_confirmed_view(request, order_reference):
 # ==========================================================
 
 @csrf_exempt
+@rate_limit(max_requests=40, window_seconds=60, key_prefix="ai_search_api", is_json=True)
 def ai_search_api(request):
     """
     POST /api/ai/search/
@@ -702,6 +715,9 @@ def ai_search_api(request):
             query = request.POST.get("query", "")
     else:
         query = request.GET.get("query", "")
+
+    query = sanitize_plain_text(query, max_length=150)
+
 
     result = parse_query_with_ai(query)
     return JsonResponse(result)
@@ -757,16 +773,17 @@ def compute_sku_exactness_score(medicine, query_text):
 # ==========================================================
 
 def search(request):
-    query = request.GET.get("medicine", "").strip()
-    category = request.GET.get("category", "").strip()
-    sort = request.GET.get("sort", "").strip()
-    radius_param = request.GET.get("radius", "").strip()
+    query = sanitize_plain_text(request.GET.get("medicine", "").strip(), max_length=150)
+    category = sanitize_plain_text(request.GET.get("category", "").strip(), max_length=100)
+    sort = sanitize_plain_text(request.GET.get("sort", "").strip(), max_length=20)
+    radius_param = sanitize_plain_text(request.GET.get("radius", "").strip(), max_length=10)
     user_lat_param = request.GET.get("lat", "").strip()
     user_lng_param = request.GET.get("lng", "").strip()
-    ai_interpreted = request.GET.get("ai_interpreted", "").strip()
+    ai_interpreted = sanitize_plain_text(request.GET.get("ai_interpreted", "").strip(), max_length=200)
 
     ai_result = None
     warning_msg = None
+
 
     if query:
         ai_result = parse_query_with_ai(query)
@@ -1056,9 +1073,10 @@ def search(request):
             "ai_interpreted": ai_interpreted,
             "did_you_mean": did_you_mean,
             "warning_msg": warning_msg,
-            "marker_data": json.dumps(marker_data)
+            "marker_data": json.dumps(marker_data).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
         }
     )
+
 
 
 @csrf_exempt
@@ -1075,9 +1093,9 @@ def subscribe_stock_alert(request):
     except Exception:
         body = request.POST
 
-    medicine_name = body.get("medicine_name") or body.get("medicine") or body.get("query", "").strip()
-    email = body.get("email", "").strip()
-    phone = body.get("phone", "").strip()
+    medicine_name = sanitize_plain_text(body.get("medicine_name") or body.get("medicine") or body.get("query", "").strip(), max_length=150)
+    email = sanitize_plain_text(body.get("email", "").strip(), max_length=150)
+    phone = sanitize_plain_text(body.get("phone", "").strip(), max_length=30)
 
     if not medicine_name:
         return JsonResponse({"success": False, "message": "Medicine name is required."}, status=400)
@@ -1103,13 +1121,15 @@ def subscribe_stock_alert(request):
     })
 
 
+@rate_limit(max_requests=60, window_seconds=60, key_prefix="suggestions_api", is_json=True)
 def search_suggestions(request):
     """
     GET /search/suggestions/?q=dollo
     Fault-tolerant auto-suggestions returning exact & fuzzy matched medicines.
     """
-    query = request.GET.get("q", "").strip()
+    query = sanitize_plain_text(request.GET.get("q", "").strip(), max_length=100)
     suggestions = []
+
 
     if query:
         seen_ids = set()
@@ -1429,7 +1449,7 @@ def medicines(request):
 
 
 
-@pharmacy_required
+@verified_pharmacy_required
 def add_medicine(request):
 
     if request.method == "POST":
@@ -1461,7 +1481,9 @@ def add_medicine(request):
             "form": form
         }
     )
-@pharmacy_required
+
+
+@verified_pharmacy_required
 def edit_medicine(request, pk):
 
     medicine = get_object_or_404(
@@ -1505,6 +1527,8 @@ def edit_medicine(request, pk):
 
 @pharmacy_required
 def delete_medicine(request, pk):
+    if not request.user.is_superuser:
+        return render(request, "403.html", status=403)
 
     medicine = get_object_or_404(
         Medicine,
@@ -1521,11 +1545,13 @@ def delete_medicine(request, pk):
     return redirect("medicines")
 
 
+
 # ==========================================================
 # Nearby Pharmacies API (Real Browser Geolocation & Inventory Discovery)
 # ==========================================================
 
 @csrf_exempt
+@rate_limit(max_requests=60, window_seconds=60, key_prefix="nearby_api", is_json=True)
 def nearby_pharmacies_api(request):
     """
     GET /api/pharmacies/nearby/?lat=...&lng=...&radius=5&sort=nearest
@@ -1534,8 +1560,9 @@ def nearby_pharmacies_api(request):
     lat_str = request.GET.get("lat", "").strip()
     lng_str = request.GET.get("lng", "").strip()
     radius_str = request.GET.get("radius", "5").strip()
-    sort_by = request.GET.get("sort", "nearest").strip()
-    query = request.GET.get("q", "").strip()
+    sort_by = sanitize_plain_text(request.GET.get("sort", "nearest").strip(), max_length=20)
+    query = sanitize_plain_text(request.GET.get("q", "").strip(), max_length=150)
+
 
     user_lat = None
     user_lng = None
@@ -1698,9 +1725,10 @@ def pharmacies(request):
             "radius": radius_param,
             "sort": sort,
             "query": query,
-            "marker_data": json.dumps(marker_data)
+            "marker_data": json.dumps(marker_data).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
         }
     )
+
 
 
 @pharmacy_required

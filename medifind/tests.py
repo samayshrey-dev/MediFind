@@ -1013,13 +1013,14 @@ class RazorpayAgenticCommerceTests(TestCase):
             status="Pending"
         )
 
-        other_user = User.objects.create_user(username="other_pharm_user", password="Password123!")
-        other_prof, _ = UserProfile.objects.get_or_create(user=other_user)
-        other_prof.role = "Pharmacy"
-        other_prof.pharmacy = other_pharm
-        other_prof.verification_status = "Approved"
-        other_prof.save()
-
+        other_user = User.objects.create_user(username="other_pharm_user_sec", password="Password123!")
+        UserProfile.objects.filter(user=other_user).delete()
+        other_prof = UserProfile.objects.create(
+            user=other_user,
+            role="Pharmacy",
+            pharmacy=other_pharm,
+            verification_status="Approved"
+        )
 
         self.client.force_login(other_user)
         resp_idor = self.client.get(f"/reservations/{res_test.id}/accept/", follow=True)
@@ -1027,7 +1028,6 @@ class RazorpayAgenticCommerceTests(TestCase):
         res_test.refresh_from_db()
         self.assertNotEqual(res_test.status, "Accepted")
         self.assertContains(resp_idor, "Unauthorized")
-
 
         # 4. File Upload Security
         fake_exe = io.BytesIO(b"MZ executable contents")
@@ -1040,6 +1040,19 @@ class RazorpayAgenticCommerceTests(TestCase):
         for _ in range(5):
             is_rate_limited(key, max_requests=5, window_seconds=10)
         self.assertTrue(is_rate_limited(key, max_requests=5, window_seconds=10))
+
+        # 6. Global Medicine Catalog Delete Protection (Non-superuser gets 403)
+        resp_del = self.client.get(f"/medicines/delete/{self.medicine.id}/")
+        self.assertEqual(resp_del.status_code, 403)
+
+
+        # 7. Input Sanitization
+        from .security import sanitize_plain_text
+        dirty_input = "<script>alert('xss')</script>Dolo 650<b>test</b>"
+        clean = sanitize_plain_text(dirty_input)
+        self.assertNotIn("<script>", clean)
+        self.assertNotIn("<b>", clean)
+
 
 
 
