@@ -493,7 +493,10 @@ def search_database_with_intent(intent_data: dict, user_lat=None, user_lng=None,
 
     # 1. Match Medicines in Catalog
     medicine_qs = Medicine.objects.none()
-    if search_term:
+    matched_ids = intent_data.get("matched_medicine_ids")
+    if matched_ids:
+        medicine_qs = Medicine.objects.filter(id__in=matched_ids)
+    elif search_term:
         # Exact / Substring / Brand Match
         medicine_qs = Medicine.objects.filter(
             Q(name__icontains=search_term) |
@@ -506,8 +509,8 @@ def search_database_with_intent(intent_data: dict, user_lat=None, user_lng=None,
         if not medicine_qs.exists():
             fuzzy = MedicineMatcher.find_matching_medicines(search_term, threshold=0.45)
             if fuzzy:
-                matched_ids = [f["medicine"].id for f in fuzzy]
-                medicine_qs = Medicine.objects.filter(id__in=matched_ids)
+                f_ids = [f["medicine"].id for f in fuzzy]
+                medicine_qs = Medicine.objects.filter(id__in=f_ids)
 
     matched_medicines_data = []
     for med in medicine_qs[:5]:
@@ -724,12 +727,14 @@ Explanation:"""
 def execute_ai_medicine_search_pipeline(query: str, user_lat=None, user_lng=None, radius_km=None) -> dict:
     """
     Executes the full end-to-end Medifind AI pipeline:
-    Query -> Intent Extraction -> DB Retrieval -> Ranking -> Grounded Response.
+    Query -> Intent Extraction -> Medicine Intelligence (AI #3) -> DB Retrieval -> Ranking -> Grounded Response.
     """
     t_start = timezone.now()
     clean_query = (query or "").strip()
 
-    # 1. Intent Extraction
+    from .medicine_intelligence import MedicineIntelligenceEngine
+
+    # 1. Intent Extraction (AI #1)
     intent_data = extract_search_intent_with_gemini(
         query=clean_query,
         user_lat=user_lat,
@@ -737,7 +742,20 @@ def execute_ai_medicine_search_pipeline(query: str, user_lat=None, user_lng=None
         default_radius_km=radius_km or 5.0
     )
 
-    # 2. Database Retrieval & Ranking
+    # 2. Medicine Intelligence & Semantic Understanding (AI #3)
+    intel_data = MedicineIntelligenceEngine.understand_query(clean_query)
+
+    # If Medicine Intelligence found matched candidates, override search_term & intent fields
+    if intel_data["matches"]:
+        top_match = intel_data["matches"][0]
+        intent_data["medicine_name"] = top_match["name"]
+        intent_data["search_term"] = top_match["name"]
+        if intel_data["normalized_query"].get("strength"):
+            intent_data["strength"] = intel_data["normalized_query"]["strength"]
+        if intel_data["normalized_query"].get("dosage_form"):
+            intent_data["dosage_form"] = intel_data["normalized_query"]["dosage_form"]
+
+    # 3. Database Retrieval & Ranking (AI #2)
     db_results = search_database_with_intent(
         intent_data=intent_data,
         user_lat=user_lat,
@@ -745,12 +763,16 @@ def execute_ai_medicine_search_pipeline(query: str, user_lat=None, user_lng=None
         default_radius_km=radius_km or intent_data.get("radius_km", 5.0)
     )
 
-    # 3. Grounded Response Generation
+    # 4. Grounded Response Generation
     ai_response = generate_grounded_ai_response(
         query=clean_query,
         intent_data=intent_data,
         db_results=db_results
     )
+
+    # Override response text if clarification is required
+    requires_clarification = intel_data.get("requires_clarification", False)
+    clarification_msg = intel_data.get("clarification_message")
 
     duration_ms = int((timezone.now() - t_start).total_seconds() * 1000)
 
@@ -766,12 +788,18 @@ def execute_ai_medicine_search_pipeline(query: str, user_lat=None, user_lng=None
         "total_results": len(db_results.get("pharmacies", [])),
         "total_stock": db_results.get("total_stock_count", 0),
         "radius_km": intent_data.get("radius_km"),
-        "confidence": intent_data.get("confidence", 0.9),
-        "ambiguity": intent_data.get("ambiguity", False),
+        "confidence": intel_data.get("confidence", intent_data.get("confidence", 0.9)),
+        "ambiguity": requires_clarification or intent_data.get("ambiguity", False),
+        "requires_clarification": requires_clarification,
+        "clarification_message": clarification_msg,
+        "normalized_query": intel_data.get("normalized_query", {}),
+        "match_type": intel_data.get("match_type", "EXACT"),
+        "candidate_matches": intel_data.get("matches", []),
         "duration_ms": duration_ms
     }
 
 # Backward compatibility alias
 parse_query_with_ai = extract_search_intent_with_gemini
+
 
 

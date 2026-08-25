@@ -1127,6 +1127,59 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertTrue(data["success"])
         self.assertNotIn("<script>", data["query"])
 
+    def test_37_medicine_intelligence_and_semantic_understanding(self):
+        """
+        Tests Medicine Intelligence (AI #3): Normalization, Exact match, Brand/Generic lookup,
+        Controlled Fuzzy matching, Unit variations, Ambiguity detection, Rejection of non-existent drugs,
+        and Admin Data Quality audit.
+        """
+        from .medicine_intelligence import MedicineIntelligenceEngine, NormalizationService, DataQualityService
+        from .models import Medicine
+
+        # 1. Unit Normalization Tests
+        self.assertEqual(NormalizationService.normalize_units("650mg"), "650 mg")
+        self.assertEqual(NormalizationService.normalize_units("1g"), "1000 mg")
+
+        # 2. Dosage Form & Strength Extraction Tests
+        self.assertEqual(NormalizationService.extract_dosage_form("Paracetamol syrup 200 ml"), "Syrup")
+        self.assertEqual(NormalizationService.extract_strength("Dolo 650mg tablet"), "650 mg")
+
+        # 3. Exact & Brand Search Tests
+        res_exact = MedicineIntelligenceEngine.understand_query("Dolo 650")
+        self.assertIn(res_exact["match_type"], ["EXACT", "BRAND_GENERIC_ALIAS", "SUBSTRING", "FUZZY"])
+        self.assertTrue(len(res_exact["matches"]) >= 1)
+
+        # 4. Misspelling & Typos Tests ("paracetmol", "cetrazine")
+        res_typo = MedicineIntelligenceEngine.understand_query("paracetmol 650")
+        self.assertTrue(len(res_typo["matches"]) >= 1)
+        self.assertEqual(res_typo["matches"][0]["name"], "Dolo 650")
+
+        # 5. Ambiguity Detection Test (Searching generic "Dolo" when both Dolo 650 and Dolo 500 exist)
+        Medicine.objects.create(name="Dolo 500", brand="Micro Labs", dosage="500 mg", category="Pain Relief")
+        res_ambig = MedicineIntelligenceEngine.understand_query("Dolo")
+        self.assertTrue(res_ambig["requires_clarification"])
+        self.assertIsNotNone(res_ambig["clarification_message"])
+
+        # 6. Non-Existent Drug Rejection & Hallucination Prevention Test
+        initial_count = Medicine.objects.count()
+        res_halluc = MedicineIntelligenceEngine.understand_query("SuperPain X999")
+        self.assertEqual(res_halluc["match_type"], "UNMATCHED")
+        self.assertEqual(len(res_halluc["matches"]), 0)
+        self.assertEqual(Medicine.objects.count(), initial_count)  # Verified zero fake records created
+
+        # 7. Understand API Endpoint Test
+        resp_api = self.client.post("/api/ai/medicine/understand/", json.dumps({
+            "query": "cetrazine 10mg"
+        }), content_type="application/json")
+        self.assertEqual(resp_api.status_code, 200)
+        data = resp_api.json()
+        self.assertIn("normalized_query", data)
+
+        # 8. Data Quality Audit Service Test
+        audit_res = DataQualityService.analyze_catalog_quality()
+        self.assertIn("total_medicines", audit_res)
+
+
 
 
 

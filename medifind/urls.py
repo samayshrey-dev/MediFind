@@ -22,6 +22,12 @@ urlpatterns = [
     path("orders/confirmed/<str:order_reference>/", views.order_confirmed_view, name="order_confirmed_view"),
     path("api/notifications/stock-alert/", views.subscribe_stock_alert, name="subscribe_stock_alert"),
 
+    # Medicine Intelligence (AI #3) & Admin Quality Endpoints
+    path("api/ai/medicine/understand/", views.medicine_understand_api, name="medicine_understand_api"),
+    path("api/ai/medicine/suggest/", views.medicine_suggest_api, name="medicine_suggest_api"),
+    path("admin/data-quality/", views.admin_data_quality_view, name="admin_data_quality_view"),
+
+
 
 
 

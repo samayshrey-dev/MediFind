@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Medicine Data Quality Audit | MediAI{% endblock %}
+
+{% block content %}
+<section class="py-4" style="background: var(--surface-secondary); min-height: 88vh; margin-top: 60px;">
+  <div class="container px-3 px-lg-4 py-2">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-3">
+      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted"><i class="fa-solid fa-house text-success me-1"></i>Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none text-muted">Dashboard</a></li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Data Quality Audit</li>
+      </ol>
+    </nav>
+
+    <!-- Header Banner -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+      <div>
+        <h3 class="fw-extrabold text-dark mb-1"><i class="fa-solid fa-list-check text-primary me-2"></i> Medicine Data Quality Audit</h3>
+        <p class="text-muted small mb-0">Automated quality check flagging duplicate records, missing dosage strengths, missing forms, and capitalization issues.</p>
+      </div>
+      <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 fw-bold">
+        Total Catalog Items: {{ audit.total_medicines }}
+      </span>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm text-center">
+          <div class="fw-extrabold text-danger fs-3">{{ audit.potential_duplicates|length }}</div>
+          <small class="text-muted fw-semibold">Potential Duplicates</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm text-center">
+          <div class="fw-extrabold text-warning fs-3">{{ audit.missing_strength|length }}</div>
+          <small class="text-muted fw-semibold">Missing Strength</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm text-center">
+          <div class="fw-extrabold text-info fs-3">{{ audit.missing_dosage_form|length }}</div>
+          <small class="text-muted fw-semibold">Missing Dosage Form</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm text-center">
+          <div class="fw-extrabold text-secondary fs-3">{{ audit.inconsistent_capitalization|length }}</div>
+          <small class="text-muted fw-semibold">Capitalization Formatting</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Potential Duplicates Table -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-copy text-danger me-2"></i> Potential Duplicate Records</h5>
+      {% if audit.potential_duplicates %}
+        <div class="table-responsive">
+          <table class="table align-middle table-hover border rounded-3 mb-0 small">
+            <thead class="table-light text-muted">
+              <tr>
+                <th>Primary Record</th>
+                <th>Duplicate Record</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for dup in audit.potential_duplicates %}
+                <tr>
+                  <td>
+                    <strong>#{{ dup.primary_id }}: {{ dup.primary_name }}</strong>
+                  </td>
+                  <td>
+                    <span class="text-danger">#{{ dup.duplicate_id }}: {{ dup.duplicate_name }}</span>
+                  </td>
+                  <td class="text-center">
+                    <a href="/medicines/edit/{{ dup.duplicate_id }}/" class="btn btn-sm btn-outline-primary rounded-pill px-3">Review & Edit</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="alert alert-success border-0 rounded-3 mb-0 small">
+          <i class="fa-solid fa-circle-check text-success me-1.5"></i> No duplicate medicine records detected in database.
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Missing Dosage Strengths Table -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-vial text-warning me-2"></i> Missing Strength Units</h5>
+      {% if audit.missing_strength %}
+        <div class="table-responsive">
+          <table class="table align-middle table-hover border rounded-3 mb-0 small">
+            <thead class="table-light text-muted">
+              <tr>
+                <th>Medicine ID</th>
+                <th>Name</th>
+                <th>Current Dosage String</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in audit.missing_strength %}
+                <tr>
+                  <td>#{{ item.id }}</td>
+                  <td><strong>{{ item.name }}</strong></td>
+                  <td><code>{{ item.dosage|default:"(Empty)" }}</code></td>
+                  <td class="text-center">
+                    <a href="/medicines/edit/{{ item.id }}/" class="btn btn-sm btn-outline-warning rounded-pill px-3">Add Strength</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="alert alert-success border-0 rounded-3 mb-0 small">
+          <i class="fa-solid fa-circle-check text-success me-1.5"></i> All catalog medicines have valid strength specifications.
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -158,14 +158,45 @@
       emergencyBanner.classList.add('d-none');
     }
 
-    // 2. AI Grounded Explanation Card
+    // 2. AI Grounded Explanation & Ambiguity Clarification Card
     if (aiResponseCard && aiResponseText) {
       aiResponseCard.classList.remove('d-none');
-      aiResponseText.innerHTML = (data.ai_response || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      let ambiguityHtml = '';
+      if (data.requires_clarification && data.candidate_matches && data.candidate_matches.length > 0) {
+        const buttons = data.candidate_matches.map(m => `
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-bold search-clarification-btn" data-query="${m.name} ${m.dosage || ''}">
+            <i class="fa-solid fa-capsules me-1"></i> ${m.name} ${m.dosage ? '(' + m.dosage + ')' : ''}
+          </button>
+        `).join('');
+
+        ambiguityHtml = `
+          <div class="alert alert-warning border-0 rounded-4 p-3 mb-3 shadow-inner">
+            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-circle-question text-warning me-1.5"></i> ${data.clarification_message || 'Multiple matching items found. Select the specific medicine:'}</h6>
+            <div class="d-flex flex-wrap gap-2 mt-2.5">
+              ${buttons}
+            </div>
+          </div>
+        `;
+      }
+
+      aiResponseText.innerHTML = ambiguityHtml + (data.ai_response || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       if (aiInterpretation && data.interpretation) {
         aiInterpretation.innerText = data.interpretation;
         aiInterpretation.classList.remove('d-none');
       }
+
+      // Attach listener to clarification buttons
+      document.querySelectorAll('.search-clarification-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const newQ = btn.getAttribute('data-query');
+          const mainInput = document.getElementById('searchQueryInput') || document.getElementById('navbarSearchInput');
+          if (mainInput) mainInput.value = newQ;
+          if (typeof window.executeAISearch === 'function') {
+            window.executeAISearch(newQ);
+          }
+        });
+      });
     }
 
     // 3. Update Result Count Heading

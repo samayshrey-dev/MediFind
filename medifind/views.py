@@ -780,6 +780,68 @@ def ai_search_api(request):
     return JsonResponse(result)
 
 
+# ==========================================================
+# Medicine Intelligence (AI #3) & Admin Quality Views
+# ==========================================================
+from .medicine_intelligence import MedicineIntelligenceEngine, DataQualityService
+
+@csrf_exempt
+@rate_limit(max_requests=60, window_seconds=60, key_prefix="medicine_understand", is_json=True)
+def medicine_understand_api(request):
+    """
+    POST /api/ai/medicine/understand/
+    Understands misspelled, brand, generic, strength, or category queries and detects ambiguities.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        body = {}
+
+    query = body.get("query") or request.POST.get("query") or request.GET.get("query", "")
+    res = MedicineIntelligenceEngine.understand_query(query)
+    return JsonResponse(res)
+
+
+def medicine_suggest_api(request):
+    """
+    GET /api/ai/medicine/suggest/?q=para
+    Fast DB autocomplete suggestions while user types.
+    """
+    q = request.GET.get("q", "").strip()
+    if not q or len(q) < 2:
+        return JsonResponse({"suggestions": []})
+
+    meds = Medicine.objects.filter(
+        Q(name__icontains=q) | Q(brand__icontains=q)
+    )[:8]
+
+    suggestions = [{
+        "id": m.id,
+        "name": m.name,
+        "brand": m.brand,
+        "dosage": m.dosage
+    } for m in meds]
+
+    return JsonResponse({"suggestions": suggestions})
+
+
+@login_required
+def admin_data_quality_view(request):
+    """
+    GET /admin/data-quality/
+    Admin audit dashboard for potential duplicates, missing strengths, and quality issues.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "403.html", status=403)
+
+    audit_res = DataQualityService.analyze_catalog_quality()
+    return render(request, "admin_data_quality.html", {"audit": audit_res})
+
+
+
 
 
 
