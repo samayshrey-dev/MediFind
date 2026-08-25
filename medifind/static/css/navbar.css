@@ -2,13 +2,23 @@
             MediAI EXECUTIVE NAVBAR
 ========================================== */
 
+body {
+    padding-top: 82px !important;
+}
+
+@media (max-width: 991.98px) {
+    body {
+        padding-top: 70px !important;
+    }
+}
+
 .navbar {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 1080;
-    padding: 14px 0;
+    padding: 10px 0;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     background: rgba(255, 255, 255, 0.95) !important;
