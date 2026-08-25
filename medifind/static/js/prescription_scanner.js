@@ -99,7 +99,14 @@
         body: formData
       });
 
-      const data = await res.json();
+      const rawText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (e) {
+        throw new Error('Server returned an invalid response. Please check image format or try again.');
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Prescription analysis failed.');
       }

@@ -814,56 +814,65 @@ def prescription_analyze_api(request):
     if not file_obj:
         return JsonResponse({"success": False, "message": "Please upload a prescription image or PDF file."}, status=400)
 
-    # 1. Secure Validation
-    val_res = validate_prescription_file(file_obj)
-    if not val_res["valid"]:
-        return JsonResponse({"success": False, "message": val_res["error"]}, status=400)
+    try:
+        # 1. Secure Validation
+        val_res = validate_prescription_file(file_obj)
+        if not val_res["valid"]:
+            return JsonResponse({"success": False, "message": val_res["error"]}, status=400)
 
-    # Read bytes for Vision API
-    file_bytes = file_obj.read()
+        # Read bytes for Vision API and reset stream position
+        file_bytes = file_obj.read()
+        file_obj.seek(0)
 
-    # 2. Extract Data via Gemini Vision OCR
-    ocr_res = extract_prescription_data_with_gemini(file_bytes, val_res["mime_type"])
+        # 2. Extract Data via Gemini Vision OCR
+        ocr_res = extract_prescription_data_with_gemini(file_bytes, val_res["mime_type"])
 
-    # 3. Match Extracted Medicines against Database Catalog
-    matched_meds = match_extracted_medicines_with_db(ocr_res.get("medicines", []))
+        # 3. Match Extracted Medicines against Database Catalog
+        matched_meds = match_extracted_medicines_with_db(ocr_res.get("medicines", []))
 
-    requires_confirmation = any(m["requires_confirmation"] for m in matched_meds) or bool(ocr_res.get("uncertain_fields"))
+        requires_confirmation = any(m.get("requires_confirmation", True) for m in matched_meds) or bool(ocr_res.get("uncertain_fields"))
 
-    # 4. Save Record in Database
-    prescription = Prescription.objects.create(
-        user=request.user if request.user.is_authenticated else None,
-        image=file_obj,
-        document_type=ocr_res.get("document_type", "prescription"),
-        doctor_name=ocr_res.get("doctor_name"),
-        patient_name=ocr_res.get("patient_name"),
-        prescription_date=ocr_res.get("prescription_date"),
-        extracted_data={
-            "ocr_raw": ocr_res,
-            "matched_medicines": matched_meds
-        },
-        confirmed_medicines=[{
-            "medicine_id": m["best_match"]["id"] if m.get("best_match") else None,
-            "name": m["best_match"]["name"] if m.get("best_match") else m["extracted_name"],
-            "strength": m["strength"],
-            "frequency": m["frequency"],
-            "duration": m["duration"]
-        } for m in matched_meds if m.get("best_match") or m.get("extracted_name")],
-        overall_confidence=ocr_res.get("overall_confidence", 0.85),
-        requires_confirmation=requires_confirmation
-    )
+        # 4. Save Record in Database
+        prescription = Prescription.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            image=file_obj,
+            document_type=ocr_res.get("document_type", "prescription"),
+            doctor_name=ocr_res.get("doctor_name"),
+            patient_name=ocr_res.get("patient_name"),
+            prescription_date=ocr_res.get("prescription_date"),
+            extracted_data={
+                "ocr_raw": ocr_res,
+                "matched_medicines": matched_meds
+            },
+            confirmed_medicines=[{
+                "medicine_id": m["best_match"]["id"] if m.get("best_match") else None,
+                "name": m["best_match"]["name"] if m.get("best_match") else m["extracted_name"],
+                "strength": m["strength"],
+                "frequency": m["frequency"],
+                "duration": m["duration"]
+            } for m in matched_meds if m.get("best_match") or m.get("extracted_name")],
+            overall_confidence=ocr_res.get("overall_confidence", 0.85),
+            requires_confirmation=requires_confirmation
+        )
 
-    return JsonResponse({
-        "success": True,
-        "prescription_id": prescription.id,
-        "document_type": prescription.document_type,
-        "doctor_name": prescription.doctor_name,
-        "patient_name": prescription.patient_name,
-        "prescription_date": prescription.prescription_date,
-        "extracted_medicines": matched_meds,
-        "overall_confidence": prescription.overall_confidence,
-        "requires_confirmation": requires_confirmation
-    })
+        return JsonResponse({
+            "success": True,
+            "prescription_id": prescription.id,
+            "document_type": prescription.document_type,
+            "doctor_name": prescription.doctor_name,
+            "patient_name": prescription.patient_name,
+            "prescription_date": prescription.prescription_date,
+            "extracted_medicines": matched_meds,
+            "overall_confidence": prescription.overall_confidence,
+            "requires_confirmation": requires_confirmation
+        })
+    except Exception as e:
+        logger.error(f"Error in prescription_analyze_api: {e}", exc_info=True)
+        return JsonResponse({
+            "success": False,
+            "message": f"Prescription processing error: {str(e)}"
+        }, status=500)
+
 
 
 @csrf_exempt
