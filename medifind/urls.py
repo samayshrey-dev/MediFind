@@ -48,6 +48,10 @@ urlpatterns = [
     path("api/ai/multilingual/search/", views.ai_multilingual_search_api, name="ai_multilingual_search_api"),
     path("admin/multilingual-analytics/", views.admin_multilingual_analytics_view, name="admin_multilingual_analytics_view"),
 
+    # Medicine Information Assistant (AI #7) Endpoints
+    path("api/ai/medicine/info/", views.ai_medicine_info_api, name="ai_medicine_info_api"),
+    path("admin/medicine-info-analytics/", views.admin_medicine_info_analytics_view, name="admin_medicine_info_analytics_view"),
+
 
 
 

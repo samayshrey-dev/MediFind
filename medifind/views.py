@@ -1445,6 +1445,74 @@ def admin_multilingual_analytics_view(request):
     })
 
 
+# ==========================================================
+# MEDIFIND AI #7 — MEDICINE INFORMATION ASSISTANT
+# ==========================================================
+
+from .medicine_info_assistant import (
+    GroundedMedicineInfoEngine,
+    MedicineInfoAnalyticsService,
+    SafetyAndRiskClassifier
+)
+
+
+@csrf_exempt
+def ai_medicine_info_api(request):
+    """
+    POST /api/ai/medicine/info/
+    Core Medicine Information Assistant API.
+    Provides clear, grounded medical guidance from Medifind DB fields and Gemini Flash.
+    Strictly non-prescriptive, grounded in verified data.
+    """
+    if request.method not in ["POST", "GET"]:
+        return JsonResponse({"success": False, "message": "POST or GET method required."}, status=405)
+
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            payload = request.POST.dict()
+    else:
+        payload = request.GET.dict()
+
+    query = payload.get("query") or payload.get("q", "")
+    med_id_raw = payload.get("medicine_id") or payload.get("med_id")
+    language = payload.get("language") or payload.get("lang", "auto")
+    confidence = float(payload.get("confidence") or 1.0)
+
+    medicine_id = None
+    if med_id_raw:
+        try:
+            medicine_id = int(med_id_raw)
+        except (ValueError, TypeError):
+            pass
+
+    if not query and not medicine_id:
+        return JsonResponse({"success": False, "message": "Query or medicine_id parameter required."}, status=400)
+
+    res = GroundedMedicineInfoEngine.answer_question(
+        query=query or "Tell me about this medicine",
+        medicine_id=medicine_id,
+        language=language,
+        speech_confidence=confidence
+    )
+
+    return JsonResponse(res)
+
+
+@login_required
+def admin_medicine_info_analytics_view(request):
+    """
+    GET /admin/medicine-info-analytics/
+    Admin audit view displaying aggregate info query intents, safety escalations, and direct field bypass rate.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "403.html", status=403)
+
+    stats = MedicineInfoAnalyticsService.get_info_analytics()
+    return render(request, "admin_medicine_info_analytics.html", {"stats": stats})
+
+
 
 
 

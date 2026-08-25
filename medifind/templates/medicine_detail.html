@@ -191,8 +191,139 @@
 
 </div>
 
-<!-- Available Pharmacies Section -->
 
+<!-- ========================================================== -->
+<!-- MEDIFIND AI #7 — MEDICINE INFORMATION ASSISTANT WIDGET -->
+<!-- ========================================================== -->
+<div class="card shadow-sm border-0 rounded-4 mb-5 bg-white overflow-hidden" id="aiMedicineInfoSection">
+  <div class="card-header bg-dark text-white p-4 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <div class="p-2 bg-primary text-white rounded-3">
+        <i class="fa-solid fa-wand-magic-sparkles fs-5"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold text-white mb-0">Ask Medifind AI about {{ medicine.name }}</h5>
+        <small class="text-white-50">Source-grounded educational guidance from verified catalog data.</small>
+      </div>
+    </div>
+    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 font-monospace" style="font-size: 0.72rem;">MEDIFIND AI #7</span>
+  </div>
+
+  <div class="card-body p-4">
+    <!-- Quick Question Chips -->
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+      <span class="text-muted small fw-bold me-1"><i class="fa-solid fa-bolt text-warning me-1"></i> Quick Questions:</span>
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold info-chip-btn" data-query="What is {{ medicine.name }} used for?">
+        <i class="fa-solid fa-bullseye me-1"></i> Uses &amp; Benefits
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1 fw-bold info-chip-btn text-dark" data-query="What are the common side effects of {{ medicine.name }}?">
+        <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Side Effects
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 fw-bold info-chip-btn text-dark" data-query="What is the brand and active ingredient of {{ medicine.name }}?">
+        <i class="fa-solid fa-capsules text-info me-1"></i> Composition
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold info-chip-btn" data-query="What warnings or precautions apply to {{ medicine.name }}?">
+        <i class="fa-solid fa-shield-halved me-1"></i> Warnings
+      </button>
+      <a href="#availablePharmacies" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold ms-auto text-white">
+        <i class="fa-solid fa-store me-1"></i> Find Nearby Pharmacies
+      </a>
+    </div>
+
+    <!-- AI Info Question Input Form -->
+    <form id="aiMedicineInfoForm" autocomplete="off" class="mb-3">
+      <input type="hidden" id="infoMedicineId" value="{{ medicine.id }}">
+      <div class="position-relative">
+        <input
+          id="aiInfoQueryInput"
+          type="text"
+          class="form-control form-control-lg border rounded-3 py-3 ps-3 pe-5 shadow-none"
+          placeholder="Ask anything, e.g. 'What is {{ medicine.name }} used for?' or 'What strength is this?'..."
+          required>
+        <button type="button" id="infoVoiceMicBtn" class="btn btn-light text-muted position-absolute end-0 top-50 translate-middle-y me-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Voice Assistant">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+      </div>
+    </form>
+
+    <!-- AI Information Response Box -->
+    <div id="aiInfoResponseCard" class="alert alert-light border rounded-4 p-4 mb-0 d-none shadow-xs">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-bold">
+          <i class="fa-solid fa-shield-check me-1"></i> Verified Information Response
+        </span>
+        <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-primary fw-bold d-none" id="btnInfoTTS">
+          <i class="fa-solid fa-volume-high me-1"></i> Read Aloud
+        </button>
+      </div>
+      <div id="aiInfoResponseText" class="text-dark lead fs-6 mb-0"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const infoForm = document.getElementById("aiMedicineInfoForm");
+  const infoInput = document.getElementById("aiInfoQueryInput");
+  const infoMedId = document.getElementById("infoMedicineId").value;
+  const respCard = document.getElementById("aiInfoResponseCard");
+  const respText = document.getElementById("aiInfoResponseText");
+  const ttsBtn = document.getElementById("btnInfoTTS");
+
+  async function fetchInfoAnswer(query) {
+    if (!query) return;
+    respCard.classList.remove("d-none");
+    respText.innerHTML = `<div class="d-flex align-items-center gap-2 text-muted"><span class="spinner-border spinner-border-sm text-primary"></span><span>Fetching verified medical guidance...</span></div>`;
+
+    try {
+      const res = await fetch("/api/ai/medicine/info/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: query,
+          medicine_id: parseInt(infoMedId, 10)
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.ai_response) {
+        respText.innerHTML = data.ai_response.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+        if (ttsBtn) {
+          ttsBtn.classList.remove("d-none");
+          ttsBtn.onclick = () => {
+            if ("speechSynthesis" in window) {
+              window.speechSynthesis.cancel();
+              const utt = new SpeechSynthesisUtterance(data.ai_response.replace(/<[^>]*>?/gm, ""));
+              utt.lang = "en-IN";
+              window.speechSynthesis.speak(utt);
+            }
+          };
+        }
+      } else {
+        respText.innerText = data.message || "Unable to retrieve information at this time.";
+      }
+    } catch (e) {
+      respText.innerText = "Error retrieving information. Please try again.";
+    }
+  }
+
+  if (infoForm) {
+    infoForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      fetchInfoAnswer(infoInput.value.trim());
+    });
+  }
+
+  document.querySelectorAll(".info-chip-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const q = btn.getAttribute("data-query");
+      infoInput.value = q;
+      fetchInfoAnswer(q);
+    });
+  });
+});
+</script>
+
+<!-- Available Pharmacies Section -->
 <div id="availablePharmacies" class="mt-5">
 
   <h3 class="fw-bold mb-4"><i class="fa-solid fa-store text-primary me-2"></i> Pharmacies Stocking {{ medicine.name }}</h3>
