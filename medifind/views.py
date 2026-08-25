@@ -823,9 +823,10 @@ def prescription_analyze_api(request):
         # Read bytes for Vision API and reset stream position
         file_bytes = file_obj.read()
         file_obj.seek(0)
+        ocr_text = request.POST.get("ocr_text", "").strip()
 
         # 2. Extract Data via Gemini Vision OCR
-        ocr_res = extract_prescription_data_with_gemini(file_bytes, val_res["mime_type"])
+        ocr_res = extract_prescription_data_with_gemini(file_bytes, val_res["mime_type"], ocr_text=ocr_text)
 
         # 3. Match Extracted Medicines against Database Catalog
         matched_meds = match_extracted_medicines_with_db(ocr_res.get("medicines", []))

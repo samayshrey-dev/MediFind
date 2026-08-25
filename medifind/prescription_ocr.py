@@ -178,7 +178,7 @@ def local_rule_based_prescription_ocr(raw_text: str = "", file_bytes: bytes = No
 # ==========================================================
 # 3. Gemini Flash Vision OCR Extraction (Phase 4)
 # ==========================================================
-def extract_prescription_data_with_gemini(file_bytes: bytes, mime_type: str) -> dict:
+def extract_prescription_data_with_gemini(file_bytes: bytes, mime_type: str, ocr_text: str = "") -> dict:
     """
     Calls Google Gemini Flash Vision API to analyze prescription image/PDF.
     Supports multi-model endpoints (gemini-1.5-flash, gemini-2.0-flash, gemini-1.5-pro).
@@ -191,7 +191,7 @@ def extract_prescription_data_with_gemini(file_bytes: bytes, mime_type: str) -> 
     api_key = os.environ.get('GEMINI_API_KEY', '').strip() or os.environ.get('AI_API_KEY', '').strip()
     if not api_key or api_key == "YOUR_API_KEY_HERE" or not api_key.startswith("AIzaSy"):
         logger.info("Using local prescription OCR fallback parser.")
-        return local_rule_based_prescription_ocr(file_bytes=file_bytes)
+        return local_rule_based_prescription_ocr(raw_text=ocr_text, file_bytes=file_bytes)
 
     base64_data = base64.b64encode(file_bytes).decode('utf-8')
 
@@ -279,7 +279,7 @@ Return ONLY a JSON object matching this exact schema:
             continue
 
     logger.warning(f"All Gemini Vision model endpoints failed: {last_error}")
-    return local_rule_based_prescription_ocr(file_bytes=file_bytes)
+    return local_rule_based_prescription_ocr(raw_text=ocr_text, file_bytes=file_bytes)
 
 
 

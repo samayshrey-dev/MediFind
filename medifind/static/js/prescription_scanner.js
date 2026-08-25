@@ -86,12 +86,24 @@
       return;
     }
 
-    // Show processing indicator
-    stepUploadCard.classList.add('d-none');
-    stepProcessingCard.classList.remove('d-none');
+    // Optional Client-Side Tesseract OCR scan (works 100% offline & without API keys)
+    let clientOcrText = '';
+    if (window.Tesseract && file.type && file.type.startsWith('image/')) {
+      try {
+        const ocrStatus = document.getElementById('ocrStepStatus');
+        if (ocrStatus) ocrStatus.innerText = 'Reading prescription text via OCR...';
+        const tessResult = await window.Tesseract.recognize(file, 'eng');
+        clientOcrText = tessResult.data?.text || '';
+      } catch (tessErr) {
+        console.warn('Client Tesseract OCR info:', tessErr);
+      }
+    }
 
     const formData = new FormData();
     formData.append('prescription_file', file);
+    if (clientOcrText) {
+      formData.append('ocr_text', clientOcrText);
+    }
 
     try {
       const res = await fetch('/api/ai/prescription/analyze/', {
