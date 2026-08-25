@@ -231,7 +231,7 @@
               </div>
             </div>
 
-            <!-- ── Mandatory Prescription Upload Section (For Rx Required Medicines) ── -->
+            <!-- ── Step 1 / Step 2 Container for Prescription Required Medicines ── -->
             {% if medicine.prescription_required %}
               <div class="card border border-warning rounded-4 p-3 mb-4 bg-warning-subtle shadow-sm" id="rxUploadContainer">
                 <div class="d-flex align-items-center gap-2.5 mb-2">
@@ -239,18 +239,18 @@
                     <i class="fa-solid fa-file-prescription"></i>
                   </div>
                   <div>
-                    <h6 class="fw-bold text-dark mb-0" style="font-size: 0.9rem;">Doctor Prescription Required</h6>
-                    <small class="text-muted" style="font-size: 0.75rem;">Upload a valid doctor prescription before proceeding to payment or store pickup.</small>
+                    <h6 class="fw-bold text-dark mb-0" style="font-size: 0.9rem;">Step 1: Upload Doctor Prescription</h6>
+                    <small class="text-muted" style="font-size: 0.75rem;">Upload prescription to unlock Online Payment and Pay on Pickup options.</small>
                   </div>
                 </div>
                 <div class="mt-2">
                   <label for="prescriptionFileInput" class="form-label text-dark fw-bold small mb-1">Attach Doctor Prescription <span class="text-danger">*</span></label>
                   <input type="file" id="prescriptionFileInput" name="prescription_file" accept="image/*,.pdf" class="form-control form-control-sm border-warning rounded-3" required>
                   <div class="form-text text-muted small mt-1" style="font-size: 0.72rem;">
-                    <i class="fa-solid fa-shield-halved me-1 text-success"></i> Accepted formats: JPG, PNG, WEBP, PDF (Max 10MB). Encrypted &amp; private.
+                    <i class="fa-solid fa-shield-halved me-1 text-success"></i> Formats: JPG, PNG, WEBP, PDF (Max 10MB). Encrypted &amp; private.
                   </div>
-                  <div id="rxFilePreview" class="mt-2 d-none alert alert-success p-2 small mb-0 fw-semibold">
-                    <i class="fa-solid fa-circle-check me-1"></i> <span id="rxFileName">Prescription attached!</span>
+                  <div id="rxFilePreview" class="mt-2 d-none alert alert-success p-2.5 small mb-0 fw-bold">
+                    <i class="fa-solid fa-circle-check me-1.5 text-success fs-6"></i> <span id="rxFileName">Prescription attached successfully!</span>
                   </div>
                 </div>
                 <div id="rxUploadAlert" class="alert alert-danger p-2 small fw-bold mt-2 mb-0 d-none">
@@ -267,65 +267,73 @@
 
           </div><!-- /px-4 -->
 
-          <!-- ── Payment mode cards ── -->
-          <div class="px-4 pb-2">
-            <p class="text-dark fw-bold small mb-2">How would you like to pay?</p>
+          <!-- ── Step 2: Payment Mode Cards & Buttons (Hidden until Rx Uploaded if Rx required) ── -->
+          <div id="paymentOptionsSection" class="{% if medicine.prescription_required %}d-none{% endif %}">
+            <div class="px-4 pb-2">
+              <p class="text-dark fw-bold small mb-2">
+                {% if medicine.prescription_required %}
+                  <span class="badge bg-success-subtle text-success me-1"><i class="fa-solid fa-check me-1"></i> Step 2</span>
+                {% endif %}
+                How would you like to pay?
+              </p>
 
-            <!-- Option 1: Pay Online -->
-            <div class="form-check payment-option-card border rounded-3 p-3 mb-2 active-payment-option" id="cardPayOnline" style="cursor: pointer;">
-              <div class="d-flex align-items-start gap-3">
-                <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayOnline" value="Online" checked>
-                <label class="form-check-label w-100" for="optPayOnline" style="cursor: pointer;">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong class="text-dark small"><i class="fa-solid fa-credit-card text-success me-1"></i> Pay Online Now</strong>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2" style="font-size: 0.68rem;">
-                      <i class="fa-solid fa-circle-check me-1"></i> Instant Confirmation
-                    </span>
-                  </div>
-                  <p class="text-muted mb-0" style="font-size: 0.78rem;">UPI, Google Pay, Cards, Net Banking — powered by Razorpay.</p>
-                </label>
+              <!-- Option 1: Pay Online -->
+              <div class="form-check payment-option-card border rounded-3 p-3 mb-2 active-payment-option" id="cardPayOnline" style="cursor: pointer;">
+                <div class="d-flex align-items-start gap-3">
+                  <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayOnline" value="Online" checked>
+                  <label class="form-check-label w-100" for="optPayOnline" style="cursor: pointer;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <strong class="text-dark small"><i class="fa-solid fa-credit-card text-success me-1"></i> Pay Online Now</strong>
+                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2" style="font-size: 0.68rem;">
+                        <i class="fa-solid fa-circle-check me-1"></i> Instant Confirmation
+                      </span>
+                    </div>
+                    <p class="text-muted mb-0" style="font-size: 0.78rem;">UPI, Google Pay, Cards, Net Banking — powered by Razorpay.</p>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Option 2: Pay at Store -->
+              <div class="form-check payment-option-card border rounded-3 p-3 mb-4" id="cardPayStore" style="cursor: pointer;">
+                <div class="d-flex align-items-start gap-3">
+                  <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayStore" value="PayOnPickup">
+                  <label class="form-check-label w-100" for="optPayStore" style="cursor: pointer;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <strong class="text-dark small"><i class="fa-solid fa-store text-primary me-1"></i> Pay at Store Counter</strong>
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2" style="font-size: 0.68rem;">
+                        <i class="fa-solid fa-hand-holding-dollar me-1"></i> Pay on Pickup
+                      </span>
+                    </div>
+
+                    <p class="text-muted mb-0" style="font-size: 0.78rem;">Reserve now, pay cash or UPI directly at the pharmacy. No upfront charge.</p>
+                  </label>
+                </div>
               </div>
             </div>
 
-            <!-- Option 2: Pay at Store -->
-            <div class="form-check payment-option-card border rounded-3 p-3 mb-4" id="cardPayStore" style="cursor: pointer;">
-              <div class="d-flex align-items-start gap-3">
-                <input class="form-check-input mt-1" type="radio" name="paymentChoice" id="optPayStore" value="PayOnPickup">
-                <label class="form-check-label w-100" for="optPayStore" style="cursor: pointer;">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong class="text-dark small"><i class="fa-solid fa-store text-primary me-1"></i> Pay at Store Counter</strong>
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2" style="font-size: 0.68rem;">
-                      <i class="fa-solid fa-hand-holding-dollar me-1"></i> Pay on Pickup
-                    </span>
-                  </div>
-
-                  <p class="text-muted mb-0" style="font-size: 0.78rem;">Reserve now, pay cash or UPI directly at the pharmacy. No upfront charge.</p>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- ── CTA buttons ── -->
-          <div class="px-4 pb-4">
-            <div id="btnAreaOnline">
-              <button type="button" id="btnPayOnlineNow" class="btn btn-cta-pay w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow">
-                <i class="fa-solid fa-lock"></i>
-                <span>Pay Securely &mdash; <span class="btn-amount-label">₹{{ unit_price }}</span></span>
-              </button>
-            </div>
-
-            <div id="btnAreaStore" style="display: none;">
-              <form method="POST" action="{% url 'reserve_medicine' inventory.id %}" enctype="multipart/form-data" id="storePayForm">
-                {% csrf_token %}
-                <input type="hidden" name="quantity" id="formQtyStore" value="1">
-                <input type="hidden" name="payment_method" value="PayOnPickup">
-                <input type="hidden" name="notes" id="formNotesStore" value="">
-                <button type="submit" id="btnPayStoreSubmit" class="btn btn-cta-store w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow-sm">
-                  <i class="fa-solid fa-store"></i>
-                  <span>Reserve &amp; Pay at Store</span>
+            <!-- ── CTA buttons ── -->
+            <div class="px-4 pb-4">
+              <div id="btnAreaOnline">
+                <button type="button" id="btnPayOnlineNow" class="btn btn-cta-pay w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow">
+                  <i class="fa-solid fa-lock"></i>
+                  <span>Pay Securely &mdash; <span class="btn-amount-label">₹{{ unit_price }}</span></span>
                 </button>
-              </form>
+              </div>
+
+              <div id="btnAreaStore" style="display: none;">
+                <form method="POST" action="{% url 'reserve_medicine' inventory.id %}" enctype="multipart/form-data" id="storePayForm">
+                  {% csrf_token %}
+                  <input type="hidden" name="quantity" id="formQtyStore" value="1">
+                  <input type="hidden" name="payment_method" value="PayOnPickup">
+                  <input type="hidden" name="notes" id="formNotesStore" value="">
+                  <button type="submit" id="btnPayStoreSubmit" class="btn btn-cta-store w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-3 shadow-sm">
+                    <i class="fa-solid fa-store"></i>
+                    <span>Reserve &amp; Pay at Store</span>
+                  </button>
+                </form>
+              </div>
             </div>
+          </div><!-- /paymentOptionsSection -->
 
             <div class="d-flex align-items-center justify-content-center gap-2 mt-3 text-muted" style="font-size: 0.74rem;">
               <i class="fa-solid fa-shield-halved text-success"></i> Payments secured by Razorpay
@@ -456,9 +464,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rxAlert) rxAlert.classList.add('d-none');
         const preview = document.getElementById('rxFilePreview');
         const fileNameSpan = document.getElementById('rxFileName');
+        const paymentSec = document.getElementById('paymentOptionsSection');
         if (preview && fileNameSpan) {
           fileNameSpan.innerText = 'Attached: ' + rxInput.files[0].name;
           preview.classList.remove('d-none');
+        }
+        if (paymentSec) {
+          paymentSec.classList.remove('d-none');
+          paymentSec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }
     });
