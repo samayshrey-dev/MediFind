@@ -44,6 +44,10 @@ urlpatterns = [
     path("api/pharmacy/analytics/ask/", views.pharmacy_analytics_ask_api, name="pharmacy_analytics_ask_api"),
     path("admin/pharmacy-benchmarking/", views.admin_pharmacy_benchmarking_view, name="admin_pharmacy_benchmarking_view"),
 
+    # Multilingual & Voice Search (AI #6) Endpoints
+    path("api/ai/multilingual/search/", views.ai_multilingual_search_api, name="ai_multilingual_search_api"),
+    path("admin/multilingual-analytics/", views.admin_multilingual_analytics_view, name="admin_multilingual_analytics_view"),
+
 
 
 

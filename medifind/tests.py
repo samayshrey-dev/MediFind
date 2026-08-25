@@ -1478,6 +1478,77 @@ class RazorpayAgenticCommerceTests(TestCase):
         resp_bench = self.client.get("/admin/pharmacy-benchmarking/")
         self.assertEqual(resp_bench.status_code, 200)
 
+    def test_41_multilingual_and_voice_medicine_search(self):
+        """
+        Comprehensive test suite for Medifind AI #6 — Multilingual + Voice Medicine Search.
+        Tests language detection, transliteration, medicine name preservation, grounded multilingual response,
+        voice search STT payload handling, and admin multilingual analytics view.
+        """
+        from .multilingual_engine import (
+            LanguageDetectorService,
+            MultilingualNormalizationService,
+            MultilingualResponseGenerator,
+            MultilingualAnalyticsService
+        )
+        from .models import Medicine, Inventory
+
+        # 1. Test LanguageDetectorService
+        lang_hi, conf_hi = LanguageDetectorService.detect_language("मुझे पास में पैरासिटामोल चाहिए")
+        self.assertEqual(lang_hi, "hi")
+
+        lang_ta, conf_ta = LanguageDetectorService.detect_language("எனக்கு அருகில் பாராசிட்டமால் வேண்டும்")
+        self.assertEqual(lang_ta, "ta")
+
+        lang_tang, conf_tang = LanguageDetectorService.detect_language("Enakku nearby paracetamol venum")
+        self.assertEqual(lang_tang, "ta")
+
+        # 2. Test MultilingualNormalizationService & Medicine Identity Preservation
+        norm_ta = MultilingualNormalizationService.normalize_query("எனக்கு அருகில் பாராசிட்டமால் வேண்டும்", lang="ta")
+        self.assertIn("Paracetamol", norm_ta["normalized_query"])
+
+        norm_hing = MultilingualNormalizationService.normalize_query("Mujhe Dolo 650 nearby chahiye", lang="hi")
+        self.assertTrue(norm_hing["location_requested"])
+
+        # 3. Test MultilingualResponseGenerator
+        mock_data = {
+            "query": "Dolo 650",
+            "pharmacies": [{"name": "Apollo Pharmacy", "distance_km": 1.2, "stock_quantity": 40}]
+        }
+        resp_hi = MultilingualResponseGenerator.generate_grounded_response(mock_data, target_lang="hi")
+        self.assertIn("Dolo 650", resp_hi)
+
+        resp_ta = MultilingualResponseGenerator.generate_grounded_response(mock_data, target_lang="ta")
+        self.assertIn("Dolo 650", resp_ta)
+
+        # 4. Test Multilingual API Endpoint (POST /api/ai/multilingual/search/)
+        resp_api_hi = self.client.post("/api/ai/multilingual/search/", data=json.dumps({
+            "query": "मुझे पास में पैरासिटामोल चाहिए",
+            "language": "hi",
+            "lat": 13.0827,
+            "lng": 80.2707
+        }), content_type="application/json")
+        self.assertEqual(resp_api_hi.status_code, 200)
+        data_hi = resp_api_hi.json()
+        self.assertEqual(data_hi["detected_language"], "hi")
+        self.assertIn("grounded_explanation", data_hi)
+
+        # 5. Test Voice Search STT Endpoint with Confidence
+        resp_voice = self.client.post("/api/ai/multilingual/search/", data=json.dumps({
+            "query": "Find Dolo 650 near me",
+            "language": "en",
+            "confidence": 0.96
+        }), content_type="application/json")
+        self.assertEqual(resp_voice.status_code, 200)
+        data_voice = resp_voice.json()
+        self.assertEqual(data_voice["speech_confidence"], 0.96)
+
+        # 6. Test Admin Multilingual Analytics View
+        admin_user = User.objects.create_superuser(username="lang_admin", password="password123")
+        self.client.force_login(admin_user)
+        resp_admin_lang = self.client.get("/admin/multilingual-analytics/")
+        self.assertEqual(resp_admin_lang.status_code, 200)
+
+
 
 
 

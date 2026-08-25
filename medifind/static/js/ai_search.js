@@ -40,13 +40,22 @@
 
     const recognition = new SpeechRec();
     recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-IN';
+    recognition.interimResults = true;
 
     let isRecording = false;
 
     micBtn.addEventListener('click', (e) => {
       e.preventDefault();
+
+      // Dynamic BCP-47 Speech Recognition Language selection
+      const langSelect = document.getElementById('searchLanguageSelect');
+      const selectedLang = langSelect ? langSelect.value : 'auto';
+      const langCodeMap = {
+        'en': 'en-IN', 'hi': 'hi-IN', 'ta': 'ta-IN', 'te': 'te-IN',
+        'bn': 'bn-IN', 'mr': 'mr-IN', 'kn': 'kn-IN', 'ml': 'ml-IN', 'auto': 'en-IN'
+      };
+      recognition.lang = langCodeMap[selectedLang] || 'en-IN';
+
       if (!isRecording) {
         try {
           recognition.start();
@@ -68,18 +77,29 @@
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
+      const confidence = event.results[0][0].confidence || 0.95;
       input.value = transcript;
+
+      // Show Transcription Preview Box if present
+      const previewBox = document.getElementById('transcriptionPreviewBox');
+      const txtOutput = document.getElementById('txtTranscriptionOutput');
+      const lblConf = document.getElementById('lblSpeechConfidence');
+
+      if (previewBox && txtOutput) {
+        txtOutput.innerText = `"${transcript}"`;
+        if (lblConf) lblConf.innerText = `Confidence: ${(confidence * 100).toFixed(0)}%`;
+        previewBox.classList.remove('d-none');
+        previewBox.classList.add('d-flex');
+      }
+
       micBtn.classList.remove('btn-danger', 'pulse-mic');
       micBtn.classList.add('btn-light', 'text-muted');
       micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
       isRecording = false;
 
-      if (form) {
-        if (typeof window.executeAISearch === 'function') {
-          window.executeAISearch(transcript);
-        } else {
-          form.submit();
-        }
+      // If high confidence and preview box not present, trigger search directly
+      if (!previewBox && form && typeof window.executeAISearch === 'function') {
+        window.executeAISearch(transcript);
       }
     };
 
@@ -98,16 +118,20 @@
     };
   }
 
-  // Core API caller
+  // Core API caller using Multilingual & Voice API
   async function performAISearch(query, radius = 5) {
+    const langSelect = document.getElementById('searchLanguageSelect');
+    const selectedLang = langSelect ? langSelect.value : 'auto';
+
     const payload = {
       query: query.trim(),
-      latitude: userCoords ? userCoords.lat : 13.0827,
-      longitude: userCoords ? userCoords.lng : 80.2707,
-      radius_km: radius
+      language: selectedLang,
+      lat: userCoords ? userCoords.lat : 13.0827,
+      lng: userCoords ? userCoords.lng : 80.2707,
+      radius: radius
     };
 
-    const res = await fetch('/api/ai/search/', {
+    const res = await fetch('/api/ai/multilingual/search/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -180,10 +204,30 @@
         `;
       }
 
-      aiResponseText.innerHTML = ambiguityHtml + (data.ai_response || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      const groundedText = data.grounded_explanation || data.ai_response || '';
+      const ttsBtnHtml = window.speechSynthesis ? `<button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-primary fw-bold float-end mb-2" id="btnPlayTTS"><i class="fa-solid fa-volume-high me-1"></i> Read Aloud</button>` : '';
+
+      aiResponseText.innerHTML = ttsBtnHtml + ambiguityHtml + (groundedText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       if (aiInterpretation && data.interpretation) {
-        aiInterpretation.innerText = data.interpretation;
+        aiInterpretation.innerText = `${data.language_name || 'English'} Search • ${data.interpretation}`;
         aiInterpretation.classList.remove('d-none');
+      }
+
+      // Attach Text-to-Speech listener
+      const ttsBtn = document.getElementById('btnPlayTTS');
+      if (ttsBtn) {
+        ttsBtn.addEventListener('click', () => {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(groundedText.replace(/<[^>]*>?/gm, ''));
+            const langCodeMap = {
+              'en': 'en-IN', 'hi': 'hi-IN', 'ta': 'ta-IN', 'te': 'te-IN',
+              'bn': 'bn-IN', 'mr': 'mr-IN', 'kn': 'kn-IN', 'ml': 'ml-IN'
+            };
+            utterance.lang = langCodeMap[data.detected_language] || 'en-IN';
+            window.speechSynthesis.speak(utterance);
+          }
+        });
       }
 
       // Attach listener to clarification buttons

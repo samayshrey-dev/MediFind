@@ -48,15 +48,31 @@
         <input type="hidden" name="lat" id="userLat" value="{{ request.GET.lat|default:'' }}">
         <input type="hidden" name="lng" id="userLng" value="{{ request.GET.lng|default:'' }}">
 
-        <div class="row align-items-center g-2">
-          <div class="col-lg-9 col-xl-10">
+        <div class="row align-items-center g-2 mb-2">
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label text-muted small fw-bold mb-1"><i class="fa-solid fa-language text-primary me-1"></i> Language</label>
+            <select id="searchLanguageSelect" class="form-select form-select-sm rounded-pill fw-semibold border shadow-none bg-white">
+              <option value="auto" selected>🌐 Auto-detect</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+              <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
+              <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+              <option value="bn">🇮🇳 বাংলা (Bengali)</option>
+              <option value="mr">🇮🇳 मराठी (Marathi)</option>
+              <option value="kn">🇮🇳 ಕನ್ನಡ (Kannada)</option>
+              <option value="ml">🇮🇳 മലയാളം (Malayalam)</option>
+            </select>
+          </div>
+
+          <div class="col-lg-7 col-md-6">
+            <label class="form-label text-muted small fw-bold mb-1"><i class="fa-solid fa-prescription-bottle-medical me-1"></i> Medicine Query</label>
             <div class="position-relative">
               <input
                 id="medicineSearch"
                 type="search"
                 name="medicine"
-                class="form-control form-control-lg border rounded-3 py-3 ps-3 pe-5 shadow-none bg-white"
-                placeholder="Search medicine, or e.g. 'Cheapest Dolo 650 within 5 km'..."
+                class="form-control form-control-lg border rounded-3 py-2.5 ps-3 pe-5 shadow-none bg-white"
+                placeholder="Search medicine or e.g. 'எனக்கு அருகில் பாராசிட்டமால் வேண்டும்'..."
                 autocomplete="off"
                 value="{{ query|default:'' }}"
                 required>
@@ -67,27 +83,41 @@
             </div>
           </div>
 
-          <div class="col-lg-3 col-xl-2 d-grid">
+          <div class="col-lg-3 col-md-3 d-grid align-self-end">
             <button
               type="submit"
               id="searchSubmitBtn"
-              class="btn btn-primary btn-lg rounded-3 fw-semibold py-3 shadow-sm">
-              <i class="fa-solid fa-magnifying-glass me-1"></i> Search
+              class="btn btn-primary btn-lg rounded-3 fw-semibold py-2.5 shadow-sm">
+              <i class="fa-solid fa-magnifying-glass me-1"></i> Search AI
             </button>
           </div>
         </div>
       </form>
 
+      <!-- Transcription Preview Box -->
+      <div id="transcriptionPreviewBox" class="alert alert-info border-info-subtle rounded-3 p-3 mt-3 d-none align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fa-solid fa-quote-left fs-5 text-info"></i>
+          <div>
+            <small class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.68rem;">Voice Transcription Preview</small>
+            <span class="fw-bold text-dark" id="txtTranscriptionOutput">"Finding Paracetamol nearby..."</span>
+            <span class="badge bg-light text-dark border ms-2" id="lblSpeechConfidence">Confidence: 96%</span>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btnEditTranscription"><i class="fa-solid fa-pen me-1"></i> Edit</button>
+          <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" id="btnConfirmVoiceSearch"><i class="fa-solid fa-magnifying-glass me-1"></i> Confirm &amp; Search</button>
+        </div>
+      </div>
 
       <!-- Quick Search Chips -->
       <div class="search-quick-tags mt-3">
         <small class="text-muted fw-semibold me-1">Try searching:</small>
         <button type="button" class="search-tag-chip" data-query="Dolo 650">Dolo 650</button>
-        <button type="button" class="search-tag-chip" data-query="Find the cheapest Dolo 650 within 5 km">Cheapest Dolo 650 within 5 km</button>
-        <button type="button" class="search-tag-chip" data-query="Find the nearest pharmacy with paracetamol">Nearest with paracetamol</button>
-        <button type="button" class="search-tag-chip" data-query="Augmentin 625 Duo">Augmentin 625 Duo</button>
-        <button type="button" class="search-tag-chip" data-query="Pan 40">Pan 40</button>
-        <button type="button" class="search-tag-chip" data-query="Cetirizine 10 mg">Cetirizine 10 mg</button>
+        <button type="button" class="search-tag-chip" data-query="मुझे पास में पैरासिटामोल चाहिए">Hindi: पास में पैरासिटामोल</button>
+        <button type="button" class="search-tag-chip" data-query="எனக்கு அருகில் பாராசிட்டமால் வேண்டும்">Tamil: பாராசிட்டமால்</button>
+        <button type="button" class="search-tag-chip" data-query="Enakku nearby paracetamol venum">Tanglish: Enakku nearby paracetamol</button>
+        <button type="button" class="search-tag-chip" data-query="Augmentin 625 Duo">Augmentin 625</button>
       </div>
     </div>
 

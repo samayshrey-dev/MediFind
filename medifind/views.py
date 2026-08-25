@@ -1342,6 +1342,109 @@ def admin_pharmacy_benchmarking_view(request):
     })
 
 
+# ==========================================================
+# MEDIFIND AI #6 — MULTILINGUAL + VOICE MEDICINE SEARCH
+# ==========================================================
+
+from .multilingual_engine import (
+    LanguageDetectorService,
+    MultilingualNormalizationService,
+    MultilingualResponseGenerator,
+    MultilingualAnalyticsService,
+    SUPPORTED_LANGUAGES
+)
+
+
+@csrf_exempt
+def ai_multilingual_search_api(request):
+    """
+    POST /api/ai/multilingual/search/
+    Core Multilingual & Voice Search API.
+    Normalizes Indian regional languages, transliterations, and voice transcripts into AI #1 & AI #3 search pipeline.
+    Returns grounded natural-language responses in user's selected/detected language.
+    """
+    if request.method not in ["POST", "GET"]:
+        return JsonResponse({"success": False, "message": "POST or GET method required."}, status=405)
+
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            payload = request.POST.dict()
+    else:
+        payload = request.GET.dict()
+
+    raw_query = payload.get("query") or payload.get("medicine", "")
+    selected_lang = payload.get("language") or payload.get("lang", "auto")
+    lat_str = payload.get("lat")
+    lng_str = payload.get("lng")
+    radius_km = float(payload.get("radius") or 5)
+    speech_confidence = float(payload.get("confidence") or 1.0)
+
+    if not raw_query:
+        return JsonResponse({"success": False, "message": "Search query parameter required."}, status=400)
+
+    # 1. Language Detection
+    detected_lang, lang_confidence = LanguageDetectorService.detect_language(raw_query, selected_lang)
+    target_lang = selected_lang if selected_lang != "auto" else detected_lang
+
+    # 2. Multilingual & Transliteration Normalization
+    norm_info = MultilingualNormalizationService.normalize_query(raw_query, lang=target_lang)
+    effective_query = norm_info["extracted_medicine"] or norm_info["normalized_query"]
+
+    if norm_info.get("radius_km"):
+        radius_km = norm_info["radius_km"]
+
+    # 3. Pass normalized query into AI #1 Intent & AI #2 Pharmacy Recommendation Pipeline
+    user_lat = None
+    user_lng = None
+    if lat_str and lng_str:
+        try:
+            user_lat = float(lat_str)
+            user_lng = float(lng_str)
+        except ValueError:
+            pass
+
+    ai_search_results = execute_ai_medicine_search_pipeline(
+        query=effective_query,
+        user_lat=user_lat,
+        user_lng=user_lng,
+        radius_km=radius_km
+    )
+
+    # 4. Generate Grounded Multilingual Response
+    grounded_explanation = MultilingualResponseGenerator.generate_grounded_response(
+        data=ai_search_results,
+        target_lang=target_lang
+    )
+
+    # Overwrite grounded response with multilingual version
+    ai_search_results["grounded_explanation"] = grounded_explanation
+    ai_search_results["original_user_query"] = raw_query
+    ai_search_results["normalized_query"] = norm_info["normalized_query"]
+    ai_search_results["detected_language"] = target_lang
+    ai_search_results["language_name"] = SUPPORTED_LANGUAGES.get(target_lang, {}).get("name", "English")
+    ai_search_results["speech_confidence"] = speech_confidence
+
+    return JsonResponse(ai_search_results)
+
+
+@login_required
+def admin_multilingual_analytics_view(request):
+    """
+    GET /admin/multilingual-analytics/
+    Admin performance dashboard displaying aggregate multilingual distribution, voice search metrics, and STT accuracy.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "403.html", status=403)
+
+    stats = MultilingualAnalyticsService.get_aggregate_stats()
+    return render(request, "admin_multilingual_analytics.html", {
+        "stats": stats,
+        "supported_languages": SUPPORTED_LANGUAGES
+    })
+
+
 
 
 

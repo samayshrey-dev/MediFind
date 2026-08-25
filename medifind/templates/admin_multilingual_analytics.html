@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Multilingual & Voice AI Performance | MediFind{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100">
+  <div class="container-fluid px-lg-5">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-dark text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">MEDIFIND AI #6</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-0.5 small fw-bold">
+            <i class="fa-solid fa-language me-1"></i> Multilingual &amp; Voice Intelligence Active
+          </span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">Multilingual &amp; Voice AI Performance</h2>
+        <p class="text-muted small mb-0">Language query distribution, speech-to-text accuracy, and voice vs text analytics.</p>
+      </div>
+    </div>
+
+    <!-- ── KPI METRIC CARDS ── -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-primary">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Total Queries Processed</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">{{ stats.total_searches }}</div>
+          <small class="text-muted">Multilingual search requests</small>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-success">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Voice Searches</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">{{ stats.voice_searches_count }}</div>
+          <small class="text-muted">Web Speech API transcripts</small>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-info">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Avg Speech Confidence</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">{{ stats.overall_speech_confidence }}%</div>
+          <small class="text-muted">STT transcript accuracy</small>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-warning">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Supported Languages</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">8 Languages</div>
+          <small class="text-muted">Regional Indian &amp; English</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LANGUAGE DISTRIBUTION TABLE ── -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-globe text-primary me-2"></i> Language Distribution &amp; Success Rates</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+            <tr>
+              <th scope="col" class="py-3 ps-3">Language</th>
+              <th scope="col" class="py-3">Code</th>
+              <th scope="col" class="py-3">Total Searches</th>
+              <th scope="col" class="py-3">Percentage</th>
+              <th scope="col" class="py-3 text-end pe-3">Search Success Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in stats.language_distribution %}
+              <tr>
+                <td class="ps-3 py-3">
+                  <span class="fw-bold text-dark">{{ item.language }}</span>
+                </td>
+                <td><code class="bg-light px-2 py-0.5 rounded text-primary">{{ item.code }}</code></td>
+                <td><span class="fw-bold text-dark">{{ item.count }}</span></td>
+                <td>
+                  <div class="d-flex align-items-center gap-2" style="max-width: 150px;">
+                    <div class="progress flex-grow-1" style="height: 6px;">
+                      <div class="progress-bar bg-primary" style="width: {{ item.percent }}%;"></div>
+                    </div>
+                    <span class="small text-muted fw-bold" style="font-size: 0.72rem;">{{ item.percent }}%</span>
+                  </div>
+                </td>
+                <td class="text-end pe-3">
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-bold">
+                    {{ item.success_rate }}%
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
