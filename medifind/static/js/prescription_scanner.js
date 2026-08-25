@@ -197,36 +197,56 @@
     });
   }
 
-  // Manual Add Medicine Row
-  if (btnAddManualMedicineBtn) {
-    btnAddManualMedicineBtn.addEventListener('click', () => {
-      if (!confirmationTableBody) return;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <input type="hidden" class="row-med-id" value="">
-          <input type="text" class="form-control form-control-sm fw-bold text-dark row-med-name" value="" placeholder="e.g. Paracetamol">
-          <small class="text-muted d-block mt-0.5" style="font-size: 0.72rem;">Manually added</small>
-        </td>
-        <td>
-          <input type="text" class="form-control form-control-sm row-med-strength" value="500 mg" placeholder="e.g. 500 mg">
-        </td>
-        <td>
-          <input type="text" class="form-control form-control-sm row-med-freq" value="1-0-1" placeholder="e.g. 1-0-1">
-        </td>
-        <td>
-          <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small">Manual</span>
-        </td>
-        <td class="text-center">
-          <button type="button" class="btn btn-sm btn-light text-danger rounded-circle btn-remove-row" title="Remove">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
-        </td>
-      `;
-      tr.querySelector('.btn-remove-row').addEventListener('click', () => tr.remove());
-      confirmationTableBody.appendChild(tr);
-    });
+  function addMedicineRow(name = '', strength = '500 mg', freq = '1-0-1') {
+    if (!confirmationTableBody) return;
+
+    // Clear empty table warning row if present
+    const emptyRow = confirmationTableBody.querySelector('td[colspan]');
+    if (emptyRow) {
+      emptyRow.closest('tr').remove();
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <input type="hidden" class="row-med-id" value="">
+        <input type="text" class="form-control form-control-sm fw-bold text-dark row-med-name" value="${name}" placeholder="e.g. Amaryl / Paracetamol">
+        <small class="text-muted d-block mt-0.5" style="font-size: 0.72rem;">User selected / added</small>
+      </td>
+      <td>
+        <input type="text" class="form-control form-control-sm row-med-strength" value="${strength}" placeholder="e.g. 500 mg">
+      </td>
+      <td>
+        <input type="text" class="form-control form-control-sm row-med-freq" value="${freq}" placeholder="e.g. 1-0-1">
+      </td>
+      <td>
+        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small">Manual</span>
+      </td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-light text-danger rounded-circle btn-remove-row" title="Remove">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
+    `;
+    tr.querySelector('.btn-remove-row').addEventListener('click', () => tr.remove());
+    confirmationTableBody.appendChild(tr);
   }
+
+  // Manual Add Medicine Button
+  if (btnAddManualMedicineBtn) {
+    btnAddManualMedicineBtn.addEventListener('click', () => addMedicineRow('', '500 mg', '1-0-1'));
+  }
+
+  // Quick Medicine Preset Chips
+  document.querySelectorAll('.quick-med-chip').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget;
+      const name = target.dataset.name || '';
+      const strength = target.dataset.strength || '';
+      const freq = target.dataset.freq || '1-0-1';
+      addMedicineRow(name, strength, freq);
+    });
+  });
 
   if (btnRestartUpload) {
     btnRestartUpload.addEventListener('click', () => {
