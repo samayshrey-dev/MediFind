@@ -991,19 +991,38 @@ class RazorpayAgenticCommerceTests(TestCase):
 
         # 3. IDOR / Horizontal Access Control on Reservations
         # Pharmacy User 2 attempts to accept a reservation placed for Pharmacy 1
+        other_pharm = Pharmacy.objects.create(
+            name="Secure Test Pharmacy 2",
+            owner_name="Test Owner",
+            phone="9876543999",
+            email="secure2@test.com",
+            address="45 Mount Road",
+            city="Chennai",
+            latitude=13.0827,
+            longitude=80.2707
+        )
+        cust = User.objects.create_user(username="test_customer_sec", password="Password123!")
+        res_test = Reservation.objects.create(
+            customer=cust,
+            pharmacy=self.pharmacy,
+            medicine=self.medicine,
+            quantity=1,
+            status="Pending"
+        )
+
         other_user = User.objects.create_user(username="other_pharm_user", password="Password123!")
         other_prof, _ = UserProfile.objects.get_or_create(user=other_user)
         other_prof.role = "Pharmacy"
-        other_prof.pharmacy = self.pharmacy2
+        other_prof.pharmacy = other_pharm
         other_prof.save()
 
-
         self.client.force_login(other_user)
-        resp_idor = self.client.get(f"/reservations/{self.reservation.id}/accept/", follow=True)
+        resp_idor = self.client.get(f"/reservations/{res_test.id}/accept/", follow=True)
         # Should be redirected with error message and NOT accepted
-        self.reservation.refresh_from_db()
-        self.assertNotEqual(self.reservation.status, "Accepted")
+        res_test.refresh_from_db()
+        self.assertNotEqual(res_test.status, "Accepted")
         self.assertContains(resp_idor, "Unauthorized")
+
 
         # 4. File Upload Security
         fake_exe = io.BytesIO(b"MZ executable contents")
