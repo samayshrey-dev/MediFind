@@ -1513,6 +1513,155 @@ def admin_medicine_info_analytics_view(request):
     return render(request, "admin_medicine_info_analytics.html", {"stats": stats})
 
 
+# ==========================================================
+# MEDIFIND AI #8 — ANOMALY, ABUSE & FRAUD-RISK DETECTION
+# ==========================================================
+
+from .anomaly_engine import (
+    InventoryAnomalyDetector,
+    OrderAndCancellationAnomalyDetector,
+    PriceAnomalyDetector,
+    DuplicateRecordDetector,
+    AnomalyDetectionEngine,
+    AIAnomalyExplanationService
+)
+from .models import OperationalAnomalyAlert
+
+
+@login_required
+def admin_security_alerts_api(request):
+    """
+    GET /api/admin/security/alerts/
+    Returns filtered operational anomaly alerts for admin review.
+    Security: Staff and Superusers only.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({"success": False, "message": "Admin authorization required."}, status=403)
+
+    # Run system anomaly scan on fetch
+    AnomalyDetectionEngine.run_full_system_anomaly_scan()
+
+    severity = request.GET.get("severity")
+    status_filter = request.GET.get("status", "OPEN")
+
+    alerts_qs = OperationalAnomalyAlert.objects.select_related("pharmacy", "medicine")
+
+    if status_filter == "OPEN":
+        alerts_qs = alerts_qs.filter(status__in=["DETECTED", "REVIEWING"])
+    elif status_filter != "ALL":
+        alerts_qs = alerts_qs.filter(status=status_filter)
+
+    if severity:
+        alerts_qs = alerts_qs.filter(severity=severity)
+
+    alerts_data = []
+    for a in alerts_qs[:50]:
+        alerts_data.append({
+            "id": a.id,
+            "alert_type": a.alert_type,
+            "severity": a.severity,
+            "status": a.status,
+            "title": a.title,
+            "summary": a.summary,
+            "pharmacy": {"id": a.pharmacy.id, "name": a.pharmacy.name} if a.pharmacy else None,
+            "medicine": {"id": a.medicine.id, "name": a.medicine.name} if a.medicine else None,
+            "risk_score": a.risk_score,
+            "evidence": a.evidence_json,
+            "created_at": a.created_at.strftime("%Y-%m-%d %H:%M")
+        })
+
+    return JsonResponse({"success": True, "count": len(alerts_data), "alerts": alerts_data})
+
+
+@login_required
+def admin_security_alert_review_api(request, alert_id):
+    """
+    POST /api/admin/security/alerts/<id>/review/
+    Human review endpoint for operational alerts. Updates status & records review notes.
+    Rule: Human decision required for consequential action (RESOLVED / DISMISSED / ESCALATED).
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({"success": False, "message": "Admin authorization required."}, status=403)
+
+    try:
+        alert = OperationalAnomalyAlert.objects.get(id=alert_id)
+    except OperationalAnomalyAlert.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Alert not found."}, status=404)
+
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST method required."}, status=405)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        payload = request.POST.dict()
+
+    new_status = payload.get("status", "RESOLVED")
+    review_note = payload.get("review_note", "")
+
+    if new_status not in ["REVIEWING", "RESOLVED", "DISMISSED", "ESCALATED"]:
+        return JsonResponse({"success": False, "message": "Invalid status choice."}, status=400)
+
+    alert.status = new_status
+    alert.review_note = review_note
+    alert.reviewer = request.user
+    if new_status in ["RESOLVED", "DISMISSED"]:
+        alert.resolved_at = timezone.now()
+    alert.save()
+
+    return JsonResponse({
+        "success": True,
+        "alert_id": alert.id,
+        "status": alert.status,
+        "reviewer": request.user.username,
+        "message": f"Alert #{alert.id} status updated to {alert.status} by human reviewer {request.user.username}."
+    })
+
+
+@login_required
+def admin_security_dashboard_view(request):
+    """
+    GET /admin/security-trust-center/
+    Security & Trust Center Dashboard UI for human review of operational anomaly alerts.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "403.html", status=403)
+
+    # Run system anomaly scan
+    scan_summary = AnomalyDetectionEngine.run_full_system_anomaly_scan()
+
+    alerts = OperationalAnomalyAlert.objects.select_related("pharmacy", "medicine", "reviewer")[:50]
+
+    return render(request, "admin_security_dashboard.html", {
+        "scan_summary": scan_summary,
+        "alerts": alerts
+    })
+
+
+@login_required
+def pharmacy_security_alerts_view(request):
+    """
+    GET /pharmacy/security-alerts/
+    Pharmacy self-monitoring view for merchants to review and resolve data entry anomalies.
+    """
+    pharmacy = _resolve_user_pharmacy(request)
+    if not pharmacy and (request.user.is_staff or request.user.is_superuser):
+        pharmacy = Pharmacy.objects.first()
+    if not pharmacy:
+        return render(request, "403.html", status=403)
+
+    # Scan pharmacy alerts
+    InventoryAnomalyDetector.scan_pharmacy_inventory_anomalies(pharmacy)
+    OrderAndCancellationAnomalyDetector.scan_cancellation_spikes(pharmacy)
+
+    pharmacy_alerts = OperationalAnomalyAlert.objects.filter(pharmacy=pharmacy).select_related("medicine")
+
+    return render(request, "pharmacy_security_alerts.html", {
+        "pharmacy": pharmacy,
+        "alerts": pharmacy_alerts
+    })
+
+
 
 
 

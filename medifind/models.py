@@ -870,5 +870,67 @@ class DemandForecast(models.Model):
         return f"{self.pharmacy.name} - {self.medicine.name}: Pred 7d = {self.predicted_demand:.1f} ({self.risk_level})"
 
 
+class OperationalAnomalyAlert(models.Model):
+    """
+    Medifind AI #8 — Operational Anomaly & Abuse Alert Model.
+    Tracks potentially anomalous operational activity for human review.
+    Rule: Never automatically bans or punishes users/pharmacies — human review is required.
+    """
+    SEVERITY_CHOICES = [
+        ("LOW", "Low Severity"),
+        ("MEDIUM", "Medium Severity"),
+        ("HIGH", "High Severity"),
+        ("CRITICAL", "Critical Severity"),
+    ]
+
+    STATUS_CHOICES = [
+        ("DETECTED", "Detected"),
+        ("REVIEWING", "Under Review"),
+        ("RESOLVED", "Resolved"),
+        ("DISMISSED", "Dismissed"),
+        ("ESCALATED", "Escalated"),
+    ]
+
+    ALERT_TYPES = [
+        ("INVENTORY_MISMATCH", "Inventory Movement Mismatch"),
+        ("RAPID_STOCK_MANIPULATION", "Rapid Stock Toggling"),
+        ("CANCELLATION_SPIKE", "Cancellation Rate Spike"),
+        ("PRICE_ANOMALY", "Unusual Price Spike"),
+        ("SEARCH_SURGE", "Search Volume Surge"),
+        ("DUPLICATE_PHARMACY", "Potential Duplicate Pharmacy"),
+        ("DUPLICATE_MEDICINE", "Potential Duplicate Medicine"),
+    ]
+
+    alert_type = models.CharField(max_length=50, choices=ALERT_TYPES, db_index=True)
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default="MEDIUM", db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="DETECTED", db_index=True)
+    
+    pharmacy = models.ForeignKey(Pharmacy, on_delete=models.CASCADE, null=True, blank=True, related_name="anomaly_alerts")
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, null=True, blank=True, related_name="anomaly_alerts")
+    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE, null=True, blank=True, related_name="anomaly_alerts")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="anomaly_alerts")
+    
+    title = models.CharField(max_length=200)
+    summary = models.TextField()
+    evidence_json = models.JSONField(default=dict)
+    risk_score = models.FloatField(default=50.0)
+
+    reviewer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviewed_anomaly_alerts")
+    review_note = models.TextField(blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["severity", "status"]),
+            models.Index(fields=["pharmacy", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"[{self.severity}] {self.title} ({self.status})"
+
+
+
 
 

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Pharmacy Operational Alerts | MediFind{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100" style="margin-top: 70px;">
+  <div class="container-fluid px-lg-5">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-primary text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">OPERATIONAL SELF-MONITORING</span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">Operational Inventory &amp; Stock Alerts</h2>
+        <p class="text-muted small mb-0">Review automated stock movement warnings and pricing checks for {{ pharmacy.name }}.</p>
+      </div>
+    </div>
+
+    <!-- Alert Cards List -->
+    <div class="row g-4">
+      <div class="col-lg-8">
+        {% for alert in alerts %}
+          <div class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-3 border-start border-4 {% if alert.severity == 'HIGH' or alert.severity == 'CRITICAL' %}border-warning{% else %}border-info{% endif %}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-bold mb-1">
+                  <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> {{ alert.alert_type }}
+                </span>
+                <h5 class="fw-bold text-dark mb-1">{{ alert.title }}</h5>
+              </div>
+              <span class="badge {% if alert.status == 'DETECTED' %}bg-warning-subtle text-warning-emphasis{% else %}bg-success-subtle text-success{% endif %} rounded-pill px-3 py-1 small fw-bold">
+                {{ alert.status }}
+              </span>
+            </div>
+
+            <p class="text-secondary small mb-3">{{ alert.summary }}</p>
+
+            {% if alert.evidence_json %}
+              <div class="p-3 bg-light rounded-3 border small mb-3">
+                <span class="text-muted fw-bold d-block mb-1">Observed Operational Telemetry:</span>
+                <code class="text-dark">{{ alert.evidence_json }}</code>
+              </div>
+            {% endif %}
+
+            <small class="text-muted" style="font-size: 0.72rem;">Detected on {{ alert.created_at|date:"Y-m-d H:i" }}. Automated operational signal.</small>
+          </div>
+        {% empty %}
+          <div class="card border-0 rounded-4 shadow-sm bg-white p-5 text-center">
+            <i class="fa-solid fa-circle-check text-success fs-1 mb-2"></i>
+            <h5 class="fw-bold text-dark mb-1">All Operational Metrics Normal</h5>
+            <p class="text-muted small mb-0">No unusual stock mismatches or pricing deviations detected for {{ pharmacy.name }}.</p>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+          <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-lightbulb text-warning me-2"></i> Why am I seeing alerts?</h6>
+          <p class="text-muted small mb-3">
+            MediFind AI #8 monitors operational data for inventory reconciliations, pricing consistency, and stock accuracy.
+          </p>
+          <ul class="text-muted small ps-3 mb-0">
+            <li class="mb-1.5">Stock drops without recorded sales indicate physical inventory count adjustments.</li>
+            <li class="mb-1.5">Price deviations flag potential data entry typos.</li>
+            <li>Alerts help keep your digital storefront accurate for local customers.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

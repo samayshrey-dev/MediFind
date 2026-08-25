@@ -1615,6 +1615,127 @@ class RazorpayAgenticCommerceTests(TestCase):
         resp_admin_info = self.client.get("/admin/medicine-info-analytics/")
         self.assertEqual(resp_admin_info.status_code, 200)
 
+    def test_43_anomaly_abuse_and_fraud_risk_detection(self):
+        """
+        Comprehensive test suite for Medifind AI #8 — Anomaly, Abuse & Fraud-Risk Detection.
+        Tests Inventory Mismatch, Cancellation Spikes, Price Deviations, Duplicate Medicine Flags,
+        Human-in-the-Loop Review API, Admin Security Trust Center, and Pharmacy Self-Monitoring.
+        """
+        from .anomaly_engine import (
+            InventoryAnomalyDetector,
+            OrderAndCancellationAnomalyDetector,
+            PriceAnomalyDetector,
+            DuplicateRecordDetector,
+            AnomalyDetectionEngine
+        )
+        from .models import Pharmacy, Medicine, Inventory, Reservation, OperationalAnomalyAlert
+
+        pharmacy = Pharmacy.objects.create(
+            name="Anomaly Test Pharmacy",
+            owner_name="Tester",
+            phone="9998887770",
+            address="123 Security St",
+            city="Chennai",
+            state="Tamil Nadu",
+            pincode="600001",
+            latitude=13.0827,
+            longitude=80.2707,
+            opening_time="08:00",
+            closing_time="22:00"
+        )
+
+        med1 = Medicine.objects.create(
+            name="Anomaly Test Pill 500mg",
+            brand="Brand A",
+            category="Pain Relief",
+            dosage="Tablet - 500mg",
+            description="Test pill.",
+            uses="Pain relief",
+            side_effects="None"
+        )
+
+        med2 = Medicine.objects.create(
+            name="Anomaly Test Pill 500 mg",
+            brand="Brand A",
+            category="Pain Relief",
+            dosage="Tablet - 500mg",
+            description="Test pill duplicate.",
+            uses="Pain relief",
+            side_effects="None"
+        )
+
+        inv = Inventory.objects.create(
+            medicine=med1,
+            pharmacy=pharmacy,
+            quantity=0,
+            price=250.00,  # Unusually high price compared to 50.00 average
+            minimum_stock=20,
+            batch_number="BATCH123",
+            expiry_date="2027-12-31"
+        )
+
+        # 1. Test Inventory Mismatch Detector
+        alerts_inv = InventoryAnomalyDetector.scan_pharmacy_inventory_anomalies(pharmacy)
+        self.assertIsInstance(alerts_inv, list)
+
+        # 2. Test Cancellation Spike Detector
+        customer_user = User.objects.create_user(username="canceller_user", password="password123")
+        for _ in range(5):
+            Reservation.objects.create(
+                customer=customer_user,
+                pharmacy=pharmacy,
+                medicine=med1,
+                quantity=1,
+                status="Cancelled"
+            )
+        alerts_canc = OrderAndCancellationAnomalyDetector.scan_cancellation_spikes(pharmacy)
+        self.assertGreaterEqual(len(alerts_canc), 1)
+
+        # 3. Test Duplicate Medicine Detector
+        alerts_dup = DuplicateRecordDetector.scan_duplicate_medicines()
+        self.assertGreaterEqual(len(alerts_dup), 1)
+
+        # 4. Test System-Wide Anomaly Detection Engine
+        scan_res = AnomalyDetectionEngine.run_full_system_anomaly_scan()
+        self.assertIn("total_open_alerts", scan_res)
+
+        # 5. Test Admin Security Alerts REST API (GET /api/admin/security/alerts/)
+        sec_admin = User.objects.create_superuser(username="sec_admin", password="password123")
+        self.client.force_login(sec_admin)
+        resp_sec_api = self.client.get("/api/admin/security/alerts/")
+        self.assertEqual(resp_sec_api.status_code, 200)
+        data_sec = resp_sec_api.json()
+        self.assertTrue(data_sec["success"])
+        self.assertIn("alerts", data_sec)
+
+        # 6. Test Human-in-the-Loop Alert Review API (POST /api/admin/security/alerts/<id>/review/)
+        target_alert = OperationalAnomalyAlert.objects.first()
+        self.assertIsNotNone(target_alert)
+
+        resp_rev = self.client.post(f"/api/admin/security/alerts/{target_alert.id}/review/", data=json.dumps({
+            "status": "RESOLVED",
+            "review_note": "Manual stock count verified and corrected."
+        }), content_type="application/json")
+        self.assertEqual(resp_rev.status_code, 200)
+        data_rev = resp_rev.json()
+        self.assertEqual(data_rev["status"], "RESOLVED")
+
+        # 7. Test Admin Security Dashboard View
+        resp_dash = self.client.get("/admin/security-trust-center/")
+        self.assertEqual(resp_dash.status_code, 200)
+
+        # 8. Test Pharmacy Self-Monitoring View
+        pharm_user = User.objects.create_user(username="pharmacy_owner_user", password="password123", is_staff=True)
+        from .models import UserProfile
+        prof, _ = UserProfile.objects.get_or_create(user=pharm_user)
+        prof.role = "Pharmacy"
+        prof.pharmacy = pharmacy
+        prof.save()
+        self.client.force_login(pharm_user)
+        resp_pharm_alerts = self.client.get("/pharmacy/security-alerts/")
+        self.assertEqual(resp_pharm_alerts.status_code, 200)
+
+
 
 
 

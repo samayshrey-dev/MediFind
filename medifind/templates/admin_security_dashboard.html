@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Security & Trust Center | MediFind AI #8{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light min-vh-100">
+  <div class="container-fluid px-lg-5">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-dark text-white rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">MEDIFIND AI #8</span>
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-0.5 small fw-bold">
+            <i class="fa-solid fa-shield-virus me-1"></i> Anomaly, Abuse &amp; Fraud-Risk System Active
+          </span>
+        </div>
+        <h2 class="fw-extrabold text-dark mb-0">Security &amp; Trust Center</h2>
+        <p class="text-muted small mb-0">Human-in-the-Loop review of operational anomalies, stock mismatches, and pricing deviations.</p>
+      </div>
+
+      <div class="alert alert-warning border-0 rounded-4 p-2.5 px-3 shadow-xs d-flex align-items-center gap-2 mb-0">
+        <i class="fa-solid fa-user-shield text-warning fs-5"></i>
+        <small class="fw-bold text-dark mb-0" style="font-size: 0.75rem;">Strict Policy: Human review is required for all consequential administrative actions.</small>
+      </div>
+    </div>
+
+    <!-- ── SUMMARY KPI CARDS ── -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-danger">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Critical Severity</span>
+          <div class="fs-3 fw-extrabold text-danger mt-1">{{ scan_summary.severity_breakdown.critical }}</div>
+          <small class="text-muted">Urgent operational anomalies</small>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-warning">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">High Severity</span>
+          <div class="fs-3 fw-extrabold text-warning-emphasis mt-1">{{ scan_summary.severity_breakdown.high }}</div>
+          <small class="text-muted">Cancellation &amp; stock spikes</small>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-info">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Medium / Low Severity</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">{{ scan_summary.severity_breakdown.medium|add:scan_summary.severity_breakdown.low }}</div>
+          <small class="text-muted">Price &amp; duplicate record checks</small>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-3">
+        <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-success">
+          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Total Open Alerts</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">{{ scan_summary.total_open_alerts }}</div>
+          <small class="text-muted">Awaiting human review</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OPERATIONAL ALERTS REVIEW TABLE ── -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list-check text-primary me-2"></i> Operational Anomaly Alert Audit Trail</h5>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+            <tr>
+              <th scope="col" class="py-3 ps-3">Severity &amp; Type</th>
+              <th scope="col" class="py-3">Title &amp; Summary</th>
+              <th scope="col" class="py-3">Entity</th>
+              <th scope="col" class="py-3">Risk Score</th>
+              <th scope="col" class="py-3">Status</th>
+              <th scope="col" class="py-3 text-end pe-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for alert in alerts %}
+              <tr>
+                <td class="ps-3 py-3">
+                  <span class="badge {% if alert.severity == 'CRITICAL' %}bg-danger{% elif alert.severity == 'HIGH' %}bg-warning text-dark{% elif alert.severity == 'MEDIUM' %}bg-info text-dark{% else %}bg-secondary{% endif %} rounded-pill px-2.5 py-1 small fw-bold d-block mb-1" style="width: fit-content;">
+                    {{ alert.severity }}
+                  </span>
+                  <code class="bg-light text-muted px-2 py-0.5 rounded small" style="font-size: 0.68rem;">{{ alert.alert_type }}</code>
+                </td>
+                <td>
+                  <div class="fw-bold text-dark mb-0">{{ alert.title }}</div>
+                  <small class="text-muted d-block text-truncate" style="max-width: 420px;">{{ alert.summary }}</small>
+                </td>
+                <td>
+                  {% if alert.pharmacy %}
+                    <span class="fw-semibold text-dark d-block"><i class="fa-solid fa-store text-primary me-1"></i> {{ alert.pharmacy.name }}</span>
+                  {% endif %}
+                  {% if alert.medicine %}
+                    <small class="text-muted d-block"><i class="fa-solid fa-capsules text-success me-1"></i> {{ alert.medicine.name }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="fw-extrabold {% if alert.risk_score >= 70 %}text-danger{% elif alert.risk_score >= 50 %}text-warning-emphasis{% else %}text-dark{% endif %} font-monospace fs-6">
+                    {{ alert.risk_score|floatformat:1 }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge {% if alert.status == 'DETECTED' %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% elif alert.status == 'RESOLVED' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-light text-dark border{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
+                    {{ alert.status }}
+                  </span>
+                </td>
+                <td class="text-end pe-3">
+                  {% if alert.status == 'DETECTED' or alert.status == 'REVIEWING' %}
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold review-modal-btn" data-id="{{ alert.id }}" data-title="{{ alert.title }}" data-summary="{{ alert.summary }}">
+                      <i class="fa-solid fa-user-check me-1"></i> Review
+                    </button>
+                  {% else %}
+                    <small class="text-muted fw-semibold" style="font-size: 0.72rem;">Reviewed by {{ alert.reviewer.username|default:"Admin" }}</small>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-5 text-muted">
+                  <i class="fa-solid fa-circle-check text-success fs-2 mb-2 d-block"></i>
+                  No open operational anomaly alerts detected. All systems operating within baseline parameters.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Review Action Modal -->
+<div class="modal fade" id="reviewAlertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header bg-dark text-white rounded-top-4">
+        <h5 class="modal-title fw-bold" id="modalAlertTitle">Human Review Decision</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="reviewAlertId">
+        <p class="text-muted small mb-3" id="modalAlertSummary"></p>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark small">Select Review Decision</label>
+          <select id="reviewStatusSelect" class="form-select rounded-3">
+            <option value="RESOLVED" selected>✅ Mark as Resolved (Manual inventory count / data corrected)</option>
+            <option value="DISMISSED">⚪ Dismiss Alert (Verified legitimate operational change)</option>
+            <option value="ESCALATED">🚨 Escalate to Senior Security Administrator</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark small">Reviewer Note / Justification</label>
+          <textarea id="reviewNoteInput" class="form-control rounded-3" rows="3" placeholder="Enter review note (e.g., 'Stock corrected following manual physical count')..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer bg-light rounded-bottom-4">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" id="btnSubmitAlertReview">Submit Decision</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const modalEl = document.getElementById("reviewAlertModal");
+  const modal = new bootstrap.Modal(modalEl);
+  const alertIdInput = document.getElementById("reviewAlertId");
+  const modalTitle = document.getElementById("modalAlertTitle");
+  const modalSummary = document.getElementById("modalAlertSummary");
+  const submitBtn = document.getElementById("btnSubmitAlertReview");
+
+  document.querySelectorAll(".review-modal-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      alertIdInput.value = btn.getAttribute("data-id");
+      modalTitle.innerText = "Human Review: Alert #" + btn.getAttribute("data-id");
+      modalSummary.innerText = btn.getAttribute("data-summary");
+      modal.show();
+    });
+  });
+
+  if (submitBtn) {
+    submitBtn.addEventListener("click", async () => {
+      const alertId = alertIdInput.value;
+      const status = document.getElementById("reviewStatusSelect").value;
+      const note = document.getElementById("reviewNoteInput").value;
+
+      try {
+        const res = await fetch(`/api/admin/security/alerts/${alertId}/review/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: status, review_note: note })
+        });
+        const data = await res.json();
+        if (data.success) {
+          modal.hide();
+          window.location.reload();
+        } else {
+          alert(data.message || "Error updating alert.");
+        }
+      } catch (e) {
+        alert("Server error updating alert.");
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

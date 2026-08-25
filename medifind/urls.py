@@ -52,6 +52,12 @@ urlpatterns = [
     path("api/ai/medicine/info/", views.ai_medicine_info_api, name="ai_medicine_info_api"),
     path("admin/medicine-info-analytics/", views.admin_medicine_info_analytics_view, name="admin_medicine_info_analytics_view"),
 
+    # Security & Anomaly Detection (AI #8) Endpoints
+    path("api/admin/security/alerts/", views.admin_security_alerts_api, name="admin_security_alerts_api"),
+    path("api/admin/security/alerts/<int:alert_id>/review/", views.admin_security_alert_review_api, name="admin_security_alert_review_api"),
+    path("admin/security-trust-center/", views.admin_security_dashboard_view, name="admin_security_dashboard_view"),
+    path("pharmacy/security-alerts/", views.pharmacy_security_alerts_view, name="pharmacy_security_alerts_view"),
+
 
 
 
