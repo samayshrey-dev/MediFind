@@ -696,31 +696,89 @@ def order_confirmed_view(request, order_reference):
 
 
 # ==========================================================
-# Legacy AI Query Interpretation API (Preserved for compatibility)
+# Medifind AI Natural-Language Medicine Search API
 # ==========================================================
+from .ai_search import execute_ai_medicine_search_pipeline, extract_search_intent_with_gemini
 
 @csrf_exempt
 @rate_limit(max_requests=40, window_seconds=60, key_prefix="ai_search_api", is_json=True)
 def ai_search_api(request):
     """
     POST /api/ai/search/
-    Parses natural language query into structured search parameters.
+    Full Natural-Language Medicine Search Pipeline:
+    Input Validation -> Gemini Flash Intent Extraction -> Database Retrieval ->
+    Deterministic Multi-Factor Ranking -> Grounded AI Explanation.
     """
     query = ""
+    user_lat = None
+    user_lng = None
+    radius_km = None
+
     if request.method == "POST":
         try:
             body = json.loads(request.body.decode("utf-8")) if request.body else {}
             query = body.get("query", "")
+            user_lat = body.get("latitude") or body.get("lat")
+            user_lng = body.get("longitude") or body.get("lng")
+            radius_km = body.get("radius_km") or body.get("radius")
         except Exception:
             query = request.POST.get("query", "")
+            user_lat = request.POST.get("latitude") or request.POST.get("lat")
+            user_lng = request.POST.get("longitude") or request.POST.get("lng")
+            radius_km = request.POST.get("radius_km") or request.POST.get("radius")
     else:
         query = request.GET.get("query", "")
+        user_lat = request.GET.get("latitude") or request.GET.get("lat")
+        user_lng = request.GET.get("longitude") or request.GET.get("lng")
+        radius_km = request.GET.get("radius_km") or request.GET.get("radius")
 
-    query = sanitize_plain_text(query, max_length=150)
+    query = sanitize_plain_text(query, max_length=200)
 
+    # Validate Coordinates if provided
+    try:
+        if user_lat is not None and user_lat != "":
+            user_lat = float(user_lat)
+            if not (-90.0 <= user_lat <= 90.0):
+                user_lat = None
+        else:
+            user_lat = None
 
-    result = parse_query_with_ai(query)
+        if user_lng is not None and user_lng != "":
+            user_lng = float(user_lng)
+            if not (-180.0 <= user_lng <= 180.0):
+                user_lng = None
+        else:
+            user_lng = None
+    except (ValueError, TypeError):
+        user_lat = None
+        user_lng = None
+
+    # Validate Radius bounds (0.5 km to 50 km)
+    try:
+        if radius_km is not None and radius_km != "":
+            radius_km = float(radius_km)
+            radius_km = max(0.5, min(50.0, radius_km))
+        else:
+            radius_km = None
+    except (ValueError, TypeError):
+        radius_km = None
+
+    if not query:
+        return JsonResponse({
+            "success": False,
+            "message": "Please enter a medicine or symptom to search."
+        }, status=400)
+
+    # Execute end-to-end Medifind AI pipeline
+    result = execute_ai_medicine_search_pipeline(
+        query=query,
+        user_lat=user_lat,
+        user_lng=user_lng,
+        radius_km=radius_km
+    )
+
     return JsonResponse(result)
+
 
 
 

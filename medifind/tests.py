@@ -1053,6 +1053,81 @@ class RazorpayAgenticCommerceTests(TestCase):
         self.assertNotIn("<script>", clean)
         self.assertNotIn("<b>", clean)
 
+    def test_36_medifind_ai_search_pipeline(self):
+        """
+        Tests the full Medifind AI Natural-Language Medicine Search Pipeline across
+        13 critical test cases (intent extraction, DB grounding, emergency triage, safety, rate limits).
+        """
+        from .ai_search import execute_ai_medicine_search_pipeline, extract_search_intent_with_gemini
+
+        # 1. Basic Query
+        res_basic = execute_ai_medicine_search_pipeline("Find paracetamol")
+        self.assertTrue(res_basic["success"])
+        self.assertIn(res_basic["intent"], ["MEDICINE_SEARCH", "AVAILABILITY_SEARCH"])
+        self.assertFalse(res_basic["is_emergency"])
+
+        # 2. Brand Query
+        res_brand = execute_ai_medicine_search_pipeline("Find Dolo 650")
+        self.assertTrue(res_brand["success"])
+        self.assertGreaterEqual(res_brand["total_results"], 1)
+
+        # 3. Misspelling Query
+        res_typo = execute_ai_medicine_search_pipeline("Find paracetmol")
+        self.assertTrue(res_typo["success"])
+
+        # 4. Location Query
+        res_loc = execute_ai_medicine_search_pipeline("Find paracetamol near me", user_lat=13.0827, user_lng=80.2707)
+        self.assertTrue(res_loc["success"])
+
+        # 5. Radius Query
+        res_rad = execute_ai_medicine_search_pipeline("Find Dolo within 2 km")
+        self.assertTrue(res_rad["success"])
+        self.assertEqual(res_rad["radius_km"], 2.0)
+
+        # 6. Open Pharmacies Query
+        res_open = execute_ai_medicine_search_pipeline("Find paracetamol at pharmacies open now")
+        self.assertTrue(res_open["success"])
+
+        # 7. Generic Symptom Request (Non-Prescribing Guardrail)
+        res_fever = execute_ai_medicine_search_pipeline("Do you have medicine for fever?")
+        self.assertTrue(res_fever["success"])
+        self.assertFalse(res_fever["is_emergency"])
+
+        # 8. Pharmacy Query
+        res_pharm = execute_ai_medicine_search_pipeline("Find pharmacies near me")
+        self.assertTrue(res_pharm["success"])
+
+        # 9. Medicine Information
+        res_info = execute_ai_medicine_search_pipeline("What is paracetamol?")
+        self.assertTrue(res_info["success"])
+
+        # 10. Ambiguous Query
+        res_ambig = execute_ai_medicine_search_pipeline("I need medicine")
+        self.assertTrue(res_ambig["success"])
+
+        # 11. No Result Query
+        res_none = execute_ai_medicine_search_pipeline("Find NonExistentSuperMed123")
+        self.assertTrue(res_none["success"])
+        self.assertEqual(res_none["total_results"], 0)
+
+        # 12. Emergency Symptom Triage Safety Check
+        res_emerg = execute_ai_medicine_search_pipeline("I am having severe chest pain and difficulty breathing")
+        self.assertTrue(res_emerg["is_emergency"])
+        self.assertIn("112", res_emerg["ai_response"])
+
+        # 13. API Endpoint Security Test (POST /api/ai/search/)
+        resp_api = self.client.post("/api/ai/search/", json.dumps({
+            "query": "<script>alert(1)</script>Find Dolo 650",
+            "latitude": 13.0827,
+            "longitude": 80.2707,
+            "radius_km": 5
+        }), content_type="application/json")
+        self.assertEqual(resp_api.status_code, 200)
+        data = resp_api.json()
+        self.assertTrue(data["success"])
+        self.assertNotIn("<script>", data["query"])
+
+
 
 
 
