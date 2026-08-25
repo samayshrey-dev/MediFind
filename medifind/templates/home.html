@@ -494,7 +494,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
         </p>
 
         <!-- Centerpiece Search Bar Above the Fold -->
-        <form action="{% url 'search' %}" method="GET" class="reveal hero-entrance mb-4"
+        <form action="{% url 'search' %}" method="GET" class="reveal hero-entrance mb-3"
               onsubmit="if(window.trackMediAIEvent) window.trackMediAIEvent('hero_search_submit', {'term': this.medicine.value});">
           <div class="p-2 rounded-4 border bg-white shadow-sm d-flex align-items-center gap-2"
             style="max-width: 600px;">
@@ -507,28 +507,6 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             </button>
           </div>
         </form>
-
-        <!-- Primary & Secondary CTAs Above The Fold -->
-        <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-3 mb-4">
-          <a href="{% url 'search' %}"
-            class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2"
-            onclick="if(window.trackMediAIEvent) window.trackMediAIEvent('hero_cta_search_click');">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <span>Instant Medicine Search</span>
-          </a>
-          <a href="{% url 'pharmacies' %}"
-            class="btn btn-outline-dark rounded-pill px-4 py-2.5 fw-semibold d-flex align-items-center gap-2"
-            onclick="if(window.trackMediAIEvent) window.trackMediAIEvent('hero_cta_pharmacies_click');">
-            <i class="fa-solid fa-location-dot text-primary"></i>
-            <span>Find Verified Pharmacies</span>
-          </a>
-          <a href="{% url 'register' %}"
-            class="btn btn-outline-secondary rounded-pill px-3.5 py-2.5 fw-medium d-flex align-items-center gap-1.5 small"
-            style="border-color: #cbd5e1; color: #475569;">
-            <i class="fa-solid fa-store text-success"></i>
-            <span>For Pharmacies &rarr;</span>
-          </a>
-        </div>
 
         <!-- Search Suggestions Internal Links -->
         <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-2 text-muted small">
