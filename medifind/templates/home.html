@@ -481,9 +481,10 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9) !important;">
           <span class="d-inline-block rounded-circle bg-success pulse-dot" style="width: 7px; height: 7px;"></span>
           <span style="font-size: 0.78rem; letter-spacing: 0.4px;" class="text-uppercase text-dark">
-            ⚡ 30s Stock Sync SLA &bull; 15-Min Guaranteed Hold &bull; Chennai
+            <i class="fa-solid fa-bolt text-success me-1"></i> 30s Stock Sync SLA &bull; 15-Min Guaranteed Hold &bull; Chennai
           </span>
         </div>
+
 
         <h1 class="reveal hero-entrance display-4 fw-extrabold text-dark mb-3 text-type-heading"
           style="letter-spacing: -1.2px; line-height: 1.15; min-height: 1.2em;">
@@ -539,8 +540,9 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             </div>
             <span
               class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold">
-              ● In Stock
+              <i class="fa-solid fa-circle text-success me-1" style="font-size: 0.5rem; vertical-align: middle;"></i> In Stock
             </span>
+
           </div>
 
           <!-- Pharmacy 1: Best Price -->
@@ -723,8 +725,9 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span
                 class="badge {% if pharm.is_open %}bg-success-subtle text-success border border-success-subtle{% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
-                ● {% if pharm.is_open %}Open Now{% else %}Closed{% endif %}
+                <i class="fa-solid fa-circle {% if pharm.is_open %}text-success{% else %}text-secondary{% endif %} me-1" style="font-size: 0.5rem; vertical-align: middle;"></i> {% if pharm.is_open %}Open Now{% else %}Closed{% endif %}
               </span>
+
               <small class="text-muted"><i class="fa-solid fa-location-dot text-success me-1"></i>{{ pharm.city|default:"Chennai" }}</small>
             </div>
             <h5 class="fw-bold text-dark mb-1">{{ pharm.name }}</h5>
@@ -1235,7 +1238,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           </div>
           <div class="pt-3 mt-3 border-top">
             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-bold" style="font-size: 0.72rem;">
-              ⚡ Sub-30s Sync
+              <i class="fa-solid fa-bolt text-success me-1"></i> Sub-30s Sync
             </span>
           </div>
         </div>
@@ -1255,7 +1258,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           </div>
           <div class="pt-3 mt-3 border-top">
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-bold" style="font-size: 0.72rem;">
-              🔒 Guaranteed Hold
+              <i class="fa-solid fa-lock text-primary me-1"></i> Guaranteed Hold
             </span>
           </div>
         </div>
@@ -1275,7 +1278,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           </div>
           <div class="pt-3 mt-3 border-top">
             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-bold" style="font-size: 0.72rem;">
-              ✓ Verified Stores
+              <i class="fa-solid fa-check text-warning-emphasis me-1"></i> Verified Stores
             </span>
           </div>
         </div>
@@ -1295,11 +1298,12 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           </div>
           <div class="pt-3 mt-3 border-top">
             <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1 small fw-bold" style="font-size: 0.72rem;">
-              📞 24/7 Live Helpline
+              <i class="fa-solid fa-phone text-info me-1"></i> 24/7 Live Helpline
             </span>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </section>

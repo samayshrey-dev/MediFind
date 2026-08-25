@@ -32,8 +32,9 @@
         <h4 class="fw-bold text-dark mb-0">Search</h4>
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-semibold">
-            ● Inventory-Aware Search
+            <i class="fa-solid fa-circle text-success me-1" style="font-size: 0.5rem; vertical-align: middle;"></i> Inventory-Aware Search
           </span>
+
           <span class="badge bg-light text-muted border rounded-pill px-3 py-1 small">
             15 Verified Pharmacies
           </span>
@@ -140,7 +141,7 @@
             <div class="card h-100 reveal" style="border: 2px solid #10b981; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08);">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="badge bg-success text-white rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.5px;">
-                  ★ BEST MATCH
+                  <i class="fa-solid fa-star me-1"></i> BEST MATCH
                 </span>
                 <div class="d-flex align-items-center gap-2">
                   {% if best_match_item.is_live_api %}
@@ -149,13 +150,14 @@
                     </span>
                   {% endif %}
                   <span class="badge {% if best_match_item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2.5 py-1 small fw-semibold">
-                    ● {% if best_match_item.is_open %}Open Now{% else %}Closed{% endif %}
+                    <i class="fa-solid fa-circle {% if best_match_item.is_open %}text-success{% else %}text-secondary{% endif %} me-1" style="font-size: 0.5rem; vertical-align: middle;"></i> {% if best_match_item.is_open %}Open Now{% else %}Closed{% endif %}
                   </span>
                   <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
                     {{ best_match_item.quantity }} available
                   </span>
                 </div>
               </div>
+
 
               <div class="row align-items-center g-4">
                 <div class="col-lg-7">
@@ -306,7 +308,7 @@
                           </span>
                         {% endif %}
                         <span class="badge {% if item.is_open %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.65rem; font-weight: 600;">
-                          ● {% if item.is_open %}Open{% else %}Closed{% endif %}
+                          <i class="fa-solid fa-circle {% if item.is_open %}text-success{% else %}text-secondary{% endif %} me-1" style="font-size: 0.45rem; vertical-align: middle;"></i> {% if item.is_open %}Open{% else %}Closed{% endif %}
                         </span>
                       </div>
                     </div>
@@ -384,9 +386,10 @@
                         {{ item.pharmacy.name }}
                       </h6>
                       <span class="badge bg-danger-subtle text-danger rounded-pill px-2.5 py-1" style="font-size: 0.68rem; font-weight: 600; flex-shrink: 0;">
-                        ● Out of stock
+                        <i class="fa-solid fa-circle text-danger me-1" style="font-size: 0.45rem; vertical-align: middle;"></i> Out of stock
                       </span>
                     </div>
+
 
                     <div class="d-flex justify-content-between align-items-baseline mb-2">
                       <div class="med-price-display text-muted">

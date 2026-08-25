@@ -137,27 +137,28 @@ Orders — {{ pharmacy.name|default:"Store Portal" }} | MediAI
                 <td class="py-3">
                   {% if r.status == "Pending" %}
                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                      ● Awaiting Confirmation
+                      <i class="fa-solid fa-clock text-warning-emphasis me-1"></i> Awaiting Confirmation
                     </span>
                   {% elif r.status == "Accepted" %}
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                      ● Ready for Pickup
+                      <i class="fa-solid fa-box-open text-primary me-1"></i> Ready for Pickup
                     </span>
                   {% elif r.status == "Collected" %}
                     {% if r.is_paid %}
                       <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                        ● 🟢 Paid &amp; Collected
+                        <i class="fa-solid fa-circle-check text-success me-1"></i> Paid &amp; Collected
                       </span>
                     {% else %}
                       <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                        ● Collected (Cash)
+                        <i class="fa-solid fa-check text-success me-1"></i> Collected (Cash)
                       </span>
                     {% endif %}
                   {% else %}
                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 small fw-semibold">
-                      ● {{ r.status }}
+                      <i class="fa-solid fa-circle-xmark text-danger me-1"></i> {{ r.status }}
                     </span>
                   {% endif %}
+
                 </td>
 
                 <!-- Date / Time -->

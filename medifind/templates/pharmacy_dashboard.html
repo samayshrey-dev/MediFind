@@ -31,7 +31,8 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
       <div class="text-end d-none d-sm-block">
         <div class="d-flex align-items-center justify-content-end gap-1.5 small fw-bold">
           <span class="d-inline-block rounded-circle {% if pharmacy.is_open %}bg-success pulse-dot{% else %}bg-danger{% endif %}" style="width: 7px; height: 7px;"></span>
-          <span style="font-size: 0.8rem; color: #0F172A;">{% if pharmacy.is_open %}● STORE OPEN{% else %}● STORE CLOSED{% endif %}</span>
+          <span style="font-size: 0.8rem; color: #0F172A;">{% if pharmacy.is_open %}STORE OPEN{% else %}STORE CLOSED{% endif %}</span>
+
         </div>
         <small class="text-muted d-block" style="font-size: 0.76rem; color: #64748B;">
           {% if low_stock_count == 0 %}Everything looks healthy{% else %}Requires attention ({{ low_stock_count }} low){% endif %} &bull; Last synced just now
