@@ -469,7 +469,8 @@ void main() {
     }
 
     onResize() {
-      const rect = this.canvas.parentElement ? this.canvas.parentElement.getBoundingClientRect() : { width: window.innerWidth, height: 600 };
+      const section = this.canvas.closest('section') || this.canvas.parentElement;
+      const rect = section ? section.getBoundingClientRect() : { width: window.innerWidth, height: 600 };
       const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
       const w = Math.floor((rect.width || window.innerWidth) * dpr);
       const h = Math.floor((rect.height || 600) * dpr);
@@ -482,6 +483,7 @@ void main() {
         }
       }
     }
+
 
     renderWebGL(now) {
       const gl = this.gl;

@@ -444,13 +444,13 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
 <!-- ======================================= -->
 
 <!-- HERO SECTION -->
-<section class="py-5 position-relative" style="background: #FAFCFB; border-bottom: 1px solid var(--border); overflow: hidden; min-height: 560px;">
-  <!-- React Bits GradientWaves WebGL Background (Top-Down Flow) -->
-  <div class="position-absolute top-0 start-0 w-100 h-100 overflow-hidden pointer-events-none" style="z-index: 0;">
+<section class="py-5 position-relative" style="width: 100%; min-height: 600px; position: relative; background: #FAFCFB; border-bottom: 1px solid var(--border); overflow: hidden;">
+  <!-- React Bits GradientWaves WebGL Background -->
+  <div style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none; z-index: 0; overflow: hidden;">
     <canvas class="gradient-waves-canvas"
       data-horizon-color="#064E3B"
       data-wave-color="#10B981"
-      data-crest-color="#88E788"
+      data-crest-color="#FFFFFF"
       data-speed="0.4"
       data-amplitude="2.5"
       data-wave-scale="0.6"
@@ -463,7 +463,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
       data-fog-depth="15"
       data-detail="medium"
       data-brightness="1"
-      data-opacity="1"
+      data-opacity="0.92"
       data-mouse-interaction="true"
       data-parallax-strength="0.5"
       data-grain="true"
@@ -477,7 +477,8 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
       <div class="col-lg-7">
         <!-- 1. Above-The-Fold Trust & SLA Promise Badge -->
         <div
-          class="reveal hero-entrance d-inline-flex align-items-center gap-2 px-3 py-1.5 mb-3 rounded-pill border bg-white small fw-bold text-muted shadow-xs">
+          class="reveal hero-entrance d-inline-flex align-items-center gap-2 px-3 py-1.5 mb-3 rounded-pill border bg-white small fw-bold text-muted shadow-xs"
+          style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9) !important;">
           <span class="d-inline-block rounded-circle bg-success pulse-dot" style="width: 7px; height: 7px;"></span>
           <span style="font-size: 0.78rem; letter-spacing: 0.4px;" class="text-uppercase text-dark">
             ⚡ 30s Stock Sync SLA &bull; 15-Min Guaranteed Hold &bull; Chennai
@@ -489,7 +490,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           <span id="textTypeContent">Find the medicine you need.</span><span id="textTypeCursor" class="text-type-cursor">_</span>
         </h1>
 
-        <p class="reveal hero-entrance lead text-muted mb-4" style="font-size: 1.15rem; max-width: 580px;">
+        <p class="reveal hero-entrance lead text-muted mb-4" style="font-size: 1.15rem; max-width: 580px; color: #334155 !important;">
           Search nearby pharmacies with verified live inventory, compare retail prices, and lock in guaranteed reservations with turn-by-turn GPS navigation.
         </p>
 
@@ -497,10 +498,10 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
         <form action="{% url 'search' %}" method="GET" class="reveal hero-entrance mb-3"
               onsubmit="if(window.trackMediAIEvent) window.trackMediAIEvent('hero_search_submit', {'term': this.medicine.value});">
           <div class="p-2 rounded-4 border bg-white shadow-sm d-flex align-items-center gap-2"
-            style="max-width: 600px;">
+            style="max-width: 600px; backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(16, 185, 129, 0.3) !important;">
             <i class="fa-solid fa-magnifying-glass text-muted ms-3 fs-5"></i>
             <input type="text" name="medicine" class="form-control border-0 shadow-none ps-2"
-              placeholder="Search medicine (e.g., 'Dolo 650', 'Cheapest Paracetamol')..." style="font-size: 1rem;"
+              placeholder="Search medicine (e.g., 'Dolo 650', 'Cheapest Paracetamol')..." style="font-size: 1rem; background: transparent;"
               required>
             <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold py-2.5 shadow-sm">
               Search
@@ -510,22 +511,26 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
 
         <!-- Search Suggestions Internal Links -->
         <div class="reveal hero-entrance d-flex align-items-center flex-wrap gap-2 text-muted small">
-          <span class="fw-semibold">Popular:</span>
+          <span class="fw-semibold text-dark">Popular:</span>
           <a href="{% url 'search' %}?medicine=Dolo+650"
-            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Dolo 650</a>
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark shadow-2xs"
+            style="backdrop-filter: blur(8px); background: rgba(255, 255, 255, 0.85);">Dolo 650</a>
           <a href="{% url 'search' %}?medicine=Find+the+cheapest+Dolo+650+within+5+km"
-            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Cheapest Dolo 650 within 5 km</a>
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark shadow-2xs"
+            style="backdrop-filter: blur(8px); background: rgba(255, 255, 255, 0.85);">Cheapest Dolo 650 within 5 km</a>
           <a href="{% url 'search' %}?medicine=Find+the+nearest+pharmacy+with+paracetamol"
-            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Nearest paracetamol</a>
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark shadow-2xs"
+            style="backdrop-filter: blur(8px); background: rgba(255, 255, 255, 0.85);">Nearest paracetamol</a>
           <a href="{% url 'search' %}?medicine=Augmentin+625+Duo"
-            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark">Augmentin 625</a>
+            class="btn btn-sm btn-light border rounded-pill px-3 py-1 text-decoration-none text-dark shadow-2xs"
+            style="backdrop-filter: blur(8px); background: rgba(255, 255, 255, 0.85);">Augmentin 625</a>
         </div>
       </div>
 
       <!-- Hero Product Preview Graphic -->
       <div class="col-lg-5">
-        <div class="reveal-scale hero-entrance card border rounded-4 shadow p-4 bg-white"
-          style="transition: var(--transition);">
+        <div class="reveal-scale hero-entrance card border-0 rounded-4 p-4"
+          style="transition: var(--transition); backdrop-filter: blur(16px); background: rgba(255, 255, 255, 0.94); border: 1px solid rgba(255, 255, 255, 0.9) !important; box-shadow: 0 20px 45px -12px rgba(6, 78, 59, 0.16) !important;">
           <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
             <div>
               <span class="text-muted small fw-semibold">Live Comparison Preview</span>
@@ -540,7 +545,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
 
           <!-- Pharmacy 1: Best Price -->
           <div class="p-3 rounded-3 bg-light border mb-2 d-flex justify-content-between align-items-center"
-            style="border-left: 3px solid #10b981 !important;">
+            style="border-left: 3px solid #10b981 !important; background: rgba(248, 250, 252, 0.85) !important;">
             <div>
               <div class="fw-bold text-dark d-flex align-items-center gap-1.5">
                 <span>MedPlus Pharmacy</span>
@@ -556,7 +561,8 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           </div>
 
           <!-- Pharmacy 2 -->
-          <div class="p-3 rounded-3 bg-light border mb-2 d-flex justify-content-between align-items-center">
+          <div class="p-3 rounded-3 bg-light border mb-2 d-flex justify-content-between align-items-center"
+            style="background: rgba(248, 250, 252, 0.85) !important;">
             <div>
               <div class="fw-bold text-dark">Apollo Pharmacy</div>
               <small class="text-muted">1.2 km &bull; 50 available</small>
@@ -568,7 +574,8 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
           </div>
 
           <!-- Pharmacy 3 -->
-          <div class="p-3 rounded-3 bg-light border mb-3 d-flex justify-content-between align-items-center">
+          <div class="p-3 rounded-3 bg-light border mb-3 d-flex justify-content-between align-items-center"
+            style="background: rgba(248, 250, 252, 0.85) !important;">
             <div>
               <div class="fw-bold text-dark">Wellness Forever</div>
               <small class="text-muted">0.6 km &bull; 30 available</small>
@@ -590,6 +597,7 @@ MediAI | Real-time Medicine Availability &amp; Pharmacy Locator
     </div>
   </div>
 </section>
+
 
 <!-- HOW IT WORKS (Interactive ScrollStack Stacking Cards) -->
 <section class="py-5 bg-white">
