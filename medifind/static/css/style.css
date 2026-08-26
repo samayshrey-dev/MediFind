@@ -1203,3 +1203,93 @@ footer .brand-logo-medi {
         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
     }
 }
+
+/* ==========================================
+   PREMIUM 9+ UI/UX DESIGN SYSTEM EXTENSIONS
+   ========================================== */
+
+/* Enhanced Card Elevation & Micro-Interactions */
+.pharmacy-item-card, .premium-card {
+    border: 1px solid var(--border-light) !important;
+    border-radius: 16px !important;
+    background: var(--surface) !important;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease !important;
+}
+
+.pharmacy-item-card:hover, .premium-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.04) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Skeleton Loading Shimmer */
+.skeleton-box {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s infinite ease-in-out;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+@keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Leaflet Map Visual Polish */
+.leaflet-container {
+    font-family: var(--font-sans) !important;
+    border-radius: 16px !important;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 14px !important;
+    padding: 6px !important;
+    box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.18) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+.leaflet-popup-tip {
+    background: var(--surface) !important;
+}
+
+/* Custom Pin Pulse Marker */
+.user-pulse-beacon {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    background: #0284c7;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(2, 132, 199, 0.6);
+}
+
+.user-pulse-beacon::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(2, 132, 199, 0.35);
+    animation: beaconPulse 2s infinite ease-out;
+}
+
+@keyframes beaconPulse {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Smooth Focus Rings for Accessibility */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2.5px solid var(--focus-ring) !important;
+    outline-offset: 2px !important;
+}
+
+/* Responsive Split Toggle on Mobile */
+@media (max-width: 991px) {
+    .mobile-tab-view {
+        display: flex !important;
+    }
+}
