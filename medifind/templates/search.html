@@ -31,16 +31,16 @@
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <h4 class="fw-bold text-dark mb-0">Search</h4>
         <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-semibold">
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-bold">
             <i class="fa-solid fa-circle text-success me-1" style="font-size: 0.5rem; vertical-align: middle;"></i> Inventory-Aware Search
           </span>
 
-          <span class="badge bg-light text-muted border rounded-pill px-3 py-1 small">
+          <span class="badge bg-light text-dark border border-secondary-subtle rounded-pill px-3 py-1 small fw-semibold">
             15 Verified Pharmacies
           </span>
         </div>
       </div>
-      <p class="text-muted small mb-3">
+      <p class="text-secondary small mb-3">
         Find medicines, discover nearby pharmacies, compare live prices, and reserve for instant pickup.
       </p>
 
@@ -50,7 +50,7 @@
 
         <div class="row align-items-center g-2 mb-2">
           <div class="col-lg-2 col-md-3">
-            <label class="form-label text-muted small fw-bold mb-1"><i class="fa-solid fa-language text-primary me-1"></i> Language</label>
+            <label class="form-label text-dark small fw-extrabold mb-1"><i class="fa-solid fa-language text-primary me-1"></i> Language</label>
             <select id="searchLanguageSelect" class="form-select form-select-sm rounded-pill fw-semibold border shadow-none bg-white">
               <option value="auto" selected>🌐 Auto-detect</option>
               <option value="en">🇬🇧 English</option>
@@ -65,7 +65,7 @@
           </div>
 
           <div class="col-lg-7 col-md-6">
-            <label class="form-label text-muted small fw-bold mb-1"><i class="fa-solid fa-prescription-bottle-medical me-1"></i> Medicine Query</label>
+            <label class="form-label text-dark small fw-extrabold mb-1"><i class="fa-solid fa-prescription-bottle-medical me-1"></i> Medicine Query</label>
             <div class="position-relative">
               <input
                 id="medicineSearch"
@@ -391,10 +391,10 @@
                     <!-- Price & Stock -->
                     <div class="d-flex justify-content-between align-items-baseline mb-2">
                       <div class="med-price-display">
-                        ₹{{ item.price }} <span class="text-muted" style="font-size: 0.72rem; font-weight: 500;">/ {{ item.package_size|default:"unit" }}</span>
+                        ₹{{ item.price }} <span class="text-secondary" style="font-size: 0.72rem; font-weight: 600;">/ {{ item.package_size|default:"unit" }}</span>
                       </div>
-                      <span class="badge bg-light text-success border rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 600;">
-                        {{ item.quantity }} in stock
+                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 700;">
+                        <i class="fa-solid fa-circle-check me-1"></i> {{ item.quantity }} in stock
                       </span>
                     </div>
 

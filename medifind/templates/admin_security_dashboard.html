@@ -30,30 +30,33 @@
           <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Critical Severity</span>
           <div class="fs-3 fw-extrabold text-danger mt-1">{{ scan_summary.severity_breakdown.critical }}</div>
           <small class="text-muted">Urgent operational anomalies</small>
+          <span class="text-secondary small fw-extrabold text-uppercase" style="font-size: 0.72rem;">High Risk Pharmacies</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">{{ scan_summary.high_risk_pharmacies }}</div>
+          <small class="text-secondary fw-semibold">Requiring priority review</small>
         </div>
       </div>
 
       <div class="col-6 col-lg-3">
         <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-warning">
-          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">High Severity</span>
-          <div class="fs-3 fw-extrabold text-warning-emphasis mt-1">{{ scan_summary.severity_breakdown.high }}</div>
-          <small class="text-muted">Cancellation &amp; stock spikes</small>
+          <span class="text-secondary small fw-extrabold text-uppercase" style="font-size: 0.72rem;">Critical / High Alerts</span>
+          <div class="fs-3 fw-extrabold text-dark mt-1">{{ scan_summary.severity_breakdown.critical|add:scan_summary.severity_breakdown.high }}</div>
+          <small class="text-secondary fw-semibold">Cancellation &amp; stock spikes</small>
         </div>
       </div>
 
       <div class="col-6 col-lg-3">
         <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-info">
-          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Medium / Low Severity</span>
+          <span class="text-secondary small fw-extrabold text-uppercase" style="font-size: 0.72rem;">Medium / Low Severity</span>
           <div class="fs-3 fw-extrabold text-dark mt-1">{{ scan_summary.severity_breakdown.medium|add:scan_summary.severity_breakdown.low }}</div>
-          <small class="text-muted">Price &amp; duplicate record checks</small>
+          <small class="text-secondary fw-semibold">Price &amp; duplicate record checks</small>
         </div>
       </div>
 
       <div class="col-6 col-lg-3">
         <div class="card border-0 rounded-4 p-3 bg-white shadow-sm border-start border-4 border-success">
-          <span class="text-muted small fw-bold text-uppercase" style="font-size: 0.68rem;">Total Open Alerts</span>
+          <span class="text-secondary small fw-extrabold text-uppercase" style="font-size: 0.72rem;">Total Open Alerts</span>
           <div class="fs-3 fw-extrabold text-dark mt-1">{{ scan_summary.total_open_alerts }}</div>
-          <small class="text-muted">Awaiting human review</small>
+          <small class="text-secondary fw-semibold">Awaiting human review</small>
         </div>
       </div>
     </div>
