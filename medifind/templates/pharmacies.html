@@ -123,19 +123,66 @@
       <div class="col-lg-7">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold text-dark mb-0" id="pharmacyCountHeading">
-            Loading mapped pharmacies...
+            {{ initial_osm_pharmacies|length }} Mapped Pharmacies within {{ radius|default:"5" }} km
           </h5>
           <span class="badge bg-light text-dark border rounded-pill px-3 py-1 small fw-semibold" id="mapMarkerCount">
-            0 stores marked
+            {{ initial_osm_pharmacies|length }} stores marked
           </span>
         </div>
 
         <div id="pharmacyListContainer" class="d-flex flex-column gap-3">
-          <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
-            <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
-            <h6 class="fw-bold text-dark mb-1">Discovering Mapped Pharmacies...</h6>
-            <p class="text-secondary small mb-0">Querying OpenStreetMap Overpass API near your coordinates.</p>
-          </div>
+          {% for p in initial_osm_pharmacies %}
+            <div class="card border rounded-4 p-4 shadow-sm bg-white pharmacy-item-card" data-osm-id="{{ p.osm_id }}" data-lat="{{ p.latitude }}" data-lng="{{ p.longitude }}" style="cursor: pointer; transition: var(--transition);">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
+                    <span class="badge {% if p.source == 'MediFind Verified Store' %}bg-success{% else %}bg-primary{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
+                      Source: {{ p.source }}
+                    </span>
+                    {% if p.opening_hours %}
+                      <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5 small"><i class="fa-regular fa-clock me-1 text-primary"></i> {{ p.opening_hours }}</span>
+                    {% endif %}
+                  </div>
+                  <h5 class="fw-bold text-dark mb-1">{{ p.name }}</h5>
+                  <p class="text-secondary small mb-0">
+                    <i class="fa-solid fa-location-dot text-primary me-1"></i> {{ p.address }}{% if p.city %}, {{ p.city }}{% endif %}
+                  </p>
+                </div>
+
+                <div class="text-end flex-shrink-0">
+                  <div class="fs-5 fw-extrabold text-primary">{{ p.distance_display }}</div>
+                  <small class="text-secondary font-monospace" style="font-size: 0.68rem;">Straight-line</small>
+                </div>
+              </div>
+
+              <div class="pt-3 border-top mt-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="small text-secondary">
+                  {% if p.phone %}
+                    <span><i class="fa-solid fa-phone me-1 text-success"></i> {{ p.phone }}</span>
+                  {% else %}
+                    <span><i class="fa-solid fa-circle-info me-1 text-info"></i> OpenStreetMap Location Data</span>
+                  {% endif %}
+                </div>
+
+                <div class="d-flex gap-2">
+                  <a href="https://maps.google.com/?q={{ p.latitude }},{{ p.longitude }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" onclick="event.stopPropagation();">
+                    <i class="fa-solid fa-diamond-turn-right me-1"></i> Directions
+                  </a>
+                  {% if p.internal_pharmacy_id %}
+                    <a href="{% url 'pharmacy_detail' p.internal_pharmacy_id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="event.stopPropagation();">
+                      View Catalog &rarr;
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
+              <i class="fa-solid fa-hospital-user fs-1 text-secondary mb-3"></i>
+              <h5 class="fw-bold text-dark mb-1">No mapped pharmacies found within 5 km</h5>
+              <p class="text-secondary small mb-3">Try expanding your search radius or changing your location.</p>
+            </div>
+          {% endfor %}
         </div>
       </div>
 
@@ -519,8 +566,17 @@
   document.addEventListener('DOMContentLoaded', function() {
     initMap(currentLat, currentLng);
 
-    // Initial load
-    fetchNearbyPharmacies(false);
+    // Initial load from pre-rendered server payload (<10ms)
+    try {
+      const initialNodes = {{ initial_osm_pharmacies_json|safe }};
+      if (initialNodes && initialNodes.length) {
+        loadPharmacyMarkers(initialNodes, false);
+      } else {
+        fetchNearbyPharmacies(false);
+      }
+    } catch(e) {
+      fetchNearbyPharmacies(false);
+    }
 
     // Presets
     document.querySelectorAll('.locality-preset-btn').forEach(btn => {

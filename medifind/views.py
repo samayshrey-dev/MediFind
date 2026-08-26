@@ -2851,11 +2851,22 @@ def pharmacies(request):
         })
 
 
+    # Get initial OpenStreetMap & partner pharmacy discovery candidates (<20ms local DB)
+    osm_res = OSMPharmacyService.get_nearby_pharmacies(
+        user_lat=calc_lat,
+        user_lng=calc_lng,
+        radius_km=radius_km if radius_km else 5.0,
+        query=query
+    )
+    initial_osm_pharmacies = osm_res.get("pharmacies", [])
+
     return render(
         request,
         "pharmacies.html",
         {
             "pharmacies": pharmacies_list,
+            "initial_osm_pharmacies": initial_osm_pharmacies,
+            "initial_osm_pharmacies_json": json.dumps(initial_osm_pharmacies).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"),
             "active_count": Pharmacy.objects.filter(is_active=True).count(),
             "open_count": sum(1 for p in pharmacies_list if getattr(p, 'is_open_now', False)),
             "user_lat": user_lat,
