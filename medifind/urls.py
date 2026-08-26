@@ -62,6 +62,9 @@ urlpatterns = [
     path("api/ai/price-comparison/", views.ai_price_comparison_api, name="ai_price_comparison_api"),
     path("admin/price-intelligence/", views.admin_price_intelligence_view, name="admin_price_intelligence_view"),
 
+    # OpenStreetMap Real-Time Pharmacy Location Discovery Endpoint
+    path("api/pharmacies/nearby/", views.nearby_pharmacies_api, name="nearby_pharmacies_api"),
+
 
 
 

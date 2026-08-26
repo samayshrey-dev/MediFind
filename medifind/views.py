@@ -25,6 +25,7 @@ from .ai_search import parse_query_with_ai, haversine_distance, SYMPTOM_MAP
 
 from .fuzzy_search import MedicineMatcher
 from .pharmacy_api import PharmacyAPIClient, MockPharmacyAPIService
+from .osm_pharmacy_service import OSMPharmacyService, format_distance_display
 from .excel_service import ExcelInventoryService
 from .commerce_agent import (
 
@@ -2745,8 +2746,39 @@ def nearby_pharmacies_api(request):
 
 
 # ==========================================================
-# Pharmacy Management & Discovery List
+# OpenStreetMap Pharmacy Location Discovery API & Directory
 # ==========================================================
+
+@csrf_exempt
+def nearby_pharmacies_api(request):
+    """
+    GET /api/pharmacies/nearby/?lat=13.0827&lng=80.2707&radius=5.0&q=Apollo
+    OpenStreetMap Overpass Pharmacy Location Discovery API.
+    Retrieves spatial location telemetry for mapped pharmacies across Tamil Nadu / India.
+    Rule: Contains ONLY spatial location & contact data. Does NOT invent fake stock or prices.
+    """
+    if request.method != "GET":
+        return JsonResponse({"success": False, "message": "Method not allowed"}, status=405)
+
+    user_lat = request.GET.get("lat", "13.0827").strip() or "13.0827"
+    user_lng = request.GET.get("lng", "80.2707").strip() or "80.2707"
+    radius_param = request.GET.get("radius", "5.0")
+    query = request.GET.get("q", "").strip()
+
+    try:
+        radius_km = float(radius_param)
+    except ValueError:
+        radius_km = 5.0
+
+    result = OSMPharmacyService.get_nearby_pharmacies(
+        user_lat=user_lat,
+        user_lng=user_lng,
+        radius_km=radius_km,
+        query=query
+    )
+
+    return JsonResponse(result)
+
 
 def pharmacies(request):
     user_lat_param = request.GET.get("lat", "").strip()

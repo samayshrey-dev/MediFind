@@ -931,6 +931,38 @@ class OperationalAnomalyAlert(models.Model):
         return f"[{self.severity}] {self.title} ({self.status})"
 
 
+class OSMPharmacyLocation(models.Model):
+    """
+    OpenStreetMap Pharmacy Location Data Model.
+    Stores spatial location telemetry for mapped pharmacies across Tamil Nadu / India.
+    Source of Truth Rule: Distinctly separated from dynamic inventory, prices, and stock.
+    Contains ONLY static location & contact metadata from OpenStreetMap Overpass API.
+    """
+    osm_id = models.CharField(max_length=100, unique=True, db_index=True)
+    name = models.CharField(max_length=255, default="Pharmacy", db_index=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, db_index=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, db_index=True)
+    address = models.TextField(blank=True, default="")
+    city = models.CharField(max_length=150, blank=True, default="", db_index=True)
+    district = models.CharField(max_length=150, blank=True, default="")
+    postcode = models.CharField(max_length=20, blank=True, default="")
+    phone = models.CharField(max_length=50, blank=True, default="")
+    opening_hours = models.CharField(max_length=255, blank=True, default="")
+    source = models.CharField(max_length=50, default="OpenStreetMap")
+    last_updated = models.DateTimeField(auto_now=True, db_index=True)
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["latitude", "longitude"]),
+            models.Index(fields=["city"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} (OSM ID: {self.osm_id})"
+
+
+
 
 
 

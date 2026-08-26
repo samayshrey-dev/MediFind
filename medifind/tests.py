@@ -1797,6 +1797,61 @@ class RazorpayAgenticCommerceTests(TestCase):
         resp_admin_price = self.client.get("/admin/price-intelligence/")
         self.assertEqual(resp_admin_price.status_code, 200)
 
+    def test_45_osm_pharmacy_location_discovery(self):
+        """
+        Test OpenStreetMap Overpass Real-Time Pharmacy Location Discovery System.
+        Verifies:
+        1. OSMPharmacyLocation model storage and spatial bounds indexing.
+        2. Haversine straight-line distance calculation & unit formatting (m below 1km, km above 1km).
+        3. REST API GET /api/pharmacies/nearby/ endpoint response structure.
+        """
+        from medifind.models import OSMPharmacyLocation
+        from medifind.osm_pharmacy_service import OSMPharmacyService, haversine_distance, format_distance_display
+
+        # 1. Test Distance Calculation & Formatting
+        dist_near = haversine_distance(13.0827, 80.2707, 13.0850, 80.2720) # ~300m
+        self.assertLess(dist_near, 1.0)
+        disp_near = format_distance_display(dist_near)
+        self.assertTrue(disp_near.endswith(" m away"))
+
+        dist_far = haversine_distance(13.0827, 80.2707, 13.0418, 80.2333) # ~5.6km
+        self.assertGreaterEqual(dist_far, 1.0)
+        disp_far = format_distance_display(dist_far)
+        self.assertTrue(disp_far.endswith(" km away"))
+
+        # 2. Test OSMPharmacyLocation DB Creation
+        osm_loc = OSMPharmacyLocation.objects.create(
+            osm_id="node/998877",
+            name="Apollo Pharmacy OSM Test",
+            latitude=Decimal("13.0850000"),
+            longitude=Decimal("80.2720000"),
+            address="Anna Salai, Chennai Central",
+            city="Chennai",
+            phone="+91 44 2852 1111",
+            source="OpenStreetMap"
+        )
+        self.assertEqual(str(osm_loc), "Apollo Pharmacy OSM Test (OSM ID: node/998877)")
+
+        # 3. Test OSMPharmacyService Discovery Execution
+        from django.core.cache import cache
+        cache.clear()
+        res = OSMPharmacyService.get_nearby_pharmacies(13.0827, 80.2707, radius_km=5.0)
+        self.assertTrue(res["success"])
+        self.assertEqual(res["source"], "OpenStreetMap")
+        self.assertGreaterEqual(res["pharmacies_count"], 1)
+
+        found_osm = any(p["osm_id"] == "node/998877" for p in res["pharmacies"])
+        self.assertTrue(found_osm)
+
+        # 4. Test Nearby API Endpoint Response
+        resp_api = self.client.get("/api/pharmacies/nearby/?lat=13.0827&lng=80.2707&radius=5.0")
+        self.assertEqual(resp_api.status_code, 200)
+        data = resp_api.json()
+        self.assertTrue(data["success"])
+        self.assertIn("pharmacies", data)
+        self.assertIn("user_location", data)
+
+
 
 
 
