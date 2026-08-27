@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}MediAI — Admin Commission & Revenue Intelligence{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold small">
+          <i class="fa-solid fa-chart-line me-1"></i> Executive Revenue Intelligence
+        </span>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold small">
+          Razorpay Agentic Commerce
+        </span>
+      </div>
+      <h2 class="fw-bold text-dark mb-1 mt-2" style="letter-spacing: -0.5px;">MediAI Marketplace Revenue Dashboard</h2>
+      <p class="text-secondary small mb-0">Real-time marketplace GMV, platform commission earnings, and pharmacy net payouts.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'admin_price_intelligence_view' %}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold small">
+        <i class="fa-solid fa-tags me-1"></i> Price Intelligence
+      </a>
+      <a href="/admin/" class="btn btn-dark rounded-pill px-3.5 fw-semibold small">
+        <i class="fa-solid fa-sliders me-1"></i> Django Admin &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100" style="border-left: 4px solid #10b981 !important;">
+        <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">Gross Platform GMV</span>
+        <h2 class="fw-extrabold text-dark mb-1 mt-1">₹{{ gross_gmv|floatformat:2 }}</h2>
+        <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Captured Razorpay GMV</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100" style="border-left: 4px solid #f59e0b !important;">
+        <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">MediAI Commission Revenue</span>
+        <h2 class="fw-extrabold text-warning mb-1 mt-1">₹{{ total_commission|floatformat:2 }}</h2>
+        <span class="text-muted small"><i class="fa-solid fa-percent text-warning me-1"></i>Finalized Platform Revenue</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100" style="border-left: 4px solid #6366f1 !important;">
+        <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">Net Pharmacy Payouts</span>
+        <h2 class="fw-extrabold text-primary mb-1 mt-1">₹{{ total_net_payout|floatformat:2 }}</h2>
+        <span class="text-muted small"><i class="fa-solid fa-wallet text-primary me-1"></i>Disbursed to Merchants</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100" style="border-left: 4px solid #06b6d4 !important;">
+        <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">Completed Transactions</span>
+        <h2 class="fw-extrabold text-info mb-1 mt-1">{{ completed_count }}</h2>
+        <span class="text-muted small"><i class="fa-solid fa-bag-shopping text-info me-1"></i>Paid & Finalized Orders</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Pharmacy Breakdown Table -->
+    <div class="col-lg-7">
+      <div class="card border rounded-4 bg-white shadow-xs p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-store text-success me-2"></i>Revenue Breakdown by Pharmacy</h5>
+          <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">
+            {{ pharmacy_breakdown|length }} Pharmacies Registered
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+            <thead class="table-light">
+              <tr>
+                <th class="fw-semibold">Pharmacy Name</th>
+                <th class="fw-semibold text-center">Commission Rate</th>
+                <th class="fw-semibold text-center">Orders</th>
+                <th class="fw-semibold text-end">Gross GMV</th>
+                <th class="fw-semibold text-end text-warning">MediAI Commission</th>
+                <th class="fw-semibold text-end text-primary">Net Payout</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in pharmacy_breakdown %}
+              <tr>
+                <td class="fw-semibold text-dark">
+                  {{ p.pharmacy.name }}
+                  <div class="small text-muted fw-normal" style="font-size: 0.75rem;">{{ p.pharmacy.city }}</div>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-2 py-0.5 fw-bold">
+                    {{ p.commission_rate }}%
+                  </span>
+                </td>
+                <td class="text-center fw-bold">{{ p.completed_orders }}</td>
+                <td class="text-end fw-semibold">₹{{ p.gross_gmv|floatformat:2 }}</td>
+                <td class="text-end fw-bold text-warning">₹{{ p.commission_earned|floatformat:2 }}</td>
+                <td class="text-end fw-bold text-primary">₹{{ p.net_payout|floatformat:2 }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">No completed transactions recorded yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue Breakdown by Date -->
+    <div class="col-lg-5">
+      <div class="card border rounded-4 bg-white shadow-xs p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Daily Revenue Trends</h5>
+          <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">Daily Aggr.</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+            <thead class="table-light">
+              <tr>
+                <th class="fw-semibold">Date</th>
+                <th class="fw-semibold text-center">Orders</th>
+                <th class="fw-semibold text-end">GMV</th>
+                <th class="fw-semibold text-end text-warning">Commission</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in date_breakdown %}
+              <tr>
+                <td class="fw-semibold text-dark">{{ d.date|date:"d M Y" }}</td>
+                <td class="text-center fw-bold">{{ d.completed_orders }}</td>
+                <td class="text-end fw-semibold">₹{{ d.gross_gmv|floatformat:2 }}</td>
+                <td class="text-end fw-bold text-warning">₹{{ d.commission_revenue|floatformat:2 }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">No date revenue records available yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -7,7 +7,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
+from django.db.models.functions import TruncDate
 from collections import Counter
 from django.utils import timezone
 from datetime import timedelta
@@ -4438,7 +4439,18 @@ def pharmacy_dashboard(request):
             "timestamp": itm.updated_at,
         })
 
-    recent_activities.sort(key=lambda x: x["timestamp"], reverse=True)
+    # MediAI Commission & Revenue Metrics for Pharmacy Dashboard
+    finalized_orders = Order.objects.filter(
+        pharmacy=pharmacy,
+        status="PAID",
+        commission_status="FINALIZED"
+    ) if pharmacy else Order.objects.none()
+
+    total_sales_gmv = finalized_orders.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
+    mediai_commission_total = finalized_orders.aggregate(total=Sum("commission_amount"))["total"] or Decimal("0.00")
+    net_pharmacy_revenue_total = finalized_orders.aggregate(total=Sum("net_pharmacy_amount"))["total"] or Decimal("0.00")
+    completed_orders_count = finalized_orders.count()
+    pharmacy_commission_rate = pharmacy.commission_rate if (pharmacy and getattr(pharmacy, "commission_rate", None) is not None) else Decimal("3.00")
 
     context = {
         "pharmacy": pharmacy,
@@ -4457,12 +4469,75 @@ def pharmacy_dashboard(request):
         "is_verified": (verification_status == "Approved"),
         "claimed_pharmacy": claimed_pharmacy,
         "active_claim": active_claim,
+        # Commission & Revenue Metrics
+        "total_sales_gmv": total_sales_gmv,
+        "mediai_commission_total": mediai_commission_total,
+        "net_pharmacy_revenue_total": net_pharmacy_revenue_total,
+        "completed_orders_count": completed_orders_count,
+        "pharmacy_commission_rate": pharmacy_commission_rate,
     }
     return render(
         request,
         "pharmacy_dashboard.html",
         context,
     )
+
+
+@login_required
+def admin_revenue_dashboard_view(request):
+    """
+    Platform-wide Admin Revenue Dashboard for MediAI Commission Analytics.
+    Displays Gross GMV, Total MediAI Commission, Net Pharmacy Payouts,
+    Completed Transactions Count, Revenue by Pharmacy, and Revenue by Date.
+    """
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("home")
+
+    finalized_orders = Order.objects.filter(status="PAID", commission_status="FINALIZED")
+
+    gross_gmv = finalized_orders.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
+    total_commission = finalized_orders.aggregate(total=Sum("commission_amount"))["total"] or Decimal("0.00")
+    total_net_payout = finalized_orders.aggregate(total=Sum("net_pharmacy_amount"))["total"] or Decimal("0.00")
+    completed_count = finalized_orders.count()
+
+    # Revenue breakdown by pharmacy
+    pharmacy_breakdown = []
+    pharmacies = Pharmacy.objects.all()
+    for p in pharmacies:
+        p_orders = finalized_orders.filter(pharmacy=p)
+        p_count = p_orders.count()
+        p_gross = p_orders.aggregate(total=Sum("total_amount"))["total"] or Decimal("0.00")
+        p_comm = p_orders.aggregate(total=Sum("commission_amount"))["total"] or Decimal("0.00")
+        p_net = p_orders.aggregate(total=Sum("net_pharmacy_amount"))["total"] or Decimal("0.00")
+        pharmacy_breakdown.append({
+            "pharmacy": p,
+            "completed_orders": p_count,
+            "gross_gmv": p_gross,
+            "commission_earned": p_comm,
+            "net_payout": p_net,
+            "commission_rate": getattr(p, "commission_rate", Decimal("3.00"))
+        })
+
+    pharmacy_breakdown.sort(key=lambda x: x["gross_gmv"], reverse=True)
+
+    # Revenue breakdown by date
+    date_breakdown_qs = finalized_orders.annotate(
+        date=TruncDate("paid_at")
+    ).values("date").annotate(
+        completed_orders=Count("id"),
+        gross_gmv=Sum("total_amount"),
+        commission_revenue=Sum("commission_amount"),
+        net_payout=Sum("net_pharmacy_amount")
+    ).order_by("-date")
+
+    return render(request, "admin_revenue_dashboard.html", {
+        "gross_gmv": gross_gmv,
+        "total_commission": total_commission,
+        "total_net_payout": total_net_payout,
+        "completed_count": completed_count,
+        "pharmacy_breakdown": pharmacy_breakdown,
+        "date_breakdown": list(date_breakdown_qs),
+    })
 # ==========================================================
 # Notification API
 # ==========================================================

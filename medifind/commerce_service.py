@@ -67,6 +67,9 @@ class AgenticCommerceService:
 
         unit_price = Decimal(str(inv.price))
         total_amount = unit_price * Decimal(quantity)
+        commission_rate = Decimal(str(getattr(inv.pharmacy, "commission_rate", "3.00") or "3.00"))
+        commission_amount = (total_amount * (commission_rate / Decimal("100.00"))).quantize(Decimal("0.01"))
+        net_pharmacy_amount = total_amount - commission_amount
         order_reference = f"MF-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
         snapshot_data = {
@@ -82,6 +85,10 @@ class AgenticCommerceService:
             "quantity": quantity,
             "unit_price": float(unit_price),
             "total_amount": float(total_amount),
+            "commission_rate": float(commission_rate),
+            "commission_amount": float(commission_amount),
+            "net_pharmacy_amount": float(net_pharmacy_amount),
+            "commission_status": "PENDING",
             "currency": "INR",
             "stock_snapshot": inv.quantity,
             "created_at": timezone.now().isoformat(),
@@ -98,13 +105,32 @@ class AgenticCommerceService:
             quantity=quantity,
             unit_price=unit_price,
             total_amount=total_amount,
+            commission_rate=commission_rate,
+            commission_amount=commission_amount,
+            net_pharmacy_amount=net_pharmacy_amount,
+            commission_status="PENDING",
             currency="INR",
             status="APPROVED",
             snapshot_data=snapshot_data,
             approved_at=timezone.now()
         )
 
-        # Log Audit Trail
+        # Log Audit Trail for Transaction & Commission Calculation
+        AgentAuditLog.objects.create(
+            session_id=session_id,
+            user=user if (user and user.is_authenticated) else None,
+            event_type="commission_calculated",
+            state="PENDING",
+            payload={
+                "order_reference": order_reference,
+                "gross_amount": float(total_amount),
+                "commission_rate": float(commission_rate),
+                "commission_amount": float(commission_amount),
+                "net_pharmacy_amount": float(net_pharmacy_amount),
+                "status": "PENDING"
+            }
+        )
+
         AgentAuditLog.objects.create(
             session_id=session_id,
             user=user if (user and user.is_authenticated) else None,
@@ -115,6 +141,8 @@ class AgenticCommerceService:
                 "medicine": inv.medicine.name,
                 "pharmacy": inv.pharmacy.name,
                 "total_amount": float(total_amount),
+                "commission_amount": float(commission_amount),
+                "net_pharmacy_amount": float(net_pharmacy_amount),
                 "quantity": quantity
             }
         )
@@ -302,6 +330,9 @@ class AgenticCommerceService:
         if not order:
             unit_price = Decimal(str(inv.price))
             total_amount = unit_price * Decimal(reservation.quantity)
+            commission_rate = Decimal(str(getattr(reservation.pharmacy, "commission_rate", "3.00") or "3.00"))
+            commission_amount = (total_amount * (commission_rate / Decimal("100.00"))).quantize(Decimal("0.01"))
+            net_pharmacy_amount = total_amount - commission_amount
             order_reference = f"MF-RES-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
             order = Order.objects.create(
@@ -315,6 +346,10 @@ class AgenticCommerceService:
                 quantity=reservation.quantity,
                 unit_price=unit_price,
                 total_amount=total_amount,
+                commission_rate=commission_rate,
+                commission_amount=commission_amount,
+                net_pharmacy_amount=net_pharmacy_amount,
+                commission_status="PENDING",
                 currency="INR",
                 status="APPROVED",
                 approved_at=timezone.now()
@@ -365,8 +400,9 @@ class AgenticCommerceService:
 
         if not is_valid:
             order.status = "PAYMENT_FAILED"
+            order.commission_status = "VOIDED"
             order.failed_at = timezone.now()
-            order.save(update_fields=["status", "failed_at"])
+            order.save(update_fields=["status", "commission_status", "failed_at"])
 
             AgentAuditLog.objects.create(
                 session_id=order.session_id,
@@ -379,15 +415,44 @@ class AgenticCommerceService:
                     "razorpay_payment_id": razorpay_payment_id
                 }
             )
+
+            AgentAuditLog.objects.create(
+                session_id=order.session_id,
+                user=user,
+                event_type="commission_voided",
+                state="VOIDED",
+                payload={
+                    "order_reference": order_reference,
+                    "reason": "Invalid payment signature",
+                    "status": "VOIDED"
+                }
+            )
             return {"success": False, "message": "Payment verification failed: Invalid signature."}
 
         # Successful Payment Transition
         with transaction.atomic():
             order.status = "PAID"
+            order.commission_status = "FINALIZED"
             order.razorpay_payment_id = razorpay_payment_id
             order.razorpay_signature = razorpay_signature
             order.paid_at = timezone.now()
             order.save()
+
+            # Log Commission Finalized Audit Trail
+            AgentAuditLog.objects.create(
+                session_id=order.session_id,
+                user=user,
+                event_type="commission_finalized",
+                state="FINALIZED",
+                payload={
+                    "order_reference": order_reference,
+                    "gross_amount": float(order.total_amount),
+                    "commission_rate": float(order.commission_rate),
+                    "commission_amount": float(order.commission_amount),
+                    "net_pharmacy_amount": float(order.net_pharmacy_amount),
+                    "status": "FINALIZED"
+                }
+            )
 
             # Mark Reservation Paid if linked
             if order.reservation:
@@ -417,7 +482,6 @@ class AgenticCommerceService:
             # Log Audit Trail
             AgentAuditLog.objects.create(
                 session_id=order.session_id,
-
                 user=user,
                 event_type="payment_verified",
                 state="PAID",
@@ -450,6 +514,8 @@ class AgenticCommerceService:
             "razorpay_order_id": razorpay_order_id,
             "razorpay_payment_id": razorpay_payment_id,
             "total_amount": float(order.total_amount),
+            "commission_amount": float(order.commission_amount),
+            "net_pharmacy_amount": float(order.net_pharmacy_amount),
             "medicine_name": order.medicine.name,
             "pharmacy_name": order.pharmacy.name,
             "message": "Payment verified and order confirmed successfully!"
@@ -461,8 +527,21 @@ class AgenticCommerceService:
         try:
             order = Order.objects.get(order_reference=order_reference)
             order.status = "PAYMENT_FAILED"
+            order.commission_status = "VOIDED"
             order.failed_at = timezone.now()
-            order.save(update_fields=["status", "failed_at"])
+            order.save(update_fields=["status", "commission_status", "failed_at"])
+
+            AgentAuditLog.objects.create(
+                session_id=order.session_id,
+                user=user,
+                event_type="commission_voided",
+                state="VOIDED",
+                payload={
+                    "order_reference": order_reference,
+                    "reason": reason,
+                    "status": "VOIDED"
+                }
+            )
 
             AgentAuditLog.objects.create(
                 session_id=order.session_id,

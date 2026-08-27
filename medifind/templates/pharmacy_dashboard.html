@@ -74,6 +74,52 @@ Dashboard — {{ pharmacy.name|default:"Store Portal" }} | MediAI
   {% endif %}
 
   <!-- ==========================================
+       COMMISSION & REVENUE KPI CARDS (MediAI Marketplace)
+       ========================================== -->
+  <div class="row g-3.5 mb-4 dash-kpi-reveal">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 position-relative overflow-hidden" style="border-left: 4px solid #10b981 !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">Total Sales (GMV)</span>
+          <div class="rounded-circle p-2" style="background: #ecfdf5; color: #10b981;"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-dark">₹{{ total_sales_gmv|floatformat:2 }}</h3>
+        <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Completed Orders</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 position-relative overflow-hidden" style="border-left: 4px solid #6366f1 !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">Net Pharmacy Revenue</span>
+          <div class="rounded-circle p-2" style="background: #e0e7ff; color: #4f46e5;"><i class="fa-solid fa-wallet"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-primary">₹{{ net_pharmacy_revenue_total|floatformat:2 }}</h3>
+        <span class="text-muted small"><i class="fa-solid fa-shield-halved text-primary me-1"></i>Net Payout After Fee</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 position-relative overflow-hidden" style="border-left: 4px solid #f59e0b !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">MediAI Commission</span>
+          <div class="rounded-circle p-2" style="background: #fffbeb; color: #d97706;"><i class="fa-solid fa-percent"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-warning">₹{{ mediai_commission_total|floatformat:2 }}</h3>
+        <span class="text-muted small">Fee Rate: <strong>{{ pharmacy_commission_rate }}%</strong></span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border rounded-4 p-3.5 bg-white shadow-xs h-100 position-relative overflow-hidden" style="border-left: 4px solid #06b6d4 !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.72rem;">Paid Transactions</span>
+          <div class="rounded-circle p-2" style="background: #cff4fc; color: #0891b2;"><i class="fa-solid fa-bag-shopping"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-info">{{ completed_orders_count }}</h3>
+        <span class="text-muted small"><i class="fa-solid fa-lock text-success me-1"></i>Finalized Revenue Status</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
        2. KPI SECTION (Interactive & Visual)
        ========================================== -->
   <div class="row g-3.5 mb-4 dash-kpi-reveal">

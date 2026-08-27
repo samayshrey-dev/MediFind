@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from decimal import Decimal
 
 
 class Medicine(models.Model):
@@ -108,6 +109,12 @@ class Pharmacy(models.Model):
             ("Rejected", "Rejected"),
         ],
         default="Approved"
+    )
+    commission_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("3.00"),
+        help_text="MediAI platform commission percentage (default: 3.00%)"
     )
     license_number = models.CharField(
         max_length=100,
@@ -652,6 +659,22 @@ class Order(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=8, decimal_places=2)
     total_amount = models.DecimalField(max_digits=8, decimal_places=2)
+
+    COMMISSION_STATUS_CHOICES = [
+        ("PENDING", "Pending Payment"),
+        ("FINALIZED", "Finalized Revenue"),
+        ("VOIDED", "Voided / Cancelled"),
+    ]
+
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("3.00"))
+    commission_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    net_pharmacy_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    commission_status = models.CharField(
+        max_length=20,
+        choices=COMMISSION_STATUS_CHOICES,
+        default="PENDING",
+        db_index=True
+    )
 
     currency = models.CharField(max_length=10, default="INR")
     status = models.CharField(
