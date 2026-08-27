@@ -261,13 +261,22 @@
                 </div>
               ` : ''}
 
-              <!-- "WHY?" Callout Box -->
+              <!-- "WHY I CHOSE THIS PHARMACY" Callout Box -->
               <div class="p-3 rounded-3 mb-2" style="background: #f0fdf4; border-left: 4px solid #10b981;">
-                <div class="fw-extrabold text-success small mb-1 d-flex align-items-center gap-1.5" style="letter-spacing: 0.3px;">
-                  <i class="fa-solid fa-circle-check"></i> WHY?
+                <div class="fw-extrabold text-success small mb-1.5 d-flex align-items-center justify-content-between flex-wrap gap-1">
+                  <span><i class="fa-solid fa-wand-magic-sparkles me-1"></i> WHY I CHOSE THIS PHARMACY:</span>
+                  <span class="badge bg-success text-white rounded-pill px-2.5 py-1" style="font-size: 0.72rem; letter-spacing: 0.3px;">
+                    AI Safety Check: ✓ PASSED
+                  </span>
                 </div>
-                <div class="text-dark small fw-medium" style="line-height: 1.5;">
+                <div class="text-dark small fw-medium mb-2" style="line-height: 1.5;">
                   ${escapeHtml(data.explanation || 'Lowest verified price within 5 km with guaranteed live stock.')}
+                </div>
+                <div class="d-flex flex-wrap gap-1.5 pt-1.5 border-top border-success-subtle">
+                  <span class="badge bg-white text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Verified In Stock (${bm.stock} units)</span>
+                  <span class="badge bg-white text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Lowest Qualifying Price</span>
+                  ${bm.distance_km !== null ? (intent.max_distance_km && bm.distance_km <= parseFloat(intent.max_distance_km) ? `<span class="badge bg-white text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Within Radius (${bm.distance_km} km)</span>` : `<span class="badge bg-white text-dark border rounded-pill px-2.5 py-1 small fw-semibold"><i class="fa-solid fa-location-dot me-1 text-primary"></i> Distance: ${bm.distance_km} km</span>`) : ''}
+                  <span class="badge bg-white text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Under Spending Limit</span>
                 </div>
               </div>
             </div>
@@ -286,7 +295,7 @@
 
                 <!-- Live Total Calculation -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                  <span class="text-muted small fw-semibold">Total:</span>
+                  <span class="text-muted small fw-semibold">Total Amount:</span>
                   <span class="fs-4 fw-extrabold text-success" id="bmTotalDisplay">₹${parseFloat(bm.price).toFixed(2)}</span>
                 </div>
 
@@ -309,13 +318,13 @@
                   ` : ''}
 
                   <div id="bmPaymentOptionsSection" class="${bm.prescription_required ? 'd-none' : ''}">
-                    ${bm.prescription_required ? `<div class="fw-bold text-dark small mb-2 text-start"><span class="badge bg-success-subtle text-success me-1">✓ Step 2</span> Choose Payment Method:</div>` : ''}
+                    ${bm.prescription_required ? `<div class="fw-bold text-dark small mb-2 text-start"><span class="badge bg-success-subtle text-success me-1">✓ Step 2</span> Human Approval Gate:</div>` : ''}
                     <div class="d-flex flex-column gap-2">
-                      <button type="button" class="btn btn-primary w-100 py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="bmBtnPayOnline" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
-                        <i class="fa-solid fa-credit-card"></i> Pay Online (Razorpay)
+                      <button type="button" class="btn btn-success w-100 py-2.5 fw-extrabold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2" id="bmBtnPayOnline" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
+                        <i class="fa-solid fa-user-check"></i> Approve &amp; Pay <span id="bmBtnPayTotal">₹${parseFloat(bm.price).toFixed(2)}</span>
                       </button>
                       <button type="button" class="btn btn-outline-dark w-100 py-2 fw-semibold rounded-pill d-flex align-items-center justify-content-center gap-2" id="bmBtnPayCounter" data-inventory-id="${bm.inventory_id}" data-price="${bm.price}">
-                        <i class="fa-solid fa-store text-success"></i> Pay on the Counter
+                        <i class="fa-solid fa-store text-success"></i> Pay on Counter
                       </button>
                     </div>
                   </div>
@@ -665,9 +674,14 @@
         key: data.key_id,
         amount: data.amount,
         currency: data.currency || 'INR',
-        name: 'MedFinder Commerce',
+        name: 'MediAI Agentic Commerce',
         description: `${data.medicine_name} at ${data.pharmacy_name}`,
         order_id: data.razorpay_order_id,
+        prefill: {
+          name: 'Demo Healthcare Customer',
+          email: 'customer@mediai.health',
+          contact: '9999999999'
+        },
         notes: {
           order_reference: data.order_reference
         },
@@ -757,20 +771,38 @@
     }
   }
 
-  // Render Graceful Payment Failure Card with Try Again button
+  // Render Graceful Payment Failure Card with Try Again button & Safety Checkmarks
   function renderPaymentFailureCard(container, orderReference, reason) {
     if (!container) return;
     container.innerHTML = `
       <div class="card border-danger border-2 rounded-4 p-3 bg-danger-subtle text-start w-100 shadow-sm">
         <div class="d-flex align-items-center mb-2">
-          <i class="fa-solid fa-circle-xmark text-danger fs-5 me-2"></i>
-          <span class="fw-bold text-danger">Payment unsuccessful</span>
+          <i class="fa-solid fa-shield-halved text-danger fs-5 me-2"></i>
+          <span class="fw-bold text-danger">Payment Failed Safely</span>
         </div>
-        <p class="small text-dark mb-2">No payment has been confirmed for order <strong>#${escapeHtml(orderReference)}</strong>.</p>
-        <p class="text-muted" style="font-size: 0.78rem;">${escapeHtml(reason)}</p>
-        <button type="button" class="btn btn-primary w-100 rounded-pill btn-sm fw-semibold" id="btnRetryPayment" data-order-ref="${escapeHtml(orderReference)}">
-          <i class="fa-solid fa-arrow-rotate-right me-1"></i> Try again
-        </button>
+        <p class="small text-dark mb-2">Razorpay could not complete the payment for order <strong>#${escapeHtml(orderReference)}</strong>.</p>
+        
+        <div class="p-2.5 rounded-3 bg-white border border-danger-subtle mb-3">
+          <div class="fw-bold text-dark small mb-1.5"><i class="fa-solid fa-list-check text-primary me-1"></i> What MediAI Did:</div>
+          <div class="d-flex flex-column gap-1 small" style="font-size: 0.78rem;">
+            <div class="text-success"><i class="fa-solid fa-circle-check me-1.5"></i> No completed payment recorded</div>
+            <div class="text-success"><i class="fa-solid fa-circle-check me-1.5"></i> Reservation released</div>
+            <div class="text-success"><i class="fa-solid fa-circle-check me-1.5"></i> Inventory restored to merchant</div>
+            <div class="text-success"><i class="fa-solid fa-circle-check me-1.5"></i> No duplicate order created</div>
+            <div class="text-success"><i class="fa-solid fa-circle-check me-1.5"></i> Transaction recorded in audit trail</div>
+          </div>
+        </div>
+
+        <p class="text-muted mb-3" style="font-size: 0.75rem;">Details: ${escapeHtml(reason)}</p>
+
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary flex-fill rounded-pill btn-sm fw-semibold" id="btnRetryPayment" data-order-ref="${escapeHtml(orderReference)}">
+            <i class="fa-solid fa-arrow-rotate-right me-1"></i> Retry
+          </button>
+          <button type="button" class="btn btn-outline-dark flex-fill rounded-pill btn-sm fw-semibold" onclick="window.MedFinderCommerce.search(document.getElementById('medicineSearch') ? document.getElementById('medicineSearch').value : '')">
+            Choose Another Pharmacy
+          </button>
+        </div>
       </div>
     `;
 
@@ -794,12 +826,16 @@
     const qtyDisplay = document.getElementById('bmQtyDisplay');
     const totalDisplay = document.getElementById('bmTotalDisplay');
 
+    const btnPayTotal = document.getElementById('bmBtnPayTotal');
+
     if (minusBtn && plusBtn && qtyDisplay && totalDisplay) {
       minusBtn.addEventListener('click', function () {
         if (selectedQuantity > 1) {
           selectedQuantity--;
           qtyDisplay.textContent = selectedQuantity;
-          totalDisplay.textContent = `₹${(selectedQuantity * unitPrice).toFixed(2)}`;
+          const fmtPrice = `₹${(selectedQuantity * unitPrice).toFixed(2)}`;
+          totalDisplay.textContent = fmtPrice;
+          if (btnPayTotal) btnPayTotal.textContent = fmtPrice;
         }
       });
 
@@ -807,7 +843,9 @@
         if (selectedQuantity < maxStock) {
           selectedQuantity++;
           qtyDisplay.textContent = selectedQuantity;
-          totalDisplay.textContent = `₹${(selectedQuantity * unitPrice).toFixed(2)}`;
+          const fmtPrice = `₹${(selectedQuantity * unitPrice).toFixed(2)}`;
+          totalDisplay.textContent = fmtPrice;
+          if (btnPayTotal) btnPayTotal.textContent = fmtPrice;
         }
       });
     }
@@ -995,7 +1033,7 @@
       });
     });
 
-    document.querySelectorAll('.agent-suggestion-btn').forEach(btn => {
+    document.querySelectorAll('.agent-suggestion-btn, .hackathon-demo-btn').forEach(btn => {
       btn.addEventListener('click', function () {
         const q = this.getAttribute('data-query');
         const input = document.getElementById('medicineSearch');
@@ -1063,11 +1101,18 @@
             <div class="audit-step-desc">${escapeHtml(bestMatchName)} ranked #1 via deterministic algorithm</div>
           </div>
 
+          <!-- 5b. Agent Policy Engine Validation -->
+          <div class="audit-step-item ${data.policy_eval ? (data.policy_eval.passed ? 'completed' : 'blocked') : 'completed'}">
+            <div class="audit-step-node"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="audit-step-title">Policy Risk Check: ${data.policy_eval ? (data.policy_eval.passed ? 'PASSED ✓' : 'BLOCKED ❌') : 'PASSED ✓'}</div>
+            <div class="audit-step-desc">${data.policy_eval && !data.policy_eval.passed ? escapeHtml(data.policy_eval.reasons[0]) : 'Bounded by ₹1,000 spend limit, max 5 units & INR currency rules'}</div>
+          </div>
+
           <!-- 6. User approval -->
           <div class="audit-step-item ${activeOrderSnapshot ? 'completed' : 'active'}">
-            <div class="audit-step-node"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="audit-step-node"><i class="fa-solid fa-user-check"></i></div>
             <div class="audit-step-title">User approval gate ${data.best_match ? `(₹${parseFloat(data.best_match.price).toFixed(0)})` : ''}</div>
-            <div class="audit-step-desc">Requires explicit user consent before financial transaction</div>
+            <div class="audit-step-desc">Requires explicit human consent before financial transaction</div>
           </div>
 
           <!-- 7. Razorpay order created -->

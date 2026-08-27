@@ -2,7 +2,8 @@
 {% load static %}
 
 {% block title %}Find Mapped Pharmacies Near You | OpenStreetMap & MediAI{% endblock %}
-{% block meta_description %}Discover real mapped pharmacies near your current browser GPS location across Tamil Nadu via OpenStreetMap with straight-line Haversine distance calculations and interactive Leaflet maps.{% endblock %}
+{% block meta_description %}Discover real mapped pharmacies near your current browser GPS location across Tamil Nadu via
+OpenStreetMap with straight-line Haversine distance calculations and interactive Leaflet maps.{% endblock %}
 
 {% block content %}
 
@@ -11,12 +12,15 @@
 
     <!-- Breadcrumbs -->
     <nav aria-label="breadcrumb" class="medi-breadcrumb-nav mb-3">
-      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope itemtype="https://schema.org/BreadcrumbList">
+      <ol class="breadcrumb bg-transparent p-0 mb-0 align-items-center small" itemscope
+        itemtype="https://schema.org/BreadcrumbList">
         <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-          <a href="{% url 'home' %}" class="text-decoration-none text-muted" itemprop="item"><i class="fa-solid fa-house fs-7 text-success me-1"></i><span itemprop="name">Home</span></a>
+          <a href="{% url 'home' %}" class="text-decoration-none text-muted" itemprop="item"><i
+              class="fa-solid fa-house fs-7 text-success me-1"></i><span itemprop="name">Home</span></a>
           <meta itemprop="position" content="1" />
         </li>
-        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" itemprop="itemListElement"
+          itemscope itemtype="https://schema.org/ListItem">
           <span itemprop="name">Nearby Mapped Pharmacies</span>
           <meta itemprop="position" content="2" />
         </li>
@@ -30,7 +34,8 @@
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <div>
           <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-bold">
+            <span
+              class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-bold">
               <i class="fa-solid fa-map-location-dot me-1"></i> Real Geospatial Discovery
             </span>
             <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 small fw-semibold">
@@ -38,33 +43,41 @@
             </span>
           </div>
           <h4 class="fw-bold text-dark mb-0">Find pharmacies near your current location</h4>
-          <p class="text-secondary small mb-0">Discover mapped retail stores, check operating hours, and view straight-line distances from your current GPS position.</p>
+          <p class="text-secondary small mb-0">Discover mapped retail stores, check operating hours, and view
+            straight-line distances from your current GPS position.</p>
         </div>
 
         {% if user.is_authenticated and user.userprofile.role == "Pharmacy" or user.is_superuser %}
-          <a href="{% url 'add_pharmacy' %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
-            <i class="fa-solid fa-plus me-1"></i> Register Pharmacy
-          </a>
+        <a href="{% url 'add_pharmacy' %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
+          <i class="fa-solid fa-plus me-1"></i> Register Pharmacy
+        </a>
         {% endif %}
       </div>
 
       <!-- Location Status Bar -->
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 bg-light rounded-3 border mt-3" id="locationStatusBar" style="border-color: var(--border) !important;">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 bg-light rounded-3 border mt-3"
+        id="locationStatusBar" style="border-color: var(--border) !important;">
         <div class="d-flex align-items-center gap-2.5">
-          <span class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-xs" style="width: 32px; height: 32px;">
+          <span
+            class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-xs"
+            style="width: 32px; height: 32px;">
             <i class="fa-solid fa-location-crosshairs fs-6"></i>
           </span>
           <div>
-            <span id="locationText" class="fw-bold text-dark d-block" style="font-size: 0.92rem;">Click "Use My Current Location" to enable GPS positioning</span>
-            <small class="text-secondary" id="locationAccuracyNotice">Calculates Haversine straight-line distance from your exact browser coordinates</small>
+            <span id="locationText" class="fw-bold text-dark d-block" style="font-size: 0.92rem;">Click "Use My Current
+              Location" to enable GPS positioning</span>
+            <small class="text-secondary" id="locationAccuracyNotice">Calculates Haversine straight-line distance from
+              your exact browser coordinates</small>
           </div>
         </div>
 
         <div class="d-flex align-items-center gap-2">
-          <button type="button" class="btn btn-sm btn-primary rounded-pill px-3.5 py-2 fw-bold shadow-sm" id="btnRefreshLocation">
+          <button type="button" class="btn btn-sm btn-primary rounded-pill px-3.5 py-2 fw-bold shadow-sm"
+            id="btnRefreshLocation">
             <i class="fa-solid fa-location-dot me-1"></i> Use My Current Location
           </button>
-          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#manualLocationModal">
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-semibold"
+            data-bs-toggle="modal" data-bs-target="#manualLocationModal">
             Manual Search
           </button>
         </div>
@@ -74,42 +87,65 @@
       <div class="row align-items-center g-2 mt-3">
         <div class="col-md-7">
           <div class="input-group">
-            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-secondary"></i></span>
-            <input type="text" id="pharmacySearchQuery" class="form-control border-start-0" placeholder="Filter mapped pharmacies by name or city (e.g. 'Apollo', 'Chennai', 'Coimbatore')...">
+            <span class="input-group-text bg-white border-end-0"><i
+                class="fa-solid fa-magnifying-glass text-secondary"></i></span>
+            <input type="text" id="pharmacySearchQuery" class="form-control border-start-0"
+              placeholder="Filter mapped pharmacies by name or city (e.g. 'Apollo', 'Chennai', 'Coimbatore')...">
           </div>
         </div>
         <div class="col-md-5">
           <div class="d-flex align-items-center flex-wrap gap-1.5 justify-content-md-end small">
-            <span class="text-secondary fw-bold me-1"><i class="fa-solid fa-city me-1 text-primary"></i> Tamil Nadu Presets:</span>
-            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold" data-lat="13.0827" data-lng="80.2707" data-name="Chennai Central">Chennai</button>
-            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold" data-lat="11.0168" data-lng="76.9558" data-name="Coimbatore">Coimbatore</button>
-            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold" data-lat="9.9252" data-lng="78.1198" data-name="Madurai">Madurai</button>
-            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold" data-lat="10.7905" data-lng="78.7047" data-name="Trichy">Trichy</button>
-            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold" data-lat="11.6643" data-lng="78.1460" data-name="Salem">Salem</button>
+            <span class="text-secondary fw-bold me-1"><i class="fa-solid fa-city me-1 text-primary"></i> Tamil Nadu
+              Presets:</span>
+            <button type="button"
+              class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold"
+              data-lat="13.0827" data-lng="80.2707" data-name="Chennai Central">Chennai</button>
+            <button type="button"
+              class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold"
+              data-lat="11.0168" data-lng="76.9558" data-name="Coimbatore">Coimbatore</button>
+            <button type="button"
+              class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold"
+              data-lat="9.9252" data-lng="78.1198" data-name="Madurai">Madurai</button>
+            <button type="button"
+              class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold"
+              data-lat="10.7905" data-lng="78.7047" data-name="Trichy">Trichy</button>
+            <button type="button"
+              class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 locality-preset-btn fw-semibold"
+              data-lat="11.6643" data-lng="78.1460" data-name="Salem">Salem</button>
           </div>
         </div>
       </div>
 
       <!-- Radius & Distance Filters -->
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 position-relative" style="z-index: 50;">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 position-relative"
+        style="z-index: 50;">
         <div class="d-flex align-items-center flex-wrap gap-1.5">
-          <small class="text-dark fw-bold me-2"><i class="fa-solid fa-circle-notch text-primary me-1"></i> Search Radius:</small>
-          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="1">1 km</button>
-          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="3">3 km</button>
-          <button type="button" class="btn btn-sm btn-primary fw-bold rounded-pill px-3 radius-chip" data-radius="5">5 km</button>
-          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="10">10 km</button>
-          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="25">25 km</button>
+          <small class="text-dark fw-bold me-2"><i class="fa-solid fa-circle-notch text-primary me-1"></i> Search
+            Radius:</small>
+          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="1">1
+            km</button>
+          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="3">3
+            km</button>
+          <button type="button" class="btn btn-sm btn-primary fw-bold rounded-pill px-3 radius-chip" data-radius="5">5
+            km</button>
+          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="10">10
+            km</button>
+          <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 radius-chip" data-radius="25">25
+            km</button>
         </div>
 
         <!-- Sorting -->
         <div class="dropdown">
-          <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle fw-bold" data-bs-toggle="dropdown">
+          <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle fw-bold"
+            data-bs-toggle="dropdown">
             <i class="fa-solid fa-arrow-down-wide-short me-1"></i>
             <span id="lblSortName">Nearest First</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow border rounded-3">
-            <li><a class="dropdown-item py-2 fw-semibold" href="#" data-sort="nearest"><i class="fa-solid fa-location-dot text-primary me-2"></i> Nearest First (Straight-line)</a></li>
-            <li><a class="dropdown-item py-2 fw-semibold" href="#" data-sort="open"><i class="fa-solid fa-clock text-success me-2"></i> Open Hours First</a></li>
+            <li><a class="dropdown-item py-2 fw-semibold" href="#" data-sort="nearest"><i
+                  class="fa-solid fa-location-dot text-primary me-2"></i> Nearest First (Straight-line)</a></li>
+            <li><a class="dropdown-item py-2 fw-semibold" href="#" data-sort="open"><i
+                  class="fa-solid fa-clock text-success me-2"></i> Open Hours First</a></li>
           </ul>
         </div>
       </div>
@@ -132,56 +168,63 @@
 
         <div id="pharmacyListContainer" class="d-flex flex-column gap-3">
           {% for p in initial_osm_pharmacies %}
-            <div class="card border rounded-4 p-4 shadow-sm bg-white pharmacy-item-card" data-osm-id="{{ p.osm_id }}" data-lat="{{ p.latitude }}" data-lng="{{ p.longitude }}" style="cursor: pointer; transition: var(--transition);">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
-                    <span class="badge {% if p.source == 'MediFind Verified Store' %}bg-success{% else %}bg-primary{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
-                      Source: {{ p.source }}
-                    </span>
-                    {% if p.opening_hours %}
-                      <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5 small"><i class="fa-regular fa-clock me-1 text-primary"></i> {{ p.opening_hours }}</span>
-                    {% endif %}
-                  </div>
-                  <h5 class="fw-bold text-dark mb-1">{{ p.name }}</h5>
-                  <p class="text-secondary small mb-0">
-                    <i class="fa-solid fa-location-dot text-primary me-1"></i> {{ p.address }}{% if p.city %}, {{ p.city }}{% endif %}
-                  </p>
+          <div class="card border rounded-4 p-4 shadow-sm bg-white pharmacy-item-card" data-osm-id="{{ p.osm_id }}"
+            data-lat="{{ p.latitude }}" data-lng="{{ p.longitude }}"
+            style="cursor: pointer; transition: var(--transition);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
+                  <span
+                    class="badge {% if p.source == 'MediFind Verified Store' %}bg-success{% else %}bg-primary{% endif %} rounded-pill px-2.5 py-1 small fw-bold">
+                    Source: {{ p.source }}
+                  </span>
+                  {% if p.opening_hours %}
+                  <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5 small"><i
+                      class="fa-regular fa-clock me-1 text-primary"></i> {{ p.opening_hours }}</span>
+                  {% endif %}
                 </div>
-
-                <div class="text-end flex-shrink-0">
-                  <div class="fs-5 fw-extrabold text-primary">{{ p.distance_display }}</div>
-                  <small class="text-secondary font-monospace" style="font-size: 0.68rem;">Straight-line</small>
-                </div>
+                <h5 class="fw-bold text-dark mb-1">{{ p.name }}</h5>
+                <p class="text-secondary small mb-0">
+                  <i class="fa-solid fa-location-dot text-primary me-1"></i> {{ p.address }}{% if p.city %}, {{ p.city
+                  }}{% endif %}
+                </p>
               </div>
 
-              <div class="pt-3 border-top mt-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="small text-secondary">
-                  {% if p.phone %}
-                    <span><i class="fa-solid fa-phone me-1 text-success"></i> {{ p.phone }}</span>
-                  {% else %}
-                    <span><i class="fa-solid fa-circle-info me-1 text-info"></i> OpenStreetMap Location Data</span>
-                  {% endif %}
-                </div>
-
-                <div class="d-flex gap-2">
-                  <a href="https://maps.google.com/?q={{ p.latitude }},{{ p.longitude }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" onclick="event.stopPropagation();">
-                    <i class="fa-solid fa-diamond-turn-right me-1"></i> Directions
-                  </a>
-                  {% if p.internal_pharmacy_id %}
-                    <a href="{% url 'pharmacy_detail' p.internal_pharmacy_id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="event.stopPropagation();">
-                      View Catalog &rarr;
-                    </a>
-                  {% endif %}
-                </div>
+              <div class="text-end flex-shrink-0">
+                <div class="fs-5 fw-extrabold text-primary">{{ p.distance_display }}</div>
+                <small class="text-secondary font-monospace" style="font-size: 0.68rem;">Straight-line</small>
               </div>
             </div>
+
+            <div class="pt-3 border-top mt-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="small text-secondary">
+                {% if p.phone %}
+                <span><i class="fa-solid fa-phone me-1 text-success"></i> {{ p.phone }}</span>
+                {% else %}
+                <span><i class="fa-solid fa-circle-info me-1 text-info"></i> OpenStreetMap Location Data</span>
+                {% endif %}
+              </div>
+
+              <div class="d-flex gap-2">
+                <a href="https://maps.google.com/?q={{ p.latitude }},{{ p.longitude }}" target="_blank"
+                  class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" onclick="event.stopPropagation();">
+                  <i class="fa-solid fa-diamond-turn-right me-1"></i> Directions
+                </a>
+                {% if p.internal_pharmacy_id %}
+                <a href="{% url 'pharmacy_detail' p.internal_pharmacy_id %}"
+                  class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="event.stopPropagation();">
+                  View Catalog &rarr;
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
           {% empty %}
-            <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
-              <i class="fa-solid fa-hospital-user fs-1 text-secondary mb-3"></i>
-              <h5 class="fw-bold text-dark mb-1">No mapped pharmacies found within 5 km</h5>
-              <p class="text-secondary small mb-3">Try expanding your search radius or changing your location.</p>
-            </div>
+          <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
+            <i class="fa-solid fa-hospital-user fs-1 text-secondary mb-3"></i>
+            <h5 class="fw-bold text-dark mb-1">No mapped pharmacies found within 5 km</h5>
+            <p class="text-secondary small mb-3">Try expanding your search radius or changing your location.</p>
+          </div>
           {% endfor %}
         </div>
       </div>
@@ -190,12 +233,15 @@
       <div class="col-lg-5">
         <div class="card border rounded-4 shadow-sm p-3 bg-white sticky-top" style="top: 85px; z-index: 10;">
           <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-            <span class="fw-bold text-dark small"><i class="fa-solid fa-map-location-dot text-primary me-1"></i> OpenStreetMap View</span>
-            <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2.5 py-0.5 small fw-semibold">
+            <span class="fw-bold text-dark small"><i class="fa-solid fa-map-location-dot text-primary me-1"></i>
+              OpenStreetMap View</span>
+            <span
+              class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2.5 py-0.5 small fw-semibold">
               <i class="fa-solid fa-ruler me-1"></i> Straight-line distance
             </span>
           </div>
-          <div id="map" style="height: 460px; border-radius: var(--radius); z-index: 1; border: 1.5px solid var(--border);"></div>
+          <div id="map"
+            style="height: 460px; border-radius: var(--radius); z-index: 1; border: 1.5px solid var(--border);"></div>
         </div>
       </div>
     </div>
@@ -206,30 +252,36 @@
 <!-- ===================================== -->
 <!-- MANUAL LOCATION MODAL -->
 <!-- ===================================== -->
-<div class="modal fade" id="manualLocationModal" tabindex="-1" aria-labelledby="manualLocationModalLabel" aria-hidden="true">
+<div class="modal fade" id="manualLocationModal" tabindex="-1" aria-labelledby="manualLocationModalLabel"
+  aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content rounded-4 border-0 shadow-lg">
       <div class="modal-header border-bottom">
-        <h5 class="modal-title fw-bold text-dark" id="manualLocationModalLabel"><i class="fa-solid fa-location-crosshairs text-primary me-2"></i> Manual Location / City Search</h5>
+        <h5 class="modal-title fw-bold text-dark" id="manualLocationModalLabel"><i
+            class="fa-solid fa-location-crosshairs text-primary me-2"></i> Manual Location / City Search</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form id="manualCoordsForm">
         <div class="modal-body p-4">
-          <p class="text-secondary small mb-3">If browser location access is unavailable, enter custom coordinates or select a city below to discover mapped pharmacies.</p>
-          
+          <p class="text-secondary small mb-3">If browser location access is unavailable, enter custom coordinates or
+            select a city below to discover mapped pharmacies.</p>
+
           <div class="row g-3 mb-3">
             <div class="col-6">
               <label class="form-label text-dark small fw-bold">Latitude</label>
-              <input type="number" step="any" id="manualLatInput" class="form-control" placeholder="13.0827" value="13.0827" required>
+              <input type="number" step="any" id="manualLatInput" class="form-control" placeholder="13.0827"
+                value="13.0827" required>
             </div>
             <div class="col-6">
               <label class="form-label text-dark small fw-bold">Longitude</label>
-              <input type="number" step="any" id="manualLngInput" class="form-control" placeholder="80.2707" value="80.2707" required>
+              <input type="number" step="any" id="manualLngInput" class="form-control" placeholder="80.2707"
+                value="80.2707" required>
             </div>
           </div>
         </div>
         <div class="modal-footer border-top">
-          <button type="button" class="btn btn-light border rounded-pill px-3 fw-bold" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-light border rounded-pill px-3 fw-bold"
+            data-bs-dismiss="modal">Cancel</button>
           <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Update Location &amp; Search</button>
         </div>
       </form>
@@ -239,20 +291,32 @@
 
 <!-- Custom Map Pulse Marker Styles -->
 <style>
-.user-pulse-marker {
-  width: 18px;
-  height: 18px;
-  background-color: #0284c7;
-  border: 3px solid #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7);
-  animation: userPulse 2s infinite;
-}
-@keyframes userPulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(2, 132, 199, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); }
-}
+  .user-pulse-marker {
+    width: 18px;
+    height: 18px;
+    background-color: #0284c7;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7);
+    animation: userPulse 2s infinite;
+  }
+
+  @keyframes userPulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7);
+    }
+
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(2, 132, 199, 0);
+    }
+
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(2, 132, 199, 0);
+    }
+  }
 </style>
 
 <!-- Leaflet Map CSS & JS -->
@@ -260,95 +324,95 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-(function() {
-  let map = null;
-  let userMarker = null;
-  let userAccuracyCircle = null;
-  let mapMarkers = [];
+  (function () {
+    let map = null;
+    let userMarker = null;
+    let userAccuracyCircle = null;
+    let mapMarkers = [];
 
-  let currentLat = 13.0827; // Default Chennai Central
-  let currentLng = 80.2707;
-  let currentAccuracy = null;
-  let currentRadius = 5.0;
-  let currentSort = 'nearest';
-  let currentQuery = '';
-  let currentAreaName = 'Default Coordinates (Chennai)';
-  let isGpsActive = false;
+    let currentLat = 13.0827; // Default Chennai Central
+    let currentLng = 80.2707;
+    let currentAccuracy = null;
+    let currentRadius = 5.0;
+    let currentSort = 'nearest';
+    let currentQuery = '';
+    let currentAreaName = 'Default Coordinates (Chennai)';
+    let isGpsActive = false;
 
-  // Custom Leaflet Icons
-  function createUserIcon() {
-    return L.divIcon({
-      className: 'custom-user-marker',
-      html: '<div class="user-pulse-marker"></div>',
-      iconSize: [20, 20],
-      iconAnchor: [10, 10]
-    });
-  }
+    // Custom Leaflet Icons
+    function createUserIcon() {
+      return L.divIcon({
+        className: 'custom-user-marker',
+        html: '<div class="user-pulse-marker"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+    }
 
-  function createPharmacyPin(isVerified = false) {
-    const color = isVerified ? '#059669' : '#0284c7';
-    const svgIcon = `
+    function createPharmacyPin(isVerified = false) {
+      const color = isVerified ? '#059669' : '#0284c7';
+      const svgIcon = `
       <svg width="32" height="38" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 0C5.37 0 0 5.37 0 12C0 21 12 30 12 30C12 30 24 21 24 12C24 5.37 18.63 0 12 0Z" fill="${color}"/>
         <path d="M11 7H13V11H17V13H13V17H11V13H7V11H11V7Z" fill="#FFFFFF"/>
       </svg>
     `;
-    return L.divIcon({
-      className: 'custom-pharmacy-pin',
-      html: svgIcon,
-      iconSize: [32, 38],
-      iconAnchor: [16, 38],
-      popupAnchor: [0, -34]
-    });
-  }
+      return L.divIcon({
+        className: 'custom-pharmacy-pin',
+        html: svgIcon,
+        iconSize: [32, 38],
+        iconAnchor: [16, 38],
+        popupAnchor: [0, -34]
+      });
+    }
 
-  function initMap(lat, lng) {
-    if (map) return;
-    map = L.map('map', { scrollWheelZoom: false }).setView([lat, lng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-  }
-
-  function updateMapUserMarker(lat, lng, accuracy = null) {
-    if (!map) return;
-    if (userMarker) map.removeLayer(userMarker);
-    if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
-
-    userMarker = L.marker([lat, lng], { icon: createUserIcon() }).addTo(map);
-    userMarker.bindPopup(`<div class="fw-bold text-dark">Your Location</div><small class="text-secondary">${accuracy ? `Accuracy: ±${Math.round(accuracy)}m` : 'Current position'}</small>`);
-
-    if (accuracy && accuracy < 2000) {
-      userAccuracyCircle = L.circle([lat, lng], {
-        radius: accuracy,
-        color: '#0284c7',
-        fillColor: '#38bdf8',
-        fillOpacity: 0.12,
-        weight: 1.5
+    function initMap(lat, lng) {
+      if (map) return;
+      map = L.map('map', { scrollWheelZoom: false }).setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map);
     }
-  }
 
-  function loadPharmacyMarkers(pharmacies, shouldCenterUser = false) {
-    if (!map) return;
-    mapMarkers.forEach(m => map.removeLayer(m));
-    mapMarkers = [];
+    function updateMapUserMarker(lat, lng, accuracy = null) {
+      if (!map) return;
+      if (userMarker) map.removeLayer(userMarker);
+      if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
 
-    const bounds = [];
-    if (currentLat && currentLng) {
-      updateMapUserMarker(currentLat, currentLng, currentAccuracy);
-      bounds.push([currentLat, currentLng]);
+      userMarker = L.marker([lat, lng], { icon: createUserIcon() }).addTo(map);
+      userMarker.bindPopup(`<div class="fw-bold text-dark">Your Location</div><small class="text-secondary">${accuracy ? `Accuracy: ±${Math.round(accuracy)}m` : 'Current position'}</small>`);
+
+      if (accuracy && accuracy < 2000) {
+        userAccuracyCircle = L.circle([lat, lng], {
+          radius: accuracy,
+          color: '#0284c7',
+          fillColor: '#38bdf8',
+          fillOpacity: 0.12,
+          weight: 1.5
+        }).addTo(map);
+      }
     }
 
-    pharmacies.forEach(p => {
-      if (p.latitude && p.longitude) {
-        const isVerified = p.source === 'MediFind Verified Store';
-        const pinIcon = createPharmacyPin(isVerified);
-        const marker = L.marker([p.latitude, p.longitude], { icon: pinIcon }).addTo(map);
-        marker.pharmacyId = p.osm_id;
+    function loadPharmacyMarkers(pharmacies, shouldCenterUser = false) {
+      if (!map) return;
+      mapMarkers.forEach(m => map.removeLayer(m));
+      mapMarkers = [];
 
-        const popupContent = `
+      const bounds = [];
+      if (currentLat && currentLng) {
+        updateMapUserMarker(currentLat, currentLng, currentAccuracy);
+        bounds.push([currentLat, currentLng]);
+      }
+
+      pharmacies.forEach(p => {
+        if (p.latitude && p.longitude) {
+          const isVerified = p.source === 'MediFind Verified Store';
+          const pinIcon = createPharmacyPin(isVerified);
+          const marker = L.marker([p.latitude, p.longitude], { icon: pinIcon }).addTo(map);
+          marker.pharmacyId = p.osm_id;
+
+          const popupContent = `
           <div style="font-family: var(--font-sans); min-width: 220px; padding: 4px;">
             <div class="d-flex align-items-center justify-content-between gap-1 mb-1">
               <span class="badge ${isVerified ? 'bg-success' : 'bg-primary'} px-2 py-0.5 small fw-bold">
@@ -367,77 +431,77 @@
             </div>
           </div>
         `;
-        marker.bindPopup(popupContent);
-        marker.on('click', function() { highlightPharmacyCard(p.osm_id); });
-        mapMarkers.push(marker);
-        bounds.push([p.latitude, p.longitude]);
+          marker.bindPopup(popupContent);
+          marker.on('click', function () { highlightPharmacyCard(p.osm_id); });
+          mapMarkers.push(marker);
+          bounds.push([p.latitude, p.longitude]);
+        }
+      });
+
+      if (shouldCenterUser && currentLat && currentLng) {
+        map.setView([currentLat, currentLng], 14, { animate: true });
+      } else if (bounds.length > 1) {
+        map.fitBounds(bounds, { padding: [40, 40] });
       }
-    });
-
-    if (shouldCenterUser && currentLat && currentLng) {
-      map.setView([currentLat, currentLng], 14, { animate: true });
-    } else if (bounds.length > 1) {
-      map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }
 
-  function highlightPharmacyCard(osmId) {
-    document.querySelectorAll('.pharmacy-item-card').forEach(card => { card.style.borderColor = 'var(--border)'; });
-    const targetCard = document.querySelector(`.pharmacy-item-card[data-osm-id="${osmId}"]`);
-    if (targetCard) {
-      targetCard.style.borderColor = 'var(--primary)';
-      targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    function highlightPharmacyCard(osmId) {
+      document.querySelectorAll('.pharmacy-item-card').forEach(card => { card.style.borderColor = 'var(--border)'; });
+      const targetCard = document.querySelector(`.pharmacy-item-card[data-osm-id="${osmId}"]`);
+      if (targetCard) {
+        targetCard.style.borderColor = 'var(--primary)';
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
-  }
 
-  async function fetchNearbyPharmacies(shouldCenterUser = false) {
-    const locationText = document.getElementById('locationText');
-    const container = document.getElementById('pharmacyListContainer');
+    async function fetchNearbyPharmacies(shouldCenterUser = false) {
+      const locationText = document.getElementById('locationText');
+      const container = document.getElementById('pharmacyListContainer');
 
-    if (container) {
-      container.innerHTML = `
+      if (container) {
+        container.innerHTML = `
         <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
           <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
           <h6 class="fw-bold text-dark mb-1">Querying OpenStreetMap Overpass API...</h6>
           <p class="text-secondary small mb-0">Retrieving mapped pharmacy locations within ${currentRadius} km.</p>
         </div>
       `;
-    }
-
-    let url = `/api/pharmacies/nearby/?lat=${currentLat}&lng=${currentLng}&radius=${currentRadius}&q=${encodeURIComponent(currentQuery)}`;
-
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (data.success) {
-        renderPharmacyList(data.pharmacies);
-        loadPharmacyMarkers(data.pharmacies, shouldCenterUser);
-
-        const countHeader = document.getElementById('pharmacyCountHeading');
-        if (countHeader) countHeader.innerText = `${data.pharmacies_count} Mapped Pharmacies within ${currentRadius} km`;
-
-        const markerCount = document.getElementById('mapMarkerCount');
-        if (markerCount) markerCount.innerText = `${data.pharmacies_count} stores marked`;
-
-        if (locationText) {
-          locationText.innerHTML = `<i class="fa-solid fa-location-dot text-primary me-1"></i> ${currentAreaName} &bull; <span class="text-primary fw-bold">${data.pharmacies_count} mapped stores</span> within ${currentRadius} km`;
-        }
-      } else {
-        if (container) container.innerHTML = `<div class="alert alert-warning p-4 rounded-4">${data.message || 'Unable to retrieve location data.'}</div>`;
       }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      if (container) container.innerHTML = `<div class="alert alert-danger p-4 rounded-4">Failed to connect to OpenStreetMap API. Please retry.</div>`;
+
+      let url = `/api/pharmacies/nearby/?lat=${currentLat}&lng=${currentLng}&radius=${currentRadius}&q=${encodeURIComponent(currentQuery)}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.success) {
+          renderPharmacyList(data.pharmacies);
+          loadPharmacyMarkers(data.pharmacies, shouldCenterUser);
+
+          const countHeader = document.getElementById('pharmacyCountHeading');
+          if (countHeader) countHeader.innerText = `${data.pharmacies_count} Mapped Pharmacies within ${currentRadius} km`;
+
+          const markerCount = document.getElementById('mapMarkerCount');
+          if (markerCount) markerCount.innerText = `${data.pharmacies_count} stores marked`;
+
+          if (locationText) {
+            locationText.innerHTML = `<i class="fa-solid fa-location-dot text-primary me-1"></i> ${currentAreaName} &bull; <span class="text-primary fw-bold">${data.pharmacies_count} mapped stores</span> within ${currentRadius} km`;
+          }
+        } else {
+          if (container) container.innerHTML = `<div class="alert alert-warning p-4 rounded-4">${data.message || 'Unable to retrieve location data.'}</div>`;
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        if (container) container.innerHTML = `<div class="alert alert-danger p-4 rounded-4">Failed to connect to OpenStreetMap API. Please retry.</div>`;
+      }
     }
-  }
 
-  function renderPharmacyList(pharmacies) {
-    const container = document.getElementById('pharmacyListContainer');
-    if (!container) return;
+    function renderPharmacyList(pharmacies) {
+      const container = document.getElementById('pharmacyListContainer');
+      if (!container) return;
 
-    if (!pharmacies.length) {
-      container.innerHTML = `
+      if (!pharmacies.length) {
+        container.innerHTML = `
         <div class="card border rounded-4 p-5 text-center bg-white shadow-sm">
           <i class="fa-solid fa-hospital-user fs-1 text-secondary mb-3"></i>
           <h5 class="fw-bold text-dark mb-1">No mapped pharmacies found within ${currentRadius} km</h5>
@@ -449,21 +513,21 @@
           </div>
         </div>
       `;
-      const fallbackBtn = container.querySelector('.radius-fallback-btn');
-      if (fallbackBtn) {
-        fallbackBtn.addEventListener('click', function() {
-          currentRadius = 25.0;
-          document.querySelectorAll('.radius-chip').forEach(b => {
-            b.classList.replace('btn-primary', 'btn-light');
-            if (b.getAttribute('data-radius') === '25') b.classList.replace('btn-light', 'btn-primary');
+        const fallbackBtn = container.querySelector('.radius-fallback-btn');
+        if (fallbackBtn) {
+          fallbackBtn.addEventListener('click', function () {
+            currentRadius = 25.0;
+            document.querySelectorAll('.radius-chip').forEach(b => {
+              b.classList.replace('btn-primary', 'btn-light');
+              if (b.getAttribute('data-radius') === '25') b.classList.replace('btn-light', 'btn-primary');
+            });
+            fetchNearbyPharmacies(true);
           });
-          fetchNearbyPharmacies(true);
-        });
+        }
+        return;
       }
-      return;
-    }
 
-    container.innerHTML = pharmacies.map(p => `
+      container.innerHTML = pharmacies.map(p => `
       <div class="card border rounded-4 p-4 shadow-sm bg-white pharmacy-item-card" data-osm-id="${p.osm_id}" data-lat="${p.latitude}" data-lng="${p.longitude}" style="cursor: pointer; transition: var(--transition);">
         <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
@@ -504,155 +568,156 @@
       </div>
     `).join('');
 
-    attachCardClickHandlers();
-  }
-
-  function attachCardClickHandlers() {
-    document.querySelectorAll('.pharmacy-item-card').forEach(card => {
-      card.addEventListener('click', function() {
-        const osmId = this.getAttribute('data-osm-id');
-        const lat = parseFloat(this.getAttribute('data-lat'));
-        const lng = parseFloat(this.getAttribute('data-lng'));
-
-        if (map && lat && lng) {
-          map.setView([lat, lng], 15, { animate: true });
-          const marker = mapMarkers.find(m => m.pharmacyId === osmId);
-          if (marker) marker.openPopup();
-        }
-        highlightPharmacyCard(osmId);
-      });
-    });
-  }
-
-  function requestBrowserLocation(forceCenter = true) {
-    const locText = document.getElementById('locationText');
-    const accuracyNotice = document.getElementById('locationAccuracyNotice');
-
-    if (!navigator.geolocation) {
-      if (locText) locText.innerHTML = '<span class="text-danger">Browser Geolocation is not supported. Use manual search.</span>';
-      fetchNearbyPharmacies(false);
-      return;
+      attachCardClickHandlers();
     }
 
-    if (locText) locText.innerText = 'Requesting current browser GPS coordinates...';
+    function attachCardClickHandlers() {
+      document.querySelectorAll('.pharmacy-item-card').forEach(card => {
+        card.addEventListener('click', function () {
+          const osmId = this.getAttribute('data-osm-id');
+          const lat = parseFloat(this.getAttribute('data-lat'));
+          const lng = parseFloat(this.getAttribute('data-lng'));
 
-    navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        currentLat = pos.coords.latitude;
-        currentLng = pos.coords.longitude;
-        currentAccuracy = pos.coords.accuracy;
-        isGpsActive = true;
-        currentAreaName = 'Your GPS Position';
+          if (map && lat && lng) {
+            map.setView([lat, lng], 15, { animate: true });
+            const marker = mapMarkers.find(m => m.pharmacyId === osmId);
+            if (marker) marker.openPopup();
+          }
+          highlightPharmacyCard(osmId);
+        });
+      });
+    }
 
-        if (accuracyNotice) {
-          accuracyNotice.innerText = `GPS Accuracy: ±${Math.round(currentAccuracy)}m • Straight-line Haversine Distance`;
-        }
+    function requestBrowserLocation(forceCenter = true) {
+      const locText = document.getElementById('locationText');
+      const accuracyNotice = document.getElementById('locationAccuracyNotice');
 
-        document.querySelectorAll('.locality-preset-btn').forEach(b => b.classList.remove('btn-primary', 'text-white'));
-        fetchNearbyPharmacies(forceCenter);
-      },
-      function(err) {
-        console.warn('Geolocation access error:', err.message);
-        isGpsActive = false;
-        if (locText) {
-          locText.innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> Location access unavailable.</span> Displaying Chennai Central default.`;
-        }
+      if (!navigator.geolocation) {
+        if (locText) locText.innerHTML = '<span class="text-danger">Browser Geolocation is not supported. Use manual search.</span>';
         fetchNearbyPharmacies(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    initMap(currentLat, currentLng);
-
-    // Initial load from pre-rendered server payload (<10ms)
-    try {
-      const initialNodes = {{ initial_osm_pharmacies_json|safe }};
-      if (initialNodes && initialNodes.length) {
-        loadPharmacyMarkers(initialNodes, false);
-      } else {
-        fetchNearbyPharmacies(false);
+        return;
       }
-    } catch(e) {
+
+      if (locText) locText.innerText = 'Requesting current browser GPS coordinates...';
+
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          currentLat = pos.coords.latitude;
+          currentLng = pos.coords.longitude;
+          currentAccuracy = pos.coords.accuracy;
+          isGpsActive = true;
+          currentAreaName = 'Your GPS Position';
+
+          if (accuracyNotice) {
+            accuracyNotice.innerText = `GPS Accuracy: ±${Math.round(currentAccuracy)}m • Straight-line Haversine Distance`;
+          }
+
+          document.querySelectorAll('.locality-preset-btn').forEach(b => b.classList.remove('btn-primary', 'text-white'));
+          fetchNearbyPharmacies(forceCenter);
+        },
+        function (err) {
+          console.warn('Geolocation access error:', err.message);
+          isGpsActive = false;
+          if (locText) {
+            locText.innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> Location access unavailable.</span> Displaying Chennai Central default.`;
+          }
+          fetchNearbyPharmacies(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initMap(currentLat, currentLng);
+
+      // Initial load from pre-rendered server payload (<10ms)
+      try {
+        const initialNodes = {{ initial_osm_pharmacies_json| safe
+      }};
+    if (initialNodes && initialNodes.length) {
+      loadPharmacyMarkers(initialNodes, false);
+    } else {
       fetchNearbyPharmacies(false);
     }
+  } catch (e) {
+    fetchNearbyPharmacies(false);
+  }
 
-    // Presets
-    document.querySelectorAll('.locality-preset-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.locality-preset-btn').forEach(b => b.classList.remove('btn-primary', 'text-white'));
-        this.classList.add('btn-primary', 'text-white');
+  // Presets
+  document.querySelectorAll('.locality-preset-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.locality-preset-btn').forEach(b => b.classList.remove('btn-primary', 'text-white'));
+      this.classList.add('btn-primary', 'text-white');
 
-        currentLat = parseFloat(this.getAttribute('data-lat'));
-        currentLng = parseFloat(this.getAttribute('data-lng'));
-        currentAreaName = this.getAttribute('data-name');
-        currentAccuracy = null;
-        fetchNearbyPharmacies(true);
-      });
+      currentLat = parseFloat(this.getAttribute('data-lat'));
+      currentLng = parseFloat(this.getAttribute('data-lng'));
+      currentAreaName = this.getAttribute('data-name');
+      currentAccuracy = null;
+      fetchNearbyPharmacies(true);
     });
-
-    // Search Query Filter
-    const searchInput = document.getElementById('pharmacySearchQuery');
-    if (searchInput) {
-      let debounceTimer;
-      searchInput.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        currentQuery = this.value.trim();
-        debounceTimer = setTimeout(() => { fetchNearbyPharmacies(false); }, 300);
-      });
-    }
-
-    // Radius Chips
-    document.querySelectorAll('.radius-chip').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.radius-chip').forEach(b => b.classList.replace('btn-primary', 'btn-light'));
-        this.classList.replace('btn-light', 'btn-primary');
-        currentRadius = parseFloat(this.getAttribute('data-radius'));
-        fetchNearbyPharmacies(true);
-      });
-    });
-
-    // Sort Menu
-    document.querySelectorAll('[data-sort]').forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.preventDefault();
-        currentSort = this.getAttribute('data-sort');
-        const lbl = document.getElementById('lblSortName');
-        if (lbl) lbl.innerText = currentSort === 'open' ? 'Open Hours First' : 'Nearest First';
-        fetchNearbyPharmacies(false);
-      });
-    });
-
-    // Refresh GPS Button
-    const refreshBtn = document.getElementById('btnRefreshLocation');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', function() {
-        requestBrowserLocation(true);
-      });
-    }
-
-    // Manual Form
-    const manualForm = document.getElementById('manualCoordsForm');
-    if (manualForm) {
-      manualForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const lat = parseFloat(document.getElementById('manualLatInput').value);
-        const lng = parseFloat(document.getElementById('manualLngInput').value);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          currentLat = lat;
-          currentLng = lng;
-          currentAreaName = `Manual Coordinates (${lat.toFixed(3)}, ${lng.toFixed(3)})`;
-          const modalEl = document.getElementById('manualLocationModal');
-          const modal = bootstrap.Modal.getInstance(modalEl);
-          if (modal) modal.hide();
-          fetchNearbyPharmacies(true);
-        }
-      });
-    }
   });
 
-})();
+  // Search Query Filter
+  const searchInput = document.getElementById('pharmacySearchQuery');
+  if (searchInput) {
+    let debounceTimer;
+    searchInput.addEventListener('input', function () {
+      clearTimeout(debounceTimer);
+      currentQuery = this.value.trim();
+      debounceTimer = setTimeout(() => { fetchNearbyPharmacies(false); }, 300);
+    });
+  }
+
+  // Radius Chips
+  document.querySelectorAll('.radius-chip').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.radius-chip').forEach(b => b.classList.replace('btn-primary', 'btn-light'));
+      this.classList.replace('btn-light', 'btn-primary');
+      currentRadius = parseFloat(this.getAttribute('data-radius'));
+      fetchNearbyPharmacies(true);
+    });
+  });
+
+  // Sort Menu
+  document.querySelectorAll('[data-sort]').forEach(item => {
+    item.addEventListener('click', function (e) {
+      e.preventDefault();
+      currentSort = this.getAttribute('data-sort');
+      const lbl = document.getElementById('lblSortName');
+      if (lbl) lbl.innerText = currentSort === 'open' ? 'Open Hours First' : 'Nearest First';
+      fetchNearbyPharmacies(false);
+    });
+  });
+
+  // Refresh GPS Button
+  const refreshBtn = document.getElementById('btnRefreshLocation');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function () {
+      requestBrowserLocation(true);
+    });
+  }
+
+  // Manual Form
+  const manualForm = document.getElementById('manualCoordsForm');
+  if (manualForm) {
+    manualForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById('manualLatInput').value);
+      const lng = parseFloat(document.getElementById('manualLngInput').value);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        currentLat = lat;
+        currentLng = lng;
+        currentAreaName = `Manual Coordinates (${lat.toFixed(3)}, ${lng.toFixed(3)})`;
+        const modalEl = document.getElementById('manualLocationModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        fetchNearbyPharmacies(true);
+      }
+    });
+  }
+  });
+
+}) ();
 </script>
 
 {% endblock %}
